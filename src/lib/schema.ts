@@ -1,0 +1,121 @@
+// Shared types + the record_lead tool schema + the extraction prompt.
+// This module is the single source of truth for the lead record shape:
+// the mock adapter, the Ember adapter, the ranking code, and the UI all
+// speak in these types (build spec section 5).
+
+export type Urgency = "emergency" | "same-day" | "routine";
+export type Category = "real" | "spam" | "not-a-lead";
+export type Language = "en" | "es";
+export type AdapterMode = "mock" | "ember";
+
+export interface BusinessConfig {
+  businessName: string;
+  trade: string;
+  tone: "friendly-direct" | "professional" | "warm";
+}
+
+export interface LeadRecord {
+  raw_text: string;
+  /** null = not stated in the text. Never invented. */
+  name: string | null;
+  /** null = not stated in the text. Never invented. */
+  phone: string | null;
+  service_needed: string | null;
+  urgency: Urgency;
+  urgency_reason: string;
+  /** null = not stated in the text. */
+  area: string | null;
+  language: Language;
+  category: Category;
+  /** Why a lead was flagged spam / not-a-lead; empty for real leads. */
+  category_reason: string;
+  /** One line for the owner, always in English. */
+  owner_summary: string;
+  /** Ready-to-send follow-up, in the lead's own language. Empty for spam. */
+  followup_draft: string;
+}
+
+export interface Usage {
+  tokens_in: number;
+  tokens_out: number;
+  /** USD cost computed from real usage + configured rates; null when rates are not set. */
+  cost_usd: number | null;
+  /** true when the numbers are simulated (mock adapter) rather than billed usage. */
+  estimated: boolean;
+}
+
+export interface ExtractionResult {
+  record: LeadRecord;
+  usage: Usage;
+  /** Which adapter actually produced this result (server may fall back to mock). */
+  mode: AdapterMode;
+  /** Set when the server fell back or degraded; shown in the UI. */
+  note?: string;
+}
+
+/** The one job every adapter does: raw lead text in, lead record out. */
+export interface LeadAdapter {
+  extract(rawText: string, config: BusinessConfig): Promise<ExtractionResult>;
+}
+
+/**
+ * Tool definition sent to Muse Ember. Mirrors LeadRecord minus the fields
+ * the app fills in itself (raw_text comes from the request; usage comes
+ * from the API response).
+ */
+export const RECORD_LEAD_TOOL = {
+  type: "function",
+  function: {
+    name: "record_lead",
+    description:
+      "Record one extracted lead. Use null for any field that is not stated in the text. Never invent a phone number, name, or detail.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: ["string", "null"], description: "Customer name exactly as stated, or null." },
+        phone: { type: ["string", "null"], description: "Phone number exactly as stated, or null." },
+        service_needed: { type: ["string", "null"], description: "Short normalized label, e.g. 'water heater leak'." },
+        urgency: { type: "string", enum: ["emergency", "same-day", "routine"] },
+        urgency_reason: { type: "string", description: "One line explaining the urgency call." },
+        area: { type: ["string", "null"], description: "Neighborhood or part of town if stated, or null." },
+        language: { type: "string", enum: ["en", "es"] },
+        category: { type: "string", enum: ["real", "spam", "not-a-lead"] },
+        category_reason: { type: "string", description: "Why spam / not-a-lead; empty string for real leads." },
+        owner_summary: { type: "string", description: "One line for the business owner, always in English." },
+        followup_draft: {
+          type: "string",
+          description: "Short polite follow-up message to the customer, in the lead's language. Empty string for spam.",
+        },
+      },
+      required: [
+        "name",
+        "phone",
+        "service_needed",
+        "urgency",
+        "urgency_reason",
+        "area",
+        "language",
+        "category",
+        "category_reason",
+        "owner_summary",
+        "followup_draft",
+      ],
+    },
+  },
+} as const;
+
+/** Extraction system prompt (from the build kit, tightened to the spec schema). */
+export function extractionSystemPrompt(config: BusinessConfig): string {
+  return [
+    `You are the intake engine for ${config.businessName}, a ${config.trade} business.`,
+    "From the pasted lead text, extract only what is actually stated. Never invent a phone number, name, address, or detail that is not there; use null for missing fields.",
+    "Call record_lead exactly once with the extracted lead.",
+    "Urgency: 'emergency' only for an active leak or flooding, no heat or no AC with elderly or infant occupants, sewage, a gas smell, an electrical hazard, or a burst pipe. 'same-day' for an appliance down, an AC outage in heat, or anything described as worsening. Otherwise 'routine'.",
+    "Category: 'spam' for marketing pitches, SEO or lead-selling solicitations, and robocalls; 'not-a-lead' for wrong numbers and fragments with no service request.",
+    "owner_summary is one line, always in English. followup_draft is a short, polite message in the lead's own language confirming what they need and saying the business will reach out shortly; empty for spam.",
+    `Tone for the follow-up: ${config.tone}.`,
+  ].join(" ");
+}
+
+/** Fields the UI flags when missing on a real lead. */
+export const FLAGGED_FIELDS: Array<keyof LeadRecord> = ["name", "phone", "service_needed", "area"];
