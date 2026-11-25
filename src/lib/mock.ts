@@ -13,7 +13,7 @@ import type {
   LeadAdapter,
   LeadRecord,
   Urgency,
-} from "./schema";
+} from "./schema.js";
 
 const SPANISH_SIGNALS = [
   "hola", "soy ", "número", "numero", "teléfono", "telefono", "por favor",

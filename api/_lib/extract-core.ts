@@ -9,9 +9,9 @@
 // - mode "ember" without a key: mock result WITH a note saying so, so
 //   the demo still runs before credits/key land and the UI can badge it.
 
-import { mockExtract } from "../../src/lib/mock";
-import type { BusinessConfig, ExtractionResult } from "../../src/lib/schema";
-import { emberEnvFromProcess, emberExtract, type EmberEnv } from "./ember";
+import { mockExtract } from "../../src/lib/mock.js";
+import type { BusinessConfig, ExtractionResult } from "../../src/lib/schema.js";
+import { emberEnvFromProcess, emberExtract, type EmberEnv } from "./ember.js";
 
 export interface ExtractRequestBody {
   raw_text?: unknown;

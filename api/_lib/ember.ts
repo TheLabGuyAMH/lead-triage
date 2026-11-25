@@ -18,7 +18,7 @@ import {
   type LeadRecord,
   type Urgency,
   type Usage,
-} from "../../src/lib/schema";
+} from "../../src/lib/schema.js";
 
 export interface EmberEnv {
   apiKey: string | null;

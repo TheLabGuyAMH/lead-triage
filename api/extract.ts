@@ -2,7 +2,7 @@
 // Holds the Meta Model API key server-side; the browser never sees it.
 // All logic lives in ./_lib/extract-core.ts (shared with local dev).
 
-import { handleExtract } from "./_lib/extract-core";
+import { handleExtract } from "./_lib/extract-core.js";
 
 interface Req {
   method?: string;
