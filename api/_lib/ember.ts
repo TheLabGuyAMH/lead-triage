@@ -103,7 +103,10 @@ export async function emberExtract(
         { role: "user", content: rawText },
       ],
       tools: [RECORD_LEAD_TOOL],
-      tool_choice: { type: "function", function: { name: "record_lead" } },
+      // Muse Ember's Chat Completions endpoint only supports tool_choice
+      // "auto" (verified live 2026-11-25: forced/named choices return 400).
+      // The system prompt directs the model to answer via record_lead.
+      tool_choice: "auto",
     }),
   });
 
