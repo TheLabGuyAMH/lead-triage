@@ -1,5 +1,21 @@
 # SUM.md — discussion record (newest first)
 
+## 2026-11-26 — Fix round 2 from the three-model re-review
+
+Anthony's approval (verbatim): "Ok go ahead and up its reasoning to x-high". Implemented the re-review items on top of `53a0d30`: hazard safety scripts replace model drafts (gas/CO/electrical, EN+ES, code-owned in `src/lib/safety.ts`, badge on the card); mock flags every unseen result, wider danger keywords, "Hi there," greeting, mode-labeled run button, mock-vs-Ember line on the board (re-measured: mock 9/9 emergencies, urgency 32/40 after widening — was 4/9 and 27/40 as measured in the review; Ember 9/9 and 40/40); capped non-sticky negotiation ladder with truncation flag; failed calls cost null with usage on 502; replay/session accounting split; critical-only top ranking; draft URL/phone stripping and empty spam/not-a-lead drafts in code; operational-only redacted trace export; scorer fixes; docs honesty; paragraph splitter. Regression through the gated endpoint on final code: held-out 40 identical accuracy to round 1 (urgency/category/language 40/40, phone 39/40 — same lead 19), calibration 12/12, replay re-recorded for the new record shape. Exact Ember spend this session: $0.022159 over 64 billed calls (task cap $0.10).
+
+Gaps I filled (not yet reviewed by Anthony):
+
+- **Safety script wording** (exact text in `docs/adr/README.md`): Gas EN "If you smell gas, leave the building now. Don't use light switches, phones or flames inside. Call 911 or your gas company from outside. We'll call you as soon as you're safe." / ES "Si huele a gas, salga del edificio ahora. No use interruptores de luz, teléfonos ni llamas adentro. Llame al 911 o a su compañía de gas desde afuera. Le llamaremos en cuanto esté a salvo." CO and electrical/fire equivalents are in the ADR. He or a licensed professional should approve the wording. Marked: not yet reviewed by Anthony.
+- **Hazard forces category to real** as well as emergency, so a hazard the model called spam can never sit in the filtered fold. Marked: not yet reviewed by Anthony.
+- **Uncapped mode removed entirely**: `maxTokensParam: null` / `EMBER_MAX_TOKENS_PARAM=none` now mean the default capped parameter. Marked: not yet reviewed by Anthony.
+- **Board comparison uses re-measured mock numbers** (9/9, 32/40) rather than the review's pre-widening 4/9, 27/40, which the README keeps for the record. Marked: not yet reviewed by Anthony.
+
+Open points:
+
+- Anthony: approve the safety script wording above (or have a professional do it) before any real-customer use.
+- Video, portal submission, and rotating/disabling the demo key after recording remain Anthony's (deadline Dec 2, 9 PM ET).
+
 ## 2026-11-26 — Scope item 4 "Prove it" completed via the live gated endpoint
 
 Follow-up to the review-fixes session below: with `MODEL_API_KEY` still a pull-proof Vercel Secret, the eval and replay ran through the live passcode-gated production endpoint (`--endpoint` mode in `scripts/eval-ember.mjs` / `scripts/record-replay.mjs`, `x-demo-key` from a freshly pulled production env file, concurrency 3, one retry on 502/timeout, hard spend guard).
