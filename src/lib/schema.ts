@@ -6,6 +6,8 @@
 export type Urgency = "emergency" | "same-day" | "routine";
 export type Category = "real" | "spam" | "not-a-lead";
 export type Language = "en" | "es";
+/** Life-safety hazard kinds with fixed, code-owned reply scripts (safety.ts). */
+export type HazardKind = "gas" | "co" | "electrical";
 export type AdapterMode = "mock" | "ember";
 
 export interface BusinessConfig {
@@ -31,14 +33,27 @@ export interface LeadRecord {
   category_reason: string;
   /** One line for the owner, always in English. */
   owner_summary: string;
-  /** Ready-to-send follow-up, in the lead's own language. Empty for spam. */
+  /** Ready-to-send follow-up, in the lead's own language. Empty for spam and not-a-lead. */
   followup_draft: string;
   /**
    * Set by server-side validation when the model's output could not be
    * trusted as-is (unknown enum, ungrounded phone, extraction failure).
-   * null = no problem detected. Records with this set sort first.
+   * null = no problem detected. Only critical records (below) sort
+   * above everything; softer flags keep their urgency tier.
    */
   needs_review: string | null;
+  /**
+   * true only when the record itself could not be trusted: extraction
+   * failure, or unknown urgency/category from the model. Those float
+   * above the whole board. Phone-grounding, draft-content, truncation
+   * and mock-heuristic flags are false: banner shown, tier kept.
+   */
+  needs_review_critical?: boolean;
+  /**
+   * Set by code (safety.ts) when a fixed hazard safety script replaced
+   * the draft. Drives the "Safety script, not AI text" badge.
+   */
+  safety_script?: HazardKind | null;
 }
 
 export interface Usage {
@@ -69,6 +84,8 @@ export interface ExtractionResult {
   request_variant?: string;
   /** API finish_reason for the call, e.g. "stop" or "length" (Ember only). */
   finish_reason?: string | null;
+  /** Wall-clock latency of the extraction call, when measured. */
+  latency_ms?: number | null;
 }
 
 /** The one job every adapter does: raw lead text in, lead record out. */
@@ -102,7 +119,7 @@ export const RECORD_LEAD_TOOL = {
         owner_summary: { type: "string", description: "One line for the business owner, always in English." },
         followup_draft: {
           type: "string",
-          description: "Short polite follow-up message to the customer, in the lead's language. Empty string for spam.",
+          description: "Short polite follow-up message to the customer, in the lead's language. Empty string for spam and not-a-lead.",
         },
       },
       required: [
@@ -152,7 +169,7 @@ export function extractionSystemPrompt(
       : "Call record_lead exactly once with the extracted lead.",
     "Urgency: 'emergency' only for uncontrolled water (an active leak that is still flowing and cannot be contained, or flooding), no heat or no AC with elderly or infant occupants, sewage, a gas smell, an electrical hazard, or a burst pipe. A slow or contained drip is NOT an emergency. Respect the timeframe the customer states: if they ask for service 'this week' or say it can wait, do not upgrade them to 'emergency'. 'same-day' for an appliance down, an AC outage in heat, a slow/contained leak or drip, or anything described as worsening. Otherwise 'routine'.",
     "Category: 'spam' for marketing pitches, SEO or lead-selling solicitations, and robocalls; 'not-a-lead' for wrong numbers and fragments with no service request.",
-    "owner_summary is one line, always in English. followup_draft is a short, polite message in the lead's own language confirming what they need and saying the business will reach out shortly; empty for spam. followup_draft must not contain URLs, prices, discounts, promises, or phone numbers that do not appear in the lead.",
+    "owner_summary is one line, always in English. followup_draft is a short, polite message in the lead's own language confirming what they need and saying the business will reach out shortly; empty for spam and not-a-lead. followup_draft must not contain URLs, prices, discounts, promises, or phone numbers that do not appear in the lead.",
     `Tone for the follow-up: ${config.tone}.`,
   ].join(" ");
 }

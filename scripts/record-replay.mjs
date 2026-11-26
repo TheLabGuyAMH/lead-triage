@@ -6,7 +6,7 @@
 // EMBER_DEMO_KEY, concurrency 3, one retry on 502/timeout).
 // Run: node scripts/record-replay.mjs [--endpoint=https://…/api/extract]
 //        [--effort=low] [--mode=structured]
-//        [--maxparam=max_completion_tokens|max_tokens|none] [--budget=0.05]
+//        [--maxparam=max_completion_tokens|max_tokens] [--budget=0.05]
 
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -39,12 +39,13 @@ try {
       if (r.usage) spend.add(costFromUsage(r.usage));
       else spend.add(null);
       if (r.error) throw new Error(`replay lead ${index + 1} failed: ${r.error}`);
-      return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, latency_ms: r.latency_ms, attempts: r.attempts, rawResponse: r.rawResponse };
+      return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, latency_ms: r.latency_ms, attempts: r.attempts, endpointResponse: r.endpointResponse };
     }
+    const t0 = Date.now();
     const r = await lib.emberExtract(raw, lib.SAMPLE_CONFIG, env, opts);
     spend.add(costOf(lib, env, r.usage));
     systemPrompt = r.systemPrompt;
-    return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason };
+    return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, latency_ms: Date.now() - t0 };
   });
   const first = items[0];
   const replay = {
@@ -63,6 +64,7 @@ try {
       output_mode: i.outputMode,
       request_variant: i.requestVariant,
       finish_reason: i.finishReason ?? null,
+      latency_ms: i.latency_ms ?? null,
     })),
   };
   const ts = `// Recorded Ember run of the 12-lead sample set on the final prompt.

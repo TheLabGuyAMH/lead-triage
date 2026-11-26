@@ -1,15 +1,17 @@
-// Held-out / calibration eval. Two transports:
+// Held-out / calibration eval. Three transports:
 //  - direct (default): calls emberExtract locally; needs MODEL_API_KEY.
 //  - endpoint (--endpoint=<url>): calls the deployed, passcode-gated
 //    POST /api/extract with x-demo-key from EMBER_DEMO_KEY (pulled env
 //    file). Concurrency at most 3, one retry on 502/timeout. This is
 //    the route used when MODEL_API_KEY is a pull-proof Vercel Secret.
-// Writes evals/results-<name>.json and traces/<label>.json. All leads
-// are fictional.
+//  - mock (--mock): runs the local heuristic mock adapter, $0, no keys.
+//    Writes only the results JSON (no Ember trace).
+// Writes evals/results-<name>.json and (Ember only) traces/<label>.json.
+// All leads are fictional.
 // Run: node scripts/eval-ember.mjs --set=heldout|sample --name=<slug>
-//        [--endpoint=https://…/api/extract] [--limit=N] [--ids=1,2,3]
+//        [--endpoint=https://…/api/extract] [--mock] [--limit=N] [--ids=1,2,3]
 //        [--effort=low|minimal|<value>] [--mode=structured|tool]
-//        [--maxparam=max_completion_tokens|max_tokens|none] [--budget=0.20]
+//        [--maxparam=max_completion_tokens|max_tokens] [--budget=0.20]
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -23,6 +25,7 @@ const mode = arg("mode", "structured");
 const maxParamRaw = arg("maxparam", "max_completion_tokens");
 const budget = Number(arg("budget", "0.20"));
 const endpoint = arg("endpoint", "");
+const useMock = process.argv.includes("--mock");
 const limit = Number(arg("limit", "0")) || 0;
 const idsArg = arg("ids", "");
 const idSet = idsArg ? new Set(idsArg.split(",").map(Number)) : null;
@@ -32,10 +35,12 @@ const { lib, cleanup } = await loadLib();
 try {
   const env = lib.emberEnvFromProcess();
   const demoKey = process.env.EMBER_DEMO_KEY || "";
-  if (endpoint) {
-    if (!demoKey) throw new Error("EMBER_DEMO_KEY not loaded (pull production env first, see _harness.mjs).");
-  } else if (!env.apiKey) {
-    throw new Error("MODEL_API_KEY not loaded (pull env first, see _harness.mjs).");
+  if (!useMock) {
+    if (endpoint) {
+      if (!demoKey) throw new Error("EMBER_DEMO_KEY not loaded (pull production env first, see _harness.mjs).");
+    } else if (!env.apiKey) {
+      throw new Error("MODEL_API_KEY not loaded (pull env first, see _harness.mjs).");
+    }
   }
   let rows = readFileSync(join(REPO, "evals", set === "sample" ? "sample12.jsonl" : "heldout.jsonl"), "utf8")
     .trim().split("\n").map((l) => JSON.parse(l));
@@ -56,17 +61,21 @@ try {
   if (endpoint) systemPrompt = lib.extractionSystemPrompt(lib.SAMPLE_CONFIG, mode === "tool" ? "tool" : "structured");
 
   const items = await pooled(rows, endpoint ? 3 : 4, async (row) => {
-    if (!spend.canAffordNext()) return { id: row.id, raw_text: row.raw_text, expected: row.expected, error: "budget guard: skipped", usage: null, record: null };
+    if (!useMock && !spend.canAffordNext()) return { id: row.id, raw_text: row.raw_text, expected: row.expected, error: "budget guard: skipped", usage: null, record: null };
     const t0 = Date.now();
     try {
+      if (useMock) {
+        const r = lib.mockExtract(row.raw_text, lib.SAMPLE_CONFIG);
+        return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: r.record, usage: r.usage, model: null, promptHash: null, outputMode: "mock", requestVariant: null, finishReason: null, latency_ms: Date.now() - t0, error: null };
+      }
       if (endpoint) {
         const r = await endpointExtract(endpoint, demoKey, row.raw_text, lib.SAMPLE_CONFIG);
         if (r.usage) spend.add(costFromUsage(r.usage));
         else spend.add(null);
-        if (r.error) return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: null, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, rawResponse: r.rawResponse, httpStatus: r.httpStatus, attempts: r.attempts, latency_ms: r.latency_ms, error: r.error };
+        if (r.error) return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: null, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, endpointResponse: r.endpointResponse, httpStatus: r.httpStatus, attempts: r.attempts, latency_ms: r.latency_ms, error: r.error };
         promptHash = r.promptHash;
         modelSeen = r.model;
-        return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, rawResponse: r.rawResponse, httpStatus: r.httpStatus, attempts: r.attempts, latency_ms: r.latency_ms, error: null };
+        return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, endpointResponse: r.endpointResponse, httpStatus: r.httpStatus, attempts: r.attempts, latency_ms: r.latency_ms, error: null };
       }
       const r = await lib.emberExtract(row.raw_text, lib.SAMPLE_CONFIG, env, opts);
       spend.add(costOf(lib, env, r.usage));
@@ -111,7 +120,8 @@ try {
     phone_exact_match: `${phoneMatch}/${done.length}`,
     hallucinated_phones: invented,
     language_accuracy: `${done.filter((i) => i.record.language === i.expected.language).length}/${done.length}`,
-    primary_output_compliance: `${done.filter((i) => i.outputMode === mode || i.outputMode === "tool").length}/${done.length}`,
+    // Compliance counts only the exact requested output mode.
+    primary_output_compliance: `${done.filter((i) => i.outputMode === (useMock ? "mock" : mode)).length}/${done.length}`,
     text_fallback_used: done.filter((i) => i.outputMode === "text-fallback").length,
     injection_attempts: injectionIds.size,
     injection_successes: injectionSuccess,
@@ -130,9 +140,22 @@ try {
       .map((i) => ({ id: i.id, expected: i.expected, got: { category: i.record.category, urgency: i.record.urgency, phone: i.record.phone, language: i.record.language, needs_review: i.record.needs_review } })),
   };
 
-  const out = { meta: { date: new Date().toISOString(), transport: endpoint ? `endpoint:${endpoint}` : "direct", settings: opts, model: modelSeen, prompt_hash: promptHash, system_prompt: systemPrompt, spend: spend.summary() }, metrics, items };
+  // In endpoint mode the server owns request shaping, so meta.settings
+  // records what the server reported (accepted variants/output modes),
+  // not this script's local direct-call options.
+  const settings = useMock
+    ? { source: "local-mock", outputMode: "mock" }
+    : endpoint
+      ? {
+          source: "server-reported",
+          request_variants: [...new Set(items.map((i) => i.requestVariant).filter(Boolean))],
+          output_modes: [...new Set(items.map((i) => i.outputMode).filter(Boolean))],
+          finish_reasons: metrics.finish_reasons,
+        }
+      : opts;
+  const out = { meta: { date: new Date().toISOString(), transport: useMock ? "mock" : endpoint ? `endpoint:${endpoint}` : "direct", settings, model: modelSeen, prompt_hash: promptHash, system_prompt: useMock ? null : systemPrompt, spend: spend.summary() }, metrics, items };
   writeFileSync(join(REPO, "evals", `results-${name}.json`), JSON.stringify(out, null, 2) + "\n");
-  writeFileSync(join(REPO, "traces", `ember-${name}.json`), JSON.stringify(toTraceFile({ label: `eval:${name}`, model: modelSeen, systemPrompt, promptHash, items, spend }), null, 2) + "\n");
+  if (!useMock) writeFileSync(join(REPO, "traces", `ember-${name}.json`), JSON.stringify(toTraceFile({ label: `eval:${name}`, model: modelSeen, systemPrompt, promptHash, items, spend }), null, 2) + "\n");
   console.log(JSON.stringify(metrics, null, 2));
   console.log(`SPEND: ${spend.summary()}`);
 } finally {

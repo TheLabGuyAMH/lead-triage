@@ -159,6 +159,8 @@ a.btn { text-decoration: none; display: inline-block; }
 .badge.same-day { background: var(--sameday-soft); color: var(--sameday); border: 1px solid #e7d28a; }
 .badge.routine { background: var(--routine-soft); color: var(--routine); border: 1px solid #bcd8ae; }
 .badge.lang { background: #eef1f6; color: var(--muted); border: 1px solid var(--line); }
+.badge.safety { background: #7a1f1a; color: #fff; border: 1px solid #7a1f1a; }
+.btn:disabled { opacity: 0.55; cursor: wait; }
 .reason { margin: 6px 0 10px; color: var(--ink); }
 .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 6px 16px; margin-bottom: 10px; }
 .fields div { font-size: 14px; }

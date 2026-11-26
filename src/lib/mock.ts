@@ -5,6 +5,8 @@
 // follows the same contract: fields not in the text come back null,
 // never invented.
 
+import { applyHazardSafety, detectHazard } from "./safety.js";
+import { SAMPLE_LEADS } from "./sample.js";
 import type {
   BusinessConfig,
   Category,
@@ -14,6 +16,19 @@ import type {
   LeadRecord,
   Urgency,
 } from "./schema.js";
+
+/**
+ * Every mock result on text that is not one of the 12 known samples is
+ * flagged: heuristics on unseen text are a guess and must never look
+ * like an Ember result. Soft flag (keeps its urgency tier).
+ */
+export const MOCK_REVIEW_NOTE = "Mock heuristics, not Ember. Unlock Ember mode for a real result.";
+
+const SAMPLE_SET = new Set(SAMPLE_LEADS.map((s) => s.trim()));
+
+export function isSampleText(text: string): boolean {
+  return SAMPLE_SET.has(text.trim());
+}
 
 const SPANISH_SIGNALS = [
   "hola", "soy ", "número", "numero", "teléfono", "telefono", "por favor",
@@ -117,15 +132,22 @@ function matchService(text: string): ServiceRule | null {
 
 function judgeUrgency(text: string): { urgency: Urgency; reason: string } {
   const t = text.toLowerCase();
-  const vulnerable = /elderly|mother in law is 7|baby|infant|78|91 degrees|84 and we have/.test(t);
-  if (/burst|water all over|flooding|still leaking/.test(t)) {
+  const vulnerable =
+    /elderly|grandma|grandmother|grandpa|grandfather|baby|infant|newborn|pregnant|anciano|abuela|abuelo|beb[ée]|\d+\s*month\s*old|mother in law is \d|is 7\d|is 8\d|is 9\d|\b[89]\d\b\s*(and|lives|staying|year)/.test(t) ||
+    /9\d degrees|house is 9\d/.test(t);
+  if (detectHazard([text])) {
+    return { urgency: "emergency", reason: "Safety hazard reported (gas / carbon monoxide / electrical)" };
+  }
+  if (/burst|water all over|flooding|flood|water (is )?rising|still leaking|spraying everywhere|inundaci/.test(t)) {
     return { urgency: "emergency", reason: "Active water leak / flooding in progress" };
   }
-  if (/(no ac|ac stopped|stopped cooling)/.test(t) && vulnerable) {
-    return { urgency: "emergency", reason: "No AC in extreme heat with elderly / infant occupants" };
+  if (/sewage|aguas negras/.test(t)) {
+    return { urgency: "emergency", reason: "Sewage backup reported" };
   }
-  if (/gas smell|sewage|electrical hazard|sparking/.test(t)) {
-    return { urgency: "emergency", reason: "Safety hazard reported" };
+  const noCooling = /no ac|ac stopped|ac not working|ac quit|stopped cooling|quit cooling|no air conditioning|aire acondicionado (dejó|dejo|no funciona)|dejó de enfriar|dejo de enfriar|sin aire acondicionado/.test(t);
+  const noHeating = /no heat|heat went out|heat is out|furnace (out|quit|not working|stopped)|heating (out|not working)|sin calefacci/.test(t);
+  if ((noCooling || noHeating) && vulnerable) {
+    return { urgency: "emergency", reason: "No heating/cooling with elderly / infant occupants" };
   }
   if (/dejó de funcionar|dejo de funcionar/.test(t) && /calor|hoy/.test(t)) {
     return { urgency: "same-day", reason: "AC out in heat; customer asks for today" };
@@ -153,38 +175,46 @@ function followupDraft(
 ): string {
   if (record.language === "es") {
     const what = service ? service.shortEs : "su solicitud de servicio";
-    return `Hola ${firstName(record.name)}, le escribo de ${config.businessName}. Gracias por contactarnos sobre ${what}. Le llamaremos hoy mismo para coordinar la visita.`;
+    const greeting = firstName(record.name) ? `Hola ${firstName(record.name)},` : "Hola,";
+    return `${greeting} le escribo de ${config.businessName}. Gracias por contactarnos sobre ${what}. Le llamaremos hoy mismo para coordinar la visita.`;
   }
   const what = service ? service.shortEn : "your service request";
+  const greeting = firstName(record.name) ? `Hi ${firstName(record.name)},` : "Hi there,";
   const reach = record.phone
     ? `We'll call you shortly at ${record.phone} to get you scheduled.`
     : "Reply here with the best number to reach you and we'll get you scheduled.";
-  return `Hi ${firstName(record.name)}, this is ${config.businessName}. Thanks for reaching out about your ${what}. ${reach}`;
+  return `${greeting} this is ${config.businessName}. Thanks for reaching out about your ${what}. ${reach}`;
 }
 
 export function mockExtract(rawText: string, config: BusinessConfig): ExtractionResult {
   const text = rawText.trim();
   const language = detectLanguage(text);
+  const unseenReview = isSampleText(text) ? null : MOCK_REVIEW_NOTE;
 
-  for (const rule of SPAM_RULES) {
-    if (rule.pattern.test(text)) {
-      const category: Category = /warranty/i.test(text) ? "not-a-lead" : "spam";
-      const record: LeadRecord = {
-        raw_text: rawText,
-        name: null,
-        phone: null,
-        service_needed: null,
-        urgency: "routine",
-        urgency_reason: "Not a service request",
-        area: null,
-        language,
-        category,
-        category_reason: rule.reason,
-        owner_summary: `Filtered: ${rule.reason}.`,
-        followup_draft: "",
-        needs_review: null,
-      };
-      return { record, usage: mockUsage(text), mode: "mock" };
+  // A hazard lead is never spam-folded, whatever else it contains.
+  if (!detectHazard([text])) {
+    for (const rule of SPAM_RULES) {
+      if (rule.pattern.test(text)) {
+        const category: Category = /warranty/i.test(text) ? "not-a-lead" : "spam";
+        const record: LeadRecord = {
+          raw_text: rawText,
+          name: null,
+          phone: null,
+          service_needed: null,
+          urgency: "routine",
+          urgency_reason: "Not a service request",
+          area: null,
+          language,
+          category,
+          category_reason: rule.reason,
+          owner_summary: `Filtered: ${rule.reason}.`,
+          followup_draft: "",
+          needs_review: unseenReview,
+          needs_review_critical: false,
+          safety_script: null,
+        };
+        return { record, usage: mockUsage(text), mode: "mock" };
+      }
     }
   }
 
@@ -215,8 +245,12 @@ export function mockExtract(rawText: string, config: BusinessConfig): Extraction
     category_reason: "",
     owner_summary,
     followup_draft: followupDraft({ name, phone, language }, service, config),
-    needs_review: null,
+    needs_review: unseenReview,
+    needs_review_critical: false,
+    safety_script: null,
   };
+  // Hazard leads get the fixed safety script, never the heuristic draft.
+  applyHazardSafety(record);
   return { record, usage: mockUsage(text), mode: "mock" };
 }
 

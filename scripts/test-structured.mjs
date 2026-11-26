@@ -53,6 +53,7 @@ async function probe(name, opts) {
 
 try {
   if (!env.apiKey) throw new Error("MODEL_API_KEY not loaded (pull env first, see _harness.mjs).");
+  // Every rung is capped (no uncapped mode); null = default capped name.
   await probe("T1_structured_strict", { outputMode: "structured", maxTokensParam: null, reasoningEffort: null });
   await probe("T2_tool_auto", { outputMode: "tool", maxTokensParam: null, reasoningEffort: null });
   let capParam = "max_completion_tokens";

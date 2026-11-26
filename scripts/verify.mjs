@@ -18,17 +18,20 @@ async function main() {
   writeFileSync(
     entry,
     `
-  export { mockExtract } from ${JSON.stringify(join(process.cwd(), "src/lib/mock.ts"))};
+  export { mockExtract, MOCK_REVIEW_NOTE } from ${JSON.stringify(join(process.cwd(), "src/lib/mock.ts"))};
   export { rankLeads, rankResults, splitBatch } from ${JSON.stringify(join(process.cwd(), "src/lib/ranking.ts"))};
   export { SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG } from ${JSON.stringify(join(process.cwd(), "src/lib/sample.ts"))};
-  export { handleExtract } from ${JSON.stringify(join(process.cwd(), "api/_lib/extract-core.ts"))};
-  export { normalizeRecord, phoneIsGrounded } from ${JSON.stringify(join(process.cwd(), "api/_lib/ember.ts"))};
+  export { handleExtract, cleanConfigField } from ${JSON.stringify(join(process.cwd(), "api/_lib/extract-core.ts"))};
+  export { normalizeRecord, phoneIsGrounded, buildVariants, sanitizeDraft } from ${JSON.stringify(join(process.cwd(), "api/_lib/ember.ts"))};
+  export { SAFETY_SCRIPTS, detectHazard } from ${JSON.stringify(join(process.cwd(), "src/lib/safety.ts"))};
+  export { buildTraceExport } from ${JSON.stringify(join(process.cwd(), "src/lib/trace-export.ts"))};
+  export { failureResult, ExtractionError } from ${JSON.stringify(join(process.cwd(), "src/lib/api-adapter.ts"))};
   `,
   );
   const out = join(dir, "bundle.mjs");
   await build({ entryPoints: [entry], bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent" });
   const lib = await import(pathToFileURL(out).href);
-  const { mockExtract, rankLeads, rankResults, splitBatch, SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG, handleExtract, normalizeRecord, phoneIsGrounded } = lib;
+  const { mockExtract, MOCK_REVIEW_NOTE, rankLeads, rankResults, splitBatch, SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG, handleExtract, cleanConfigField, normalizeRecord, phoneIsGrounded, buildVariants, sanitizeDraft, SAFETY_SCRIPTS, detectHazard, buildTraceExport, failureResult, ExtractionError } = lib;
 
   let failures = 0;
   function check(label, cond, detail = "") {
@@ -111,11 +114,11 @@ async function main() {
   const emptyRes = await handleExtract({ raw_text: "  ", mode: "mock" });
   check("empty raw_text is a 400", emptyRes.status === 400);
 
-  console.log("Splitter (--- separator):");
-  const formLead = "Name: Test Person\n\nPhone: 361-555-0100\n\nMessage: sink leaking";
-  const dashed = splitBatch(formLead + "\n---\nsecond lead here, call 361-555-0101");
-  check("web form with blank lines stays one lead under ---", dashed.length === 2 && dashed[0].includes("Phone:"), `got ${dashed.length}`);
-  check("blank-line split still works without ---", splitBatch("one lead\n\ntwo lead").length === 2);
+  console.log("Splitter (--- splits only where it appears; blank lines always split):");
+  check("blank-line split works without ---", splitBatch("one lead\n\ntwo lead").length === 2);
+  check("--- separates adjacent lines with no blank line", splitBatch("one line lead\n---\nsecond line lead").length === 2);
+  const mixed = splitBatch("first lead\n\nsecond lead\n---\nthird lead\n\nfourth lead");
+  check("--- does not disable blank-line splitting elsewhere", mixed.length === 4, `got ${mixed.length}: ${JSON.stringify(mixed)}`);
 
   console.log("Fail-closed normalization + phone grounding:");
   const bad = normalizeRecord(
@@ -134,10 +137,24 @@ async function main() {
   );
   check("clean record -> needs_review null", good.needs_review === null && good.phone === "361-555-0147");
 
-  console.log("Ranking puts needs_review first:");
-  const fake = (needs_review, urgency, index) => ({ index, record: { needs_review, urgency, category: "real" } });
-  const reviewFirst = rankResults([fake(null, "emergency", 0), fake("check me", "routine", 1)]);
-  check("needs_review sorts ahead of a clean emergency", reviewFirst[0].index === 1);
+  console.log("Ranking: only critical needs_review floats above everything:");
+  const fake = (needs_review, critical, urgency, index) => ({ index, record: { needs_review, needs_review_critical: critical, urgency, category: "real" } });
+  const criticalFirst = rankResults([fake(null, false, "emergency", 0), fake("extraction failed", true, "routine", 1)]);
+  check("critical needs_review sorts ahead of a clean emergency", criticalFirst[0].index === 1);
+  const spelled = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", phone: "361-555-0229", followup_draft: "Hi, thanks for reaching out." },
+    "Bathroom exhaust fan quit, replace whenever. My number is three six one five five five zero two two nine. - Colleen",
+  );
+  check("word-spelled phone is a soft (non-critical) flag", spelled.needs_review !== null && spelled.needs_review_critical === false && spelled.phone === null, spelled.needs_review);
+  const cleanEmergency = normalizeRecord(
+    { urgency: "emergency", category: "real", language: "en", phone: "361-555-0147", followup_draft: "Hi, we will call shortly." },
+    SAMPLE_LEADS[0],
+  );
+  const tierKept = rankResults([
+    { index: 0, record: spelled },
+    { index: 1, record: cleanEmergency },
+  ]);
+  check("routine with word-spelled phone ranks BELOW a clean emergency", tierKept[0].index === 1 && tierKept[1].index === 0);
 
   console.log("Endpoint lock (no network — gates answer first):");
   const bigRes = await handleExtract({ raw_text: "x".repeat(4001), mode: "mock" });
@@ -154,6 +171,102 @@ async function main() {
   check("EMBER_ENABLED unset (kill switch) -> mock even with the right key", offRes.status === 200 && offRes.json.mode === "mock");
   delete process.env.EMBER_DEMO_KEY;
 
+  console.log("Hazard safety scripts replace model drafts (item 1):");
+  const gasModel = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", phone: "361-555-0201", service_needed: "gas smell", urgency_reason: "unhurried", followup_draft: "Hi, we'll reach out shortly. Maybe ventilate the kitchen." },
+    "smell gas bad in kitchen since this morning getting headache, 361-555-0201, this is Dana",
+  );
+  check("gas lead forced to emergency", gasModel.urgency === "emergency");
+  check("gas lead gets badge field safety_script=gas", gasModel.safety_script === "gas");
+  check("gas draft is exactly the EN safety script", gasModel.followup_draft === SAFETY_SCRIPTS.gas.en, gasModel.followup_draft);
+  const gasEs = normalizeRecord(
+    { urgency: "same-day", category: "real", language: "es", followup_draft: "Hola, le llamaremos pronto." },
+    "Hola, huele mucho a gas en la cocina desde hoy, mi número es 361-555-0301",
+  );
+  check("Spanish gas lead gets the ES safety script", gasEs.safety_script === "gas" && gasEs.followup_draft === SAFETY_SCRIPTS.gas.es);
+  const coModel = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", service_needed: "carbon monoxide alarm beeping", followup_draft: "Hi, we will be in touch." },
+    "the alarm upstairs keeps beeping since last night, call me at 361-555-0302",
+  );
+  check("CO detected from model service_needed", coModel.safety_script === "co" && coModel.urgency === "emergency" && coModel.followup_draft === SAFETY_SCRIPTS.co.en);
+  const elecModel = normalizeRecord(
+    { urgency: "same-day", category: "spam", language: "en", followup_draft: "promo text" },
+    "breaker panel is sparking and buzzing, burning smell in laundry room, need electrician urgent 361-555-0205",
+  );
+  check("electrical hazard script + forced visible (real)", elecModel.safety_script === "electrical" && elecModel.category === "real" && elecModel.followup_draft === SAFETY_SCRIPTS.electrical.en);
+  check("routine smoke-detector install is not a hazard", detectHazard(["quote to install smoke detectors and a fireplace insert next month"]) === null);
+  const mockGas = mockExtract("smell gas in the kitchen, call me 361-555-0201 please", SAMPLE_CONFIG).record;
+  check("mock gas lead: emergency + safety script + badge field", mockGas.urgency === "emergency" && mockGas.safety_script === "gas" && mockGas.followup_draft === SAFETY_SCRIPTS.gas.en, `${mockGas.urgency}/${mockGas.safety_script}: ${mockGas.followup_draft}`);
+  const mockNew = mockExtract("need a quote to move a sink next month, no rush, 361-555-0310", SAMPLE_CONFIG).record;
+  check("mock on unseen text is flagged as heuristics", mockNew.needs_review === MOCK_REVIEW_NOTE, String(mockNew.needs_review));
+  check("mock unseen greeting uses Hi there (no name)", mockNew.followup_draft.startsWith("Hi there,"), mockNew.followup_draft);
+
+  console.log("Negotiation ladder: every rung capped, effort kept (item 3):");
+  const ladder = buildVariants({ outputMode: "structured", maxTokensParam: null, reasoningEffort: "low", maxTokens: 3000 });
+  check("explicit null cap becomes the default capped name", ladder[0].maxTokensParam === "max_completion_tokens");
+  check("no uncapped rung exists", ladder.every((v) => v.maxTokensParam === "max_completion_tokens" || v.maxTokensParam === "max_tokens"), JSON.stringify(ladder));
+  check("effort kept through cap/mode rungs, dropped only last", ladder[1].reasoningEffort === "low" && ladder[2].reasoningEffort === "low" && ladder[ladder.length - 1].reasoningEffort === null);
+  check("explicit max_tokens is the first rung", buildVariants({ maxTokensParam: "max_tokens" })[0].maxTokensParam === "max_tokens");
+  const truncated = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", phone: "361-555-0147" },
+    SAMPLE_LEADS[0],
+    { finishReason: "length" },
+  );
+  check("finish_reason length flags output truncated (soft)", (truncated.needs_review ?? "").includes("output truncated") && truncated.needs_review_critical === false, String(truncated.needs_review));
+  check("unknown enums are critical", bad.needs_review_critical === true);
+
+  console.log("Failed-call cost is unknown, never $0 (item 4):");
+  const clientFail = failureResult("any lead", 0, "ember", new Error("boom"));
+  check("client failureResult cost_usd is null + critical", clientFail.usage.cost_usd === null && clientFail.record.needs_review_critical === true);
+  const clientFailUsage = failureResult("any lead", 0, "ember", new ExtractionError("HTTP 502", { tokens_in: 10, tokens_out: 20, cost_usd: 0.000011, estimated: false }));
+  check("client failureResult keeps server-reported usage", clientFailUsage.usage.cost_usd === 0.000011 && clientFailUsage.usage.tokens_out === 20);
+  process.env.EMBER_ENABLED = "1";
+  process.env.EMBER_DEMO_KEY = "verify-key";
+  const deadEnv = { apiKey: "unused", model: "muse-ember-1.0", base: "http://127.0.0.1:1/v1", inputRatePerMTok: 0.1, outputRatePerMTok: 0.5 };
+  const errRes = await handleExtract({ raw_text: SAMPLE_LEADS[6], config: SAMPLE_CONFIG, mode: "ember" }, { demoKey: "verify-key" }, deadEnv);
+  check("server 502 carries usage with cost_usd null", errRes.status === 502 && errRes.json.usage && errRes.json.usage.cost_usd === null, JSON.stringify(errRes.json).slice(0, 160));
+  delete process.env.EMBER_ENABLED;
+  delete process.env.EMBER_DEMO_KEY;
+
+  console.log("Draft safety in code (item 7):");
+  const dirty = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", followup_draft: "Hi! See http://cheap-deals.example.com or call 361-555-9999 for $200 off today." },
+    "need an AC tune-up this month please, no phone in this message",
+  );
+  check("URL stripped from draft + flagged", !/https?:\/\//.test(dirty.followup_draft) && (dirty.needs_review ?? "").includes("URL"), dirty.followup_draft);
+  check("unlisted phone stripped from draft + flagged, rest kept", !dirty.followup_draft.includes("555-9999") && dirty.followup_draft.includes("Hi!") && (dirty.needs_review ?? "").includes("phone"), dirty.followup_draft);
+  const groundedDraft = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", phone: "361-555-0147", followup_draft: "Hi, we will call you at 361-555-0147 shortly." },
+    SAMPLE_LEADS[0],
+  );
+  check("grounded phone in draft is kept unflagged", groundedDraft.followup_draft.includes("361-555-0147") && groundedDraft.needs_review === null, groundedDraft.followup_draft);
+  const notLead = normalizeRecord({ urgency: "routine", category: "not-a-lead", language: "en", followup_draft: "Hi there!" }, "hello?? anyone there");
+  check("not-a-lead draft emptied in code", notLead.followup_draft === "");
+  const spamRec = normalizeRecord({ urgency: "routine", category: "spam", language: "en", followup_draft: "Buy now!" }, "SEO free audit act now");
+  check("spam draft emptied in code", spamRec.followup_draft === "");
+  const cleanedCfg = cleanConfigField('A "quoted" name\u2028with\u0085\u2029seps', 80);
+  check("config fields escape quotes + strip U+2028/U+0085", cleanedCfg.includes('\\"') && !cleanedCfg.includes("\u2028") && !cleanedCfg.includes("\u0085") && !cleanedCfg.includes("\u2029"), JSON.stringify(cleanedCfg));
+  check("sanitizeDraft is direct-testable", sanitizeDraft("go to www.example.com now", "plain lead").problems.length === 1);
+
+  console.log("Trace export privacy (item 8):");
+  const traceRec = normalizeRecord(
+    { urgency: "emergency", category: "real", language: "en", name: "Secret Name", phone: "361-555-0147", owner_summary: "secret summary", followup_draft: "secret draft" },
+    "PRIVATE RAW TEXT call 361-555-0147 - Secret Name",
+  );
+  const entries = [
+    { index: 0, ts: "2026-11-26T00:00:00.000Z", mode: "ember", model: "muse-ember-1.0", prompt_hash: "abc", output_mode: "structured", request_variant: "structured+max_completion_tokens+effort=low", finish_reason: "stop", latency_ms: 1234, tokens_in: 100, tokens_out: 50, cost_usd: 0.001, estimated: false, category: "real", urgency: "emergency", language: "en", needs_review: "private reason text", note: "private note", record: traceRec },
+    { index: 1, ts: "2026-11-26T00:00:01.000Z", mode: "mock", model: null, prompt_hash: null, output_mode: null, request_variant: null, finish_reason: null, latency_ms: 3, tokens_in: 40, tokens_out: 180, cost_usd: 0, estimated: true, category: "real", urgency: "routine", language: "en", needs_review: null, record: traceRec },
+  ];
+  const ctx = { model: "muse-ember-1.0", prompt_hash: "abc", system_prompt: "SECRET PROMPT", capUsd: 10, replay: true, recorded_at: "2026-11-26T00:00:00.000Z" };
+  const redacted = buildTraceExport(entries, true, ctx);
+  const redactedJson = JSON.stringify(redacted);
+  check("redacted export has no free text", !/PRIVATE RAW|Secret Name|secret (draft|summary)|private (reason|note)|SECRET PROMPT|361-555/.test(redactedJson), redactedJson.slice(0, 300));
+  check("redacted needs_review is boolean", redacted.calls[0].needs_review === true && redacted.calls[1].needs_review === false);
+  check("redacted rows carry variant/finish/latency", redacted.calls[0].request_variant === "structured+max_completion_tokens+effort=low" && redacted.calls[0].finish_reason === "stop" && redacted.calls[0].latency_ms === 1234);
+  check("export totals computed from exported rows", redacted.totals.tokens_in === 140 && redacted.totals.tokens_out === 230 && redacted.totals.cost_usd === 0.001, JSON.stringify(redacted.totals));
+  check("replay export marked with original timestamps", redacted.replay === true && redacted.recorded_at === "2026-11-26T00:00:00.000Z" && redacted.calls[0].ts === "2026-11-26T00:00:00.000Z");
+  const unredacted = buildTraceExport(entries, false, ctx);
+  check("unredacted export sets contains_customer_data + full record", unredacted.contains_customer_data === true && unredacted.calls[0].record.raw_text.includes("PRIVATE RAW") && unredacted.calls[0].request_variant !== null);
 
   console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
   return failures === 0 ? 0 : 1;

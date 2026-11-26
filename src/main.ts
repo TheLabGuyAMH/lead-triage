@@ -6,11 +6,12 @@
 // "Called" toggle remembered in localStorage. On first load the board
 // shows a clearly labeled replay of a recorded Ember run ($0 to view).
 
-import { ApiAdapter, DEMO_KEY_STORAGE } from "./lib/api-adapter";
+import { ApiAdapter, DEMO_KEY_STORAGE, failureResult } from "./lib/api-adapter";
 import { MockAdapter } from "./lib/mock";
 import { isFiltered, rankResults, splitBatch } from "./lib/ranking";
 import { REPLAY } from "./lib/replay-data";
 import { SAMPLE_CONFIG, SAMPLE_LEADS, SAMPLE_PASTE } from "./lib/sample";
+import { buildTraceExport, type TraceEntry } from "./lib/trace-export";
 import type {
   AdapterMode,
   BusinessConfig,
@@ -29,26 +30,10 @@ interface UiConfig extends BusinessConfig {
   capUsd: number;
 }
 
-interface TraceEntry {
-  index: number;
-  ts: string;
-  mode: AdapterMode;
-  model: string | null;
-  prompt_hash: string | null;
-  output_mode: string | null;
-  tokens_in: number;
-  tokens_out: number;
-  cost_usd: number | null;
-  estimated: boolean;
-  category: string;
-  urgency: string;
-  language: string;
-  name: string | null;
-  phone: string | null;
-  needs_review: string | null;
-  note?: string;
-  record: LeadRecord;
-}
+// Measured on the same 40 held-out leads (mock: free local run,
+// evals/results-heldout-mock-2026-11-26.json; Ember: committed eval).
+const MOCK_VS_EMBER_LINE =
+  "Mock vs Ember on the same 40 held-out leads: the mock caught 9/9 emergencies but only 32/40 urgency overall (and flags every unseen result for review); Ember caught 9/9 emergencies with 40/40 urgency.";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -67,10 +52,22 @@ const modeBadge = $<HTMLDivElement>("mode-badge");
 const costPill = $<HTMLDivElement>("cost-pill");
 const costTraceSummary = $<HTMLElement>("cost-trace-summary");
 
+interface Totals {
+  tokensIn: number;
+  tokensOut: number;
+  cost: number;
+  costKnown: boolean;
+}
+const emptyTotals = (): Totals => ({ tokensIn: 0, tokensOut: 0, cost: 0, costKnown: true });
+
 let config: UiConfig = loadConfig();
 let results: ExtractionResult[] = [];
 let trace: TraceEntry[] = [];
-let totals = { tokensIn: 0, tokensOut: 0, cost: 0, costKnown: true };
+// Session spend (live runs in this browser session) and the replay's
+// recorded cost are kept apart: the header pill and budget meter show
+// session spend only; the replay shows its recorded cost in its label.
+let sessionTotals = emptyTotals();
+let replayTotals = emptyTotals();
 let running = false;
 let showingReplay = false;
 // Prompt actually used by the current board, recorded at run/replay time
@@ -136,6 +133,7 @@ function readConfigInputs() {
 }
 
 function updateBadge(fallbackNote = false) {
+  runBtn.textContent = config.mode === "mock" ? "Run (mock, free)" : "Run with Ember";
   if (showingReplay && !fallbackNote) {
     modeBadge.className = "mode-badge replay";
     modeBadge.textContent = "REPLAY — recorded Ember run, $0 to view";
@@ -147,6 +145,14 @@ function updateBadge(fallbackNote = false) {
     : config.mode === "mock"
       ? "MOCK MODE — no Ember spend"
       : "EMBER MODE — live API calls";
+}
+
+/** While workers run, the board-changing controls stay disabled. */
+function setControlsDisabled(disabled: boolean) {
+  runBtn.disabled = disabled;
+  $<HTMLButtonElement>("view-replay").disabled = disabled;
+  $<HTMLButtonElement>("clear-session").disabled = disabled;
+  $<HTMLButtonElement>("clear-input").disabled = disabled;
 }
 
 function esc(s: string): string {
@@ -199,6 +205,9 @@ function fieldHtml(label: string, value: string | null): string {
 
 function cardHtml(record: LeadRecord, rank: number, result: ExtractionResult): string {
   const langBadge = record.language === "es" ? `<span class="badge lang">ES → EN card</span>` : "";
+  const safetyBadge = record.safety_script
+    ? `<span class="badge safety">Safety script, not AI text</span>`
+    : "";
   const cost =
     result.usage.cost_usd === null
       ? "cost: unknown (usage not reported)"
@@ -219,6 +228,7 @@ function cardHtml(record: LeadRecord, rank: number, result: ExtractionResult): s
       <span class="rank">#${rank}</span>
       <span class="card-name">${esc(record.name ?? "Unknown caller")}</span>
       <span class="badge ${esc(record.urgency)}">${esc(record.urgency.toUpperCase())}</span>
+      ${safetyBadge}
       ${langBadge}
       ${called ? `<span class="badge lang">CALLED</span>` : ""}
     </div>
@@ -247,14 +257,17 @@ function cardHtml(record: LeadRecord, rank: number, result: ExtractionResult): s
   </article>`;
 }
 
-function toTraceEntry(result: ExtractionResult): TraceEntry {
+function toTraceEntry(result: ExtractionResult, ts?: string): TraceEntry {
   return {
     index: result.index ?? 0,
-    ts: new Date().toISOString(),
+    ts: ts ?? new Date().toISOString(),
     mode: result.mode,
     model: result.model ?? null,
     prompt_hash: result.prompt_hash ?? null,
     output_mode: result.output_mode ?? null,
+    request_variant: result.request_variant ?? null,
+    finish_reason: result.finish_reason ?? null,
+    latency_ms: result.latency_ms ?? null,
     tokens_in: result.usage.tokens_in,
     tokens_out: result.usage.tokens_out,
     cost_usd: result.usage.cost_usd,
@@ -262,19 +275,17 @@ function toTraceEntry(result: ExtractionResult): TraceEntry {
     category: result.record.category,
     urgency: result.record.urgency,
     language: result.record.language,
-    name: result.record.name,
-    phone: result.record.phone,
     needs_review: result.record.needs_review,
     note: result.note,
     record: result.record,
   };
 }
 
-function addToTotals(result: ExtractionResult) {
-  totals.tokensIn += result.usage.tokens_in;
-  totals.tokensOut += result.usage.tokens_out;
-  if (result.usage.cost_usd === null) totals.costKnown = false;
-  else totals.cost += result.usage.cost_usd;
+function addToTotals(t: Totals, result: ExtractionResult) {
+  t.tokensIn += result.usage.tokens_in;
+  t.tokensOut += result.usage.tokens_out;
+  if (result.usage.cost_usd === null) t.costKnown = false;
+  else t.cost += result.usage.cost_usd;
 }
 
 function render() {
@@ -301,18 +312,19 @@ function render() {
   $<HTMLSpanElement>("m-processed").textContent = String(present.length);
   $<HTMLSpanElement>("m-real").textContent = String(real.length);
   $<HTMLSpanElement>("m-spam").textContent = String(filtered.length);
-  $<HTMLSpanElement>("m-tokens").textContent = String(totals.tokensIn + totals.tokensOut);
-  $<HTMLSpanElement>("m-cost").textContent = totals.costKnown ? `$${totals.cost.toFixed(4)}` : "unknown";
-  const pct = config.capUsd > 0 ? Math.min(100, (totals.cost / config.capUsd) * 100) : 0;
+  // Session spend only: the replay's recorded cost lives in its label.
+  $<HTMLSpanElement>("m-tokens").textContent = String(sessionTotals.tokensIn + sessionTotals.tokensOut);
+  $<HTMLSpanElement>("m-cost").textContent = sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "unknown";
+  const pct = config.capUsd > 0 ? Math.min(100, (sessionTotals.cost / config.capUsd) * 100) : 0;
   const fill = $<HTMLDivElement>("budget-fill");
   fill.style.width = `${pct}%`;
   fill.className = "budget-fill" + (pct >= 90 ? " over" : pct >= 60 ? " warn" : "");
   $<HTMLSpanElement>("m-budget").textContent =
-    `Budget: $${totals.cost.toFixed(2)} of $${config.capUsd.toFixed(2)} cap (advisory — server enforces)`;
+    `Budget: $${sessionTotals.cost.toFixed(2)} of $${config.capUsd.toFixed(2)} cap (advisory — server enforces)`;
 
   const calls = trace.filter(Boolean).length;
-  costPill.textContent = `${totals.costKnown ? `$${totals.cost.toFixed(4)}` : "cost unknown"} · ${calls} call${calls === 1 ? "" : "s"}`;
-  costTraceSummary.textContent = `Cost & trace · ${totals.costKnown ? `$${totals.cost.toFixed(4)}` : "cost unknown"} · ${calls} call${calls === 1 ? "" : "s"}`;
+  costPill.textContent = `${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} · ${calls} call${calls === 1 ? "" : "s"} (session)`;
+  costTraceSummary.textContent = `Cost & trace · ${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} session · ${calls} call${calls === 1 ? "" : "s"} shown`;
 
   const shown = trace.filter(Boolean).sort((a, b) => a.index - b.index);
   traceView.textContent =
@@ -324,30 +336,6 @@ function render() {
               `#${t.index + 1} ${t.mode}${t.model ? ` (${t.model})` : ""} · ${t.tokens_in}in/${t.tokens_out}out · ${fmtCost(t.cost_usd)} · ${t.category}/${t.urgency}${t.needs_review ? " · REVIEW: " + t.needs_review : ""}${t.note ? " · NOTE: " + t.note : ""}`,
           )
           .join("\n");
-}
-
-function failureResult(raw: string, index: number, err: unknown): ExtractionResult {
-  return {
-    index,
-    mode: config.mode,
-    // A timed-out call may still bill upstream; the server guard is the real cap.
-    usage: { tokens_in: 0, tokens_out: 0, cost_usd: 0, estimated: true },
-    record: {
-      raw_text: raw,
-      name: null,
-      phone: null,
-      service_needed: null,
-      urgency: "emergency",
-      urgency_reason: "Not read automatically. Open the original message.",
-      area: null,
-      language: "en",
-      category: "real",
-      category_reason: "",
-      owner_summary: "Could not process this lead. Read the original.",
-      followup_draft: "",
-      needs_review: err instanceof Error ? err.message : "extraction failed",
-    },
-  };
 }
 
 async function runTriage() {
@@ -363,7 +351,7 @@ async function runTriage() {
   }
   if (config.mode === "ember") {
     const ok = window.confirm(
-      `Ember mode makes one paid API call per lead: ${leads.length} call(s). Session spend so far: $${totals.cost.toFixed(4)} of your $${config.capUsd.toFixed(2)} advisory cap. Continue?`,
+      `Ember mode makes one paid API call per lead: ${leads.length} call(s). Session spend so far: $${sessionTotals.cost.toFixed(4)} of your $${config.capUsd.toFixed(2)} advisory cap. Continue?`,
     );
     if (!ok) return;
   }
@@ -378,31 +366,35 @@ async function runTriage() {
   updateBadge();
   render();
   running = true;
-  runBtn.disabled = true;
+  setControlsDisabled(true);
   runNote.hidden = true;
   let fallbackSeen = false;
   let next = 0;
   let done = 0;
   let failed = 0;
+  let flagged = 0;
   let stoppedForCap = false;
 
   const worker = async () => {
     while (next < leads.length) {
-      if (totals.costKnown && totals.cost >= config.capUsd) {
+      if (sessionTotals.costKnown && sessionTotals.cost >= config.capUsd) {
         stoppedForCap = true;
         return;
       }
       const i = next++;
       let result: ExtractionResult;
+      const t0 = Date.now();
       try {
         result = { ...(await adapter.extract(leads[i], config)), index: i };
+        result.latency_ms = result.latency_ms ?? Date.now() - t0;
+        if (result.record.needs_review) flagged++;
       } catch (err) {
         failed++;
-        result = failureResult(leads[i], i, err);
+        result = { ...failureResult(leads[i], i, config.mode, err), latency_ms: Date.now() - t0 };
       }
       results[i] = result;
       trace[i] = toTraceEntry(result);
-      addToTotals(result);
+      addToTotals(sessionTotals, result);
       if (result.model) boardPrompt.model = result.model;
       if (result.prompt_hash) boardPrompt.prompt_hash = result.prompt_hash;
       if (result.note) {
@@ -420,13 +412,13 @@ async function runTriage() {
     await Promise.all(Array.from({ length: Math.min(CONCURRENCY, leads.length) }, worker));
   } finally {
     running = false;
-    runBtn.disabled = false;
+    setControlsDisabled(false);
     if (config.mode === "ember") updateBadge(fallbackSeen);
   }
   const notRun = leads.length - done;
   runStatus.textContent = stoppedForCap
-    ? `Stopped at the $${config.capUsd.toFixed(2)} advisory cap: ${done} triaged, ${notRun} not processed.`
-    : `Done: ${done - failed} triaged, ${failed} need review.`;
+    ? `Stopped at the $${config.capUsd.toFixed(2)} advisory cap: ${done} triaged (${failed} failed, ${flagged} flagged for review), ${notRun} not processed.`
+    : `Done: ${done - failed} triaged, ${failed} failed, ${flagged} flagged for review.`;
 }
 
 function loadReplay() {
@@ -436,10 +428,12 @@ function loadReplay() {
   }
   results = REPLAY.results.map((r, i) => ({ ...r, index: r.index ?? i }));
   trace = [];
-  totals = { tokensIn: 0, tokensOut: 0, cost: 0, costKnown: true };
+  // Replay cost is tracked apart from session spend, and replay trace
+  // entries keep the original recorded timestamp.
+  replayTotals = emptyTotals();
   for (const r of results) {
-    trace[r.index ?? 0] = toTraceEntry(r);
-    addToTotals(r);
+    trace[r.index ?? 0] = toTraceEntry(r, REPLAY.recorded_at);
+    addToTotals(replayTotals, r);
   }
   boardPrompt = {
     system_prompt: REPLAY.system_prompt || null,
@@ -447,7 +441,7 @@ function loadReplay() {
     model: REPLAY.model,
   };
   showingReplay = true;
-  boardNote.textContent = `Replay: recorded Muse Ember run of the 12-lead sample (${REPLAY.recorded_at.slice(0, 10)} · model ${REPLAY.model ?? "muse-ember-1.0"} · recorded cost ${totals.costKnown ? `$${totals.cost.toFixed(4)}` : "unknown"}). Viewing it spends $0. Run Triage to process the pasted leads (mock is $0; live Ember needs the demo key).`;
+  boardNote.textContent = `Replay: recorded Muse Ember run of the 12-lead sample (${REPLAY.recorded_at.slice(0, 10)} · model ${REPLAY.model ?? "muse-ember-1.0"} · recorded cost ${replayTotals.costKnown ? `$${replayTotals.cost.toFixed(4)}` : "unknown"}). Viewing it spends $0. Run Triage to process the pasted leads (mock is $0; live Ember needs the demo key). ${MOCK_VS_EMBER_LINE}`;
   boardNote.hidden = false;
   runNote.hidden = true;
   if (!pasteEl.value) pasteEl.value = SAMPLE_PASTE;
@@ -455,57 +449,22 @@ function loadReplay() {
   render();
 }
 
-function redactedRecord(rec: LeadRecord) {
-  return {
-    ...rec,
-    raw_text: `[redacted: ${rec.raw_text.length} chars]`,
-    name: rec.name === null ? null : `[redacted: ${rec.name.length} chars]`,
-    phone: rec.phone === null ? null : `[redacted: ${rec.phone.replace(/\D/g, "").length} digits]`,
-  };
-}
-
 function exportTrace() {
   const redact = $<HTMLInputElement>("redact-trace").checked;
-  const shown = trace.filter(Boolean).sort((a, b) => a.index - b.index);
-  const payload = {
-    exported_at: new Date().toISOString(),
-    app: "lead-triage",
-    redacted: redact,
-    contains_customer_data: !redact,
-    // Server-reported for Ember calls; null for mock. Recorded when the
-    // calls happened — never rebuilt at export time.
+  if (!redact) {
+    const ok = window.confirm(
+      "Contains customer data: this unredacted export includes lead text, names, phone numbers and drafts, and will be marked contains_customer_data: true. Export it only where customer data is allowed, and never commit a real one. Continue?",
+    );
+    if (!ok) return;
+  }
+  const payload = buildTraceExport(trace.filter(Boolean), redact, {
     model: boardPrompt.model,
     prompt_hash: boardPrompt.prompt_hash,
     system_prompt: boardPrompt.system_prompt,
-    system_prompt_note:
-      boardPrompt.system_prompt === null
-        ? "Prompt text is held server-side; prompt_hash identifies exactly what was sent. The replay/eval recordings in the repo carry the full text."
-        : "Captured verbatim from the recording of this run.",
-    budget_cap_usd_advisory: config.capUsd,
-    totals: {
-      calls: shown.length,
-      tokens_in: totals.tokensIn,
-      tokens_out: totals.tokensOut,
-      cost_usd: totals.costKnown ? Number(totals.cost.toFixed(4)) : null,
-      cost_note: totals.costKnown
-        ? "Computed from API usage + configured rates (mock calls are $0, estimated)."
-        : "Usage missing for one or more calls; token counts are exact, dollar total unavailable (never shown as $0).",
-    },
-    calls: shown.map((t) => ({
-      call: t.index + 1,
-      ts: t.ts,
-      mode: t.mode,
-      model: t.model,
-      prompt_hash: t.prompt_hash,
-      output_mode: t.output_mode,
-      tokens_in: t.tokens_in,
-      tokens_out: t.tokens_out,
-      cost_usd: t.cost_usd,
-      estimated: t.estimated,
-      note: t.note ?? null,
-      record: redact ? redactedRecord(t.record) : t.record,
-    })),
-  };
+    capUsd: config.capUsd,
+    replay: showingReplay,
+    recorded_at: showingReplay ? REPLAY.recorded_at : null,
+  });
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -517,7 +476,8 @@ function exportTrace() {
 function clearSession() {
   results = [];
   trace = [];
-  totals = { tokensIn: 0, tokensOut: 0, cost: 0, costKnown: true };
+  sessionTotals = emptyTotals();
+  replayTotals = emptyTotals();
   showingReplay = false;
   boardNote.hidden = true;
   boardPrompt = { system_prompt: null, prompt_hash: null, model: null };
@@ -535,6 +495,7 @@ $<HTMLButtonElement>("load-sample").addEventListener("click", () => {
 $<HTMLButtonElement>("view-replay").addEventListener("click", loadReplay);
 $<HTMLButtonElement>("clear-input").addEventListener("click", () => {
   pasteEl.value = "";
+  runStatus.textContent = "";
   pasteEl.focus();
 });
 runBtn.addEventListener("click", () => void runTriage());

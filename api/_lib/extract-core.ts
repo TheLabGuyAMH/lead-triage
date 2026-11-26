@@ -18,8 +18,8 @@
 
 import { timingSafeEqual } from "node:crypto";
 import { mockExtract } from "../../src/lib/mock.js";
-import type { BusinessConfig, ExtractionResult } from "../../src/lib/schema.js";
-import { emberEnvFromProcess, emberExtract, type EmberEnv } from "./ember.js";
+import type { BusinessConfig, ExtractionResult, Usage } from "../../src/lib/schema.js";
+import { computeCostUsd, emberEnvFromProcess, emberExtract, usageFromError, type EmberEnv } from "./ember.js";
 
 export interface ExtractRequestBody {
   raw_text?: unknown;
@@ -29,7 +29,7 @@ export interface ExtractRequestBody {
 
 export interface ExtractResponse {
   status: number;
-  json: ExtractionResult | { error: string };
+  json: ExtractionResult | { error: string; usage?: Usage };
 }
 
 const MAX_RAW_CHARS = 4000;
@@ -41,9 +41,23 @@ const DEFAULT_CONFIG: BusinessConfig = {
   tone: "friendly-direct",
 };
 
-function clean(v: unknown, max: number): string {
+/**
+ * Config fields land inside quoted slots in the system prompt, so they
+ * are stripped of control characters and Unicode line separators
+ * (U+2028, U+2029, U+0085), have `"` escaped so a field can never close
+ * its quote early, and are length-capped.
+ */
+export function cleanConfigField(v: unknown, max: number): string {
   if (typeof v !== "string") return "";
-  return v.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max);
+  return v
+    .replace(/[\u0000-\u001f\u007f\u0085\u2028\u2029]/g, " ")
+    .replace(/"/g, '\\"')
+    .trim()
+    .slice(0, max);
+}
+
+function clean(v: unknown, max: number): string {
+  return cleanConfigField(v, max);
 }
 
 function keyMatches(given: string | null, expected: string | undefined): boolean {
@@ -108,6 +122,15 @@ export async function handleExtract(
     };
   } catch (err) {
     console.error("ember_error", err); // full detail stays in server logs
-    return { status: 502, json: { error: "Ember call failed; this lead was not processed." } };
+    // A failed call may still have billed upstream. Report its usage
+    // when the upstream sent it; cost is null (unknown), never $0.
+    const reported = usageFromError(err);
+    const usage: Usage = {
+      tokens_in: reported?.tokens_in ?? 0,
+      tokens_out: reported?.tokens_out ?? 0,
+      cost_usd: reported ? computeCostUsd(reported.tokens_in, reported.tokens_out, env) : null,
+      estimated: false,
+    };
+    return { status: 502, json: { error: "Ember call failed; this lead was not processed.", usage } };
   }
 }

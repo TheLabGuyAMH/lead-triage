@@ -23,7 +23,7 @@
       <section class="panel input-zone">
         <h2>1 · The day's leads</h2>
         <label class="field">
-          <span>Raw leads — separate with a blank line, or a <code>---</code> line when one lead has blank lines inside it</span>
+          <span>Raw leads — put each lead in its own paragraph (a blank line between leads), or separate leads with a <code>---</code> line</span>
           <textarea id="paste" rows="12" placeholder="Paste voicemail transcripts, web form submissions, messages — messy is fine."></textarea>
         </label>
         <div class="row">
@@ -86,8 +86,8 @@
               <span class="meter-label" id="m-budget">Budget: $10.00 cap</span>
             </div>
           </section>
-          <p class="hint">Every extraction is logged (mode, model, tokens, cost, extracted record). Export is redacted by default — customer text, names, and phones become lengths unless you opt in. A full export contains customer data: handle it that way, and never commit a real one.</p>
-          <label class="field inline-check"><input id="redact-trace" type="checkbox" checked /> <span>Redact customer text in export</span></label>
+          <p class="hint">Every extraction is logged (mode, model, tokens, cost, latency). The redacted export (default) contains only operational fields — no customer text at all. Uncheck redaction only to export full records: <strong>that export contains customer data</strong> (lead text, names, phones, drafts), is marked <code>contains_customer_data: true</code>, and a real one must never be committed.</p>
+          <label class="field inline-check"><input id="redact-trace" type="checkbox" checked /> <span>Redact export (operational fields only, no customer text)</span></label>
           <div class="row">
             <button id="export-trace" type="button" class="btn secondary">Export trace JSON</button>
             <button id="clear-session" type="button" class="btn ghost">Clear session</button>

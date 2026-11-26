@@ -35,6 +35,7 @@ export async function loadLib() {
     entry,
     `
 export { emberExtract, emberEnvFromProcess, emberOptionsFromProcess, computeCostUsd } from ${JSON.stringify(join(REPO, "api/_lib/ember.ts"))};
+export { mockExtract } from ${JSON.stringify(join(REPO, "src/lib/mock.ts"))};
 export { extractionSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/schema.ts"))};
 export { SAMPLE_LEADS, SAMPLE_CONFIG } from ${JSON.stringify(join(REPO, "src/lib/sample.ts"))};
 `,
@@ -130,12 +131,14 @@ export async function endpointExtract(endpoint, demoKey, rawText, config, { time
         continue;
       }
       if (!res.ok) {
-        return { record: null, usage: null, model: null, promptHash: null, outputMode: null, requestVariant: null, finishReason: null, rawResponse: lastRaw, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `HTTP ${res.status}: ${String(json?.error ?? text).slice(0, 200)}` };
+        // The server returns upstream-reported usage on a 502 when it
+        // has it (cost null when unknown, never $0) — keep it for spend.
+        return { record: null, usage: json?.usage ?? null, model: null, promptHash: null, outputMode: null, requestVariant: null, finishReason: null, endpointResponse: lastRaw, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `HTTP ${res.status}: ${String(json?.error ?? text).slice(0, 200)}` };
       }
       if (!json || json.mode !== "ember" || !json.record) {
-        return { record: null, usage: json?.usage ?? null, model: json?.model ?? null, promptHash: json?.prompt_hash ?? null, outputMode: json?.output_mode ?? null, requestVariant: json?.request_variant ?? null, finishReason: json?.finish_reason ?? null, rawResponse: lastRaw, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `gate fallback: mode=${String(json?.mode)} note=${String(json?.note ?? "").slice(0, 160)}` };
+        return { record: null, usage: json?.usage ?? null, model: json?.model ?? null, promptHash: json?.prompt_hash ?? null, outputMode: json?.output_mode ?? null, requestVariant: json?.request_variant ?? null, finishReason: json?.finish_reason ?? null, endpointResponse: lastRaw, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `gate fallback: mode=${String(json?.mode)} note=${String(json?.note ?? "").slice(0, 160)}` };
       }
-      return { record: json.record, usage: json.usage ?? null, model: json.model ?? null, promptHash: json.prompt_hash ?? null, outputMode: json.output_mode ?? null, requestVariant: json.request_variant ?? null, finishReason: json.finish_reason ?? null, rawResponse: json, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: null };
+      return { record: json.record, usage: json.usage ?? null, model: json.model ?? null, promptHash: json.prompt_hash ?? null, outputMode: json.output_mode ?? null, requestVariant: json.request_variant ?? null, finishReason: json.finish_reason ?? null, endpointResponse: json, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: null };
     } catch (err) {
       lastError = err?.name === "AbortError" ? `timeout after ${timeoutMs}ms` : String(err?.message ?? err).slice(0, 200);
       if (attempt === 2) break;
@@ -143,7 +146,7 @@ export async function endpointExtract(endpoint, demoKey, rawText, config, { time
       clearTimeout(timer);
     }
   }
-  return { record: null, usage: null, model: null, promptHash: null, outputMode: null, requestVariant: null, finishReason: null, rawResponse: lastRaw, httpStatus: null, attempts: 2, latency_ms: Date.now() - t0, error: lastError ?? "endpoint call failed" };
+  return { record: null, usage: null, model: null, promptHash: null, outputMode: null, requestVariant: null, finishReason: null, endpointResponse: lastRaw, httpStatus: null, attempts: 2, latency_ms: Date.now() - t0, error: lastError ?? "endpoint call failed" };
 }
 
 /** Trace file in the same shape the UI exports (fictional data only — safe to commit). */

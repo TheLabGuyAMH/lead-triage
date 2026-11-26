@@ -14,6 +14,7 @@
 // Everything Ember-shaped stays in this one file.
 
 import { createHash } from "node:crypto";
+import { applyHazardSafety } from "../../src/lib/safety.js";
 import {
   RECORD_LEAD_SCHEMA,
   RECORD_LEAD_TOOL,
@@ -39,7 +40,7 @@ export interface EmberOptions {
   outputMode?: "structured" | "tool";
   /** Sent only when set; the eval harness sweeps this. */
   reasoningEffort?: string | null;
-  /** Token-cap parameter name; the endpoint's accepted name is verified by test call. */
+  /** Preferred token-cap parameter name. null/omitted = the default capped name; there is no uncapped mode. */
   maxTokensParam?: "max_completion_tokens" | "max_tokens" | null;
   maxTokens?: number;
 }
@@ -91,12 +92,9 @@ export function emberOptionsFromProcess(): EmberOptions {
   return {
     outputMode: process.env.EMBER_OUTPUT_MODE === "tool" ? "tool" : "structured",
     reasoningEffort: process.env.EMBER_REASONING_EFFORT || null,
-    maxTokensParam:
-      param === "max_tokens" || param === "none"
-        ? param === "none"
-          ? null
-          : "max_tokens"
-        : "max_completion_tokens",
+    // There is no uncapped setting: every request carries an output cap.
+    // A legacy "none" value falls back to the default capped parameter.
+    maxTokensParam: param === "max_tokens" ? "max_tokens" : "max_completion_tokens",
     maxTokens: Number.isInteger(capRaw) && capRaw >= 256 && capRaw <= 8000 ? capRaw : DEFAULT_MAX_TOKENS,
   };
 }
@@ -127,25 +125,64 @@ export function phoneIsGrounded(phone: string, rawText: string): boolean {
   return digits.length === 11 && digits.startsWith("1") && source.includes(digits.slice(1));
 }
 
+const DRAFT_URL_RE = /https?:\/\/\S+|www\.\S+/gi;
+const DRAFT_PHONE_RE = /(?:\+?1[\s.\-]?)?\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}\b|\b\d{10,15}\b/g;
+
+/**
+ * Strip URLs and phone numbers that do not appear in the lead from a
+ * follow-up draft, in code (the prompt rule alone is not a control).
+ * The rest of the draft is kept; every strip is flagged for review.
+ */
+export function sanitizeDraft(draft: string, rawText: string): { draft: string; problems: string[] } {
+  const problems: string[] = [];
+  let out = draft;
+  if (out.match(DRAFT_URL_RE)) {
+    problems.push("follow-up draft contained a URL (removed)");
+    out = out.replace(DRAFT_URL_RE, " ");
+  }
+  out = out.replace(DRAFT_PHONE_RE, (m) => {
+    if (phoneIsGrounded(m, rawText)) return m;
+    problems.push(`follow-up draft contained phone "${m}" not in the message (removed)`);
+    return " ";
+  });
+  out = out.replace(/[ \t]{2,}/g, " ").replace(/\s+([.,;:!?])/g, "$1").trim();
+  return { draft: out, problems };
+}
+
 /**
  * Fail-closed normalization: anything unrecognized degrades toward the
  * top of the board with a `needs_review` explanation, never silently
- * toward the bottom. Unknown urgency → emergency + flagged; unknown
- * category → real (visible, not the spam fold) + flagged; ungrounded
- * phone → null + flagged.
+ * toward the bottom. Unknown urgency → emergency + flagged critical;
+ * unknown category → real (visible, not the spam fold) + flagged
+ * critical; ungrounded phone → null + flagged. Drafts for spam and
+ * not-a-lead are emptied in code; URLs / unlisted phones are stripped
+ * from surviving drafts; a truncated call (`finish_reason: "length"`)
+ * is flagged. Finally, hazard leads get the fixed safety script
+ * (safety.ts), never the model's draft.
  */
-export function normalizeRecord(args: Record<string, unknown>, rawText: string): LeadRecord {
+export function normalizeRecord(
+  args: Record<string, unknown>,
+  rawText: string,
+  opts: { finishReason?: string | null } = {},
+): LeadRecord {
   const str = (v: unknown): string | null =>
     typeof v === "string" && v.trim().length > 0 ? v : null;
   const problems: string[] = [];
+  let critical = false;
 
   let urgency: Urgency = "emergency";
   if (URGENCIES.includes(args.urgency as Urgency)) urgency = args.urgency as Urgency;
-  else problems.push(`urgency "${String(args.urgency)}" not recognised`);
+  else {
+    problems.push(`urgency "${String(args.urgency)}" not recognised`);
+    critical = true;
+  }
 
   let category: Category = "real";
   if (CATEGORIES.includes(args.category as Category)) category = args.category as Category;
-  else problems.push(`category "${String(args.category)}" not recognised`);
+  else {
+    problems.push(`category "${String(args.category)}" not recognised`);
+    critical = true;
+  }
 
   let phone = str(args.phone);
   if (phone && !phoneIsGrounded(phone, rawText)) {
@@ -153,8 +190,19 @@ export function normalizeRecord(args: Record<string, unknown>, rawText: string):
     phone = null;
   }
 
+  let draft = str(args.followup_draft) ?? "";
+  if (category !== "real") {
+    draft = "";
+  } else if (draft) {
+    const cleaned = sanitizeDraft(draft, rawText);
+    draft = cleaned.draft;
+    problems.push(...cleaned.problems);
+  }
+
+  if (opts.finishReason === "length") problems.push("output truncated");
+
   const language: Language = args.language === "es" ? "es" : "en";
-  return {
+  const record: LeadRecord = {
     raw_text: rawText,
     name: str(args.name),
     phone,
@@ -166,9 +214,12 @@ export function normalizeRecord(args: Record<string, unknown>, rawText: string):
     category,
     category_reason: str(args.category_reason) ?? "",
     owner_summary: str(args.owner_summary) ?? "",
-    followup_draft: str(args.followup_draft) ?? "",
+    followup_draft: draft,
     needs_review: problems.length ? problems.join("; ") : null,
+    needs_review_critical: critical && problems.length > 0,
+    safety_script: null,
   };
+  return applyHazardSafety(record);
 }
 
 interface ChatResponse {
@@ -183,22 +234,55 @@ interface ChatResponse {
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 }
 
+/** Usage the upstream reported for a call, when it reported any at all. */
+export interface ReportedUsage {
+  tokens_in: number;
+  tokens_out: number;
+}
+
+function usageFromBody(parsed: unknown): ReportedUsage | null {
+  const u = (parsed as { usage?: { prompt_tokens?: unknown; completion_tokens?: unknown } } | null)?.usage;
+  if (!u || typeof u.prompt_tokens !== "number" || typeof u.completion_tokens !== "number") return null;
+  return { tokens_in: u.prompt_tokens, tokens_out: u.completion_tokens };
+}
+
 class EmberHttpError extends Error {
   status: number;
+  usage: ReportedUsage | null;
   constructor(status: number, body: string) {
-    super(`Ember API ${status}: ${body}`);
+    super(`Ember API ${status}: ${body.slice(0, 300)}`);
     this.status = status;
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      /* non-JSON error body: no usage to recover */
+    }
+    this.usage = usageFromBody(parsed);
   }
+}
+
+/** Any Ember failure may carry upstream-reported usage for honest cost. */
+export function usageFromError(err: unknown): ReportedUsage | null {
+  if (err instanceof EmberHttpError) return err.usage;
+  const u = (err as { usage?: ReportedUsage | null } | null)?.usage;
+  return u && typeof u.tokens_in === "number" && typeof u.tokens_out === "number" ? u : null;
+}
+
+function errorWithUsage(message: string, usage: ReportedUsage | null): Error {
+  const err = new Error(message) as Error & { usage?: ReportedUsage | null };
+  err.usage = usage;
+  return err;
 }
 
 interface Variant {
   outputMode: "structured" | "tool";
-  maxTokensParam: "max_completion_tokens" | "max_tokens" | null;
+  maxTokensParam: "max_completion_tokens" | "max_tokens";
   reasoningEffort: string | null;
 }
 
 function variantLabel(v: Variant): string {
-  return `${v.outputMode}+${v.maxTokensParam ?? "nocap"}${v.reasoningEffort ? `+effort=${v.reasoningEffort}` : ""}`;
+  return `${v.outputMode}+${v.maxTokensParam}${v.reasoningEffort ? `+effort=${v.reasoningEffort}` : ""}`;
 }
 
 /**
@@ -207,16 +291,21 @@ function variantLabel(v: Variant): string {
  * `reasoning_effort`) are documented differently across sources, so the
  * adapter tries the configured variant first and, ONLY on an HTTP 400
  * (the API rejecting a parameter — other failures throw at once), steps
- * down to plainer variants. The variant that works is remembered for
- * the life of the server instance, so a batch negotiates once. Every
- * variant is still length-capped by the server-side gates upstream,
- * and only the accepted call can bill for output.
+ * down to plainer variants. Invariants: every rung keeps an
+ * output-token cap (the ladder may rename the cap parameter, never
+ * drop it — there are no uncapped rungs, and an explicit
+ * `maxTokensParam: null` means the default capped name), and
+ * `reasoning_effort` is kept through every cap/mode change and dropped
+ * only on the last rungs, after all capped combinations with it were
+ * rejected. Nothing is remembered across requests: each call starts
+ * at the configured rung, so a downgrade can never stick.
  */
-function buildVariants(opts: EmberOptions): Variant[] {
+export function buildVariants(opts: EmberOptions): Variant[] {
   const mode = opts.outputMode ?? "structured";
   const otherMode = mode === "structured" ? "tool" : "structured";
-  const cap = opts.maxTokensParam ?? "max_completion_tokens";
-  const otherCap = cap === "max_tokens" ? "max_completion_tokens" : "max_tokens";
+  const cap: Variant["maxTokensParam"] = opts.maxTokensParam === "max_tokens" ? "max_tokens" : "max_completion_tokens";
+  const otherCap: Variant["maxTokensParam"] = cap === "max_tokens" ? "max_completion_tokens" : "max_tokens";
+  const effort = opts.reasoningEffort ?? null;
   const seen = new Set<string>();
   const out: Variant[] = [];
   const push = (v: Variant) => {
@@ -226,14 +315,14 @@ function buildVariants(opts: EmberOptions): Variant[] {
       out.push(v);
     }
   };
-  push({ outputMode: mode, maxTokensParam: cap, reasoningEffort: opts.reasoningEffort ?? null });
-  if (cap) push({ outputMode: mode, maxTokensParam: otherCap, reasoningEffort: null });
-  push({ outputMode: mode, maxTokensParam: null, reasoningEffort: null });
-  push({ outputMode: otherMode, maxTokensParam: null, reasoningEffort: null });
+  for (const e of effort ? [effort, null] : [null]) {
+    push({ outputMode: mode, maxTokensParam: cap, reasoningEffort: e });
+    push({ outputMode: mode, maxTokensParam: otherCap, reasoningEffort: e });
+    push({ outputMode: otherMode, maxTokensParam: cap, reasoningEffort: e });
+    push({ outputMode: otherMode, maxTokensParam: otherCap, reasoningEffort: e });
+  }
   return out;
 }
-
-let learnedVariant = 0;
 
 async function attemptExtract(
   rawText: string,
@@ -254,7 +343,7 @@ async function attemptExtract(
       { role: "user", content: `<lead>\n${rawText}\n</lead>` },
     ],
   };
-  if (variant.maxTokensParam) body[variant.maxTokensParam] = maxTokens;
+  body[variant.maxTokensParam] = maxTokens; // every rung is capped, by construction
   if (variant.reasoningEffort) body.reasoning_effort = variant.reasoningEffort;
   if (structured) {
     body.response_format = {
@@ -285,10 +374,15 @@ async function attemptExtract(
 
   if (!res.ok) {
     // Detail is for server logs only; callers get a generic 502.
-    throw new EmberHttpError(res.status, (await res.text()).slice(0, 300));
+    throw new EmberHttpError(res.status, await res.text());
   }
 
   const data = (await res.json()) as ChatResponse;
+  // Usage is captured before any payload check so a failed call still
+  // reports what the upstream billed (cost unknown ≠ $0).
+  const reported = usageFromBody(data);
+  const finishReason: string | null =
+    typeof data.choices?.[0]?.finish_reason === "string" ? data.choices[0].finish_reason : null;
   const msg = data.choices?.[0]?.message;
   const call = msg?.tool_calls?.find((c) => c.function?.name === "record_lead");
 
@@ -301,27 +395,24 @@ async function attemptExtract(
     argText = msg.content.match(/\{[\s\S]*\}/)?.[0];
     outputMode = structured ? "structured" : "text-fallback";
   } else {
-    throw new Error("Ember returned no record_lead payload.");
+    throw errorWithUsage("Ember returned no record_lead payload.", reported);
   }
-  if (!argText) throw new Error("Ember returned no record_lead payload.");
+  if (!argText) throw errorWithUsage("Ember returned no record_lead payload.", reported);
 
   let args: Record<string, unknown>;
   try {
     args = JSON.parse(argText) as Record<string, unknown>;
   } catch {
-    throw new Error("Ember returned malformed record_lead arguments.");
+    throw errorWithUsage("Ember returned malformed record_lead arguments.", reported);
   }
 
-  const pin = data.usage?.prompt_tokens;
-  const pout = data.usage?.completion_tokens;
-  const known = typeof pin === "number" && typeof pout === "number";
   return {
-    record: normalizeRecord(args, rawText),
+    record: normalizeRecord(args, rawText, { finishReason }),
     usage: {
-      tokens_in: pin ?? 0,
-      tokens_out: pout ?? 0,
+      tokens_in: reported?.tokens_in ?? 0,
+      tokens_out: reported?.tokens_out ?? 0,
       // Missing usage is unknown cost, never $0 — $0 would defeat the meter.
-      cost_usd: known ? computeCostUsd(pin, pout, env) : null,
+      cost_usd: reported ? computeCostUsd(reported.tokens_in, reported.tokens_out, env) : null,
       estimated: false,
     },
     model: typeof data.model === "string" && data.model ? data.model : env.model,
@@ -329,7 +420,7 @@ async function attemptExtract(
     systemPrompt,
     outputMode,
     requestVariant: variantLabel(variant),
-    finishReason: typeof data.choices?.[0]?.finish_reason === "string" ? data.choices[0].finish_reason : null,
+    finishReason,
   };
 }
 
@@ -342,11 +433,10 @@ export async function emberExtract(
   if (!env.apiKey) throw new Error("MODEL_API_KEY is not set on the server.");
   const variants = buildVariants(opts);
   let lastErr: unknown = null;
-  for (let i = Math.min(learnedVariant, variants.length - 1); i < variants.length; i++) {
+  // No cross-request memory: every call starts at the configured rung.
+  for (let i = 0; i < variants.length; i++) {
     try {
-      const r = await attemptExtract(rawText, config, env, variants[i], opts.maxTokens ?? DEFAULT_MAX_TOKENS);
-      learnedVariant = i;
-      return r;
+      return await attemptExtract(rawText, config, env, variants[i], opts.maxTokens ?? DEFAULT_MAX_TOKENS);
     } catch (err) {
       lastErr = err;
       // Step down only when the API rejected the request shape itself.
