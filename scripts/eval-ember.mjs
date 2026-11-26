@@ -44,7 +44,8 @@ try {
       systemPrompt = r.systemPrompt;
       promptHash = r.promptHash;
       modelSeen = r.model;
-      return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, latency_ms: Date.now() - t0, error: null };
+      return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode,
+      requestVariant: r.requestVariant, latency_ms: Date.now() - t0, error: null };
     } catch (err) {
       return { id: row.id, raw_text: row.raw_text, expected: row.expected, record: null, usage: null, latency_ms: Date.now() - t0, error: String(err?.message ?? err).slice(0, 300) };
     }

@@ -97,14 +97,14 @@ export async function handleExtract(
   }
 
   try {
-    const { record, usage, model, promptHash, outputMode } = await emberExtract(
+    const { record, usage, model, promptHash, outputMode, requestVariant } = await emberExtract(
       rawText,
       config,
       env,
     );
     return {
       status: 200,
-      json: { record, usage, mode: "ember", model, prompt_hash: promptHash, output_mode: outputMode },
+      json: { record, usage, mode: "ember", model, prompt_hash: promptHash, output_mode: outputMode, request_variant: requestVariant },
     };
   } catch (err) {
     console.error("ember_error", err); // full detail stays in server logs

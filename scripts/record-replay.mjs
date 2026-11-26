@@ -27,7 +27,7 @@ try {
     const r = await lib.emberExtract(raw, lib.SAMPLE_CONFIG, env, opts);
     spend.add(costOf(lib, env, r.usage));
     systemPrompt = r.systemPrompt;
-    return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode };
+    return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant };
   });
   const first = items[0];
   const replay = {
@@ -44,6 +44,7 @@ try {
       model: i.model,
       prompt_hash: i.promptHash,
       output_mode: i.outputMode,
+      request_variant: i.requestVariant,
     })),
   };
   const ts = `// Recorded Ember run of the 12-lead sample set on the final prompt.

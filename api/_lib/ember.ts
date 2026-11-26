@@ -1,14 +1,15 @@
 // Server-only: the real Muse Ember adapter.
 //
-// Talks to the Meta Model API Chat Completions endpoint. Output strategy,
-// in order: (1) `response_format` JSON-schema structured output (strict),
-// if the endpoint accepts it; (2) the `record_lead` tool with
-// `tool_choice: "auto"` (forced choice returns 400, verified live
-// 2026-11-25); (3) a plain-text JSON object in `message.content`, which
-// "auto" may legally return instead of a tool call. Which strategy is
-// primary is decided by EMBER_OUTPUT_MODE and by the one-call test logged
-// in docs/adr/README.md; every path funnels into the same fail-closed
-// normalizeRecord(), so no path can silently degrade a lead.
+// Talks to the Meta Model API Chat Completions endpoint. Output strategy:
+// `response_format` JSON-schema structured output (strict) first, then
+// the `record_lead` tool with `tool_choice: "auto"` (forced choice
+// returns 400, verified live 2026-11-25), with a plain-text JSON object
+// in `message.content` accepted on either path ("auto" may legally
+// answer in text). Request parameters whose support is uncertain
+// (strict schemas, the token-cap name, `reasoning_effort`) are handled
+// by the 400-only negotiation ladder below, which reports the accepted
+// variant on every result; see docs/adr/README.md. Every path funnels
+// into the same fail-closed normalizeRecord().
 //
 // Everything Ember-shaped stays in this one file.
 
@@ -53,6 +54,8 @@ export interface EmberResult {
   /** System prompt actually sent (for traces/evals; never rebuilt later). */
   systemPrompt: string;
   outputMode: "structured" | "tool" | "text-fallback";
+  /** Negotiated variant the API accepted, e.g. "structured+max_tokens". */
+  requestVariant: string;
 }
 
 const TIMEOUT_MS = 20_000;
@@ -171,15 +174,66 @@ interface ChatResponse {
   usage?: { prompt_tokens?: number; completion_tokens?: number };
 }
 
-export async function emberExtract(
+class EmberHttpError extends Error {
+  status: number;
+  constructor(status: number, body: string) {
+    super(`Ember API ${status}: ${body}`);
+    this.status = status;
+  }
+}
+
+interface Variant {
+  outputMode: "structured" | "tool";
+  maxTokensParam: "max_completion_tokens" | "max_tokens" | null;
+  reasoningEffort: string | null;
+}
+
+function variantLabel(v: Variant): string {
+  return `${v.outputMode}+${v.maxTokensParam ?? "nocap"}${v.reasoningEffort ? `+effort=${v.reasoningEffort}` : ""}`;
+}
+
+/**
+ * Capability negotiation ladder. Several request parameters
+ * (`response_format` strict schemas, the token-cap parameter name,
+ * `reasoning_effort`) are documented differently across sources, so the
+ * adapter tries the configured variant first and, ONLY on an HTTP 400
+ * (the API rejecting a parameter — other failures throw at once), steps
+ * down to plainer variants. The variant that works is remembered for
+ * the life of the server instance, so a batch negotiates once. Every
+ * variant is still length-capped by the server-side gates upstream,
+ * and only the accepted call can bill for output.
+ */
+function buildVariants(opts: EmberOptions): Variant[] {
+  const mode = opts.outputMode ?? "structured";
+  const otherMode = mode === "structured" ? "tool" : "structured";
+  const cap = opts.maxTokensParam ?? "max_completion_tokens";
+  const otherCap = cap === "max_tokens" ? "max_completion_tokens" : "max_tokens";
+  const seen = new Set<string>();
+  const out: Variant[] = [];
+  const push = (v: Variant) => {
+    const k = variantLabel(v);
+    if (!seen.has(k)) {
+      seen.add(k);
+      out.push(v);
+    }
+  };
+  push({ outputMode: mode, maxTokensParam: cap, reasoningEffort: opts.reasoningEffort ?? null });
+  if (cap) push({ outputMode: mode, maxTokensParam: otherCap, reasoningEffort: null });
+  push({ outputMode: mode, maxTokensParam: null, reasoningEffort: null });
+  push({ outputMode: otherMode, maxTokensParam: null, reasoningEffort: null });
+  return out;
+}
+
+let learnedVariant = 0;
+
+async function attemptExtract(
   rawText: string,
   config: BusinessConfig,
   env: EmberEnv,
-  opts: EmberOptions = emberOptionsFromProcess(),
+  variant: Variant,
+  maxTokens: number,
 ): Promise<EmberResult> {
-  if (!env.apiKey) throw new Error("MODEL_API_KEY is not set on the server.");
-
-  const structured = opts.outputMode !== "tool";
+  const structured = variant.outputMode === "structured";
   const systemPrompt = extractionSystemPrompt(config, structured ? "structured" : "tool");
   const promptHash = createHash("sha256").update(systemPrompt).digest("hex");
 
@@ -191,8 +245,8 @@ export async function emberExtract(
       { role: "user", content: `<lead>\n${rawText}\n</lead>` },
     ],
   };
-  if (opts.maxTokensParam) body[opts.maxTokensParam] = opts.maxTokens ?? DEFAULT_MAX_TOKENS;
-  if (opts.reasoningEffort) body.reasoning_effort = opts.reasoningEffort;
+  if (variant.maxTokensParam) body[variant.maxTokensParam] = maxTokens;
+  if (variant.reasoningEffort) body.reasoning_effort = variant.reasoningEffort;
   if (structured) {
     body.response_format = {
       type: "json_schema",
@@ -222,7 +276,7 @@ export async function emberExtract(
 
   if (!res.ok) {
     // Detail is for server logs only; callers get a generic 502.
-    throw new Error(`Ember API ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    throw new EmberHttpError(res.status, (await res.text()).slice(0, 300));
   }
 
   const data = (await res.json()) as ChatResponse;
@@ -265,5 +319,29 @@ export async function emberExtract(
     promptHash,
     systemPrompt,
     outputMode,
+    requestVariant: variantLabel(variant),
   };
+}
+
+export async function emberExtract(
+  rawText: string,
+  config: BusinessConfig,
+  env: EmberEnv,
+  opts: EmberOptions = emberOptionsFromProcess(),
+): Promise<EmberResult> {
+  if (!env.apiKey) throw new Error("MODEL_API_KEY is not set on the server.");
+  const variants = buildVariants(opts);
+  let lastErr: unknown = null;
+  for (let i = Math.min(learnedVariant, variants.length - 1); i < variants.length; i++) {
+    try {
+      const r = await attemptExtract(rawText, config, env, variants[i], opts.maxTokens ?? DEFAULT_MAX_TOKENS);
+      learnedVariant = i;
+      return r;
+    } catch (err) {
+      lastErr = err;
+      // Step down only when the API rejected the request shape itself.
+      if (!(err instanceof EmberHttpError && err.status === 400)) throw err;
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Ember call failed.");
 }

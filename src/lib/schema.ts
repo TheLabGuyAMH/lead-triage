@@ -65,6 +65,8 @@ export interface ExtractionResult {
   prompt_hash?: string;
   /** How the record was obtained: "structured" | "tool" | "text-fallback" (Ember only). */
   output_mode?: string;
+  /** Which negotiated request variant the API accepted, e.g. "structured+max_tokens" (Ember only). */
+  request_variant?: string;
 }
 
 /** The one job every adapter does: raw lead text in, lead record out. */
