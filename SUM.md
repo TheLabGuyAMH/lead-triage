@@ -1,5 +1,9 @@
 # SUM.md — discussion record (newest first)
 
+## 2026-11-26 — Safety wording: no approval needed for the hackathon
+
+Anthony (verbatim): "This is just for a hackathon so not sure it's really necessary to treat the safety as customer-ready yet." Decision: the safety scripts stay in the demo as written; approving their wording is no longer a hackathon task. It becomes a step only if the app is ever offered to real customers. This closes the open point "approve the safety script wording" in the entry below.
+
 ## 2026-11-26 — Fix round 2 from the three-model re-review
 
 Anthony's approval (verbatim): "Ok go ahead and up its reasoning to x-high". Implemented the re-review items on top of `53a0d30`: hazard safety scripts replace model drafts (gas/CO/electrical, EN+ES, code-owned in `src/lib/safety.ts`, badge on the card); mock flags every unseen result, wider danger keywords, "Hi there," greeting, mode-labeled run button, mock-vs-Ember line on the board (re-measured: mock 9/9 emergencies, urgency 32/40 after widening — was 4/9 and 27/40 as measured in the review; Ember 9/9 and 40/40); capped non-sticky negotiation ladder with truncation flag; failed calls cost null with usage on 502; replay/session accounting split; critical-only top ranking; draft URL/phone stripping and empty spam/not-a-lead drafts in code; operational-only redacted trace export; scorer fixes; docs honesty; paragraph splitter. Regression through the gated endpoint on final code: held-out 40 identical accuracy to round 1 (urgency/category/language 40/40, phone 39/40 — same lead 19), calibration 12/12, replay re-recorded for the new record shape. Exact Ember spend this session: $0.022159 over 64 billed calls (task cap $0.10).
