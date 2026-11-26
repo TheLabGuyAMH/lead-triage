@@ -19,7 +19,10 @@ function localExtractApi(): Plugin {
         req.on("end", async () => {
           try {
             const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
-            const { status, json } = await handleExtract(body);
+            const key = req.headers["x-demo-key"];
+            const { status, json } = await handleExtract(body, {
+              demoKey: typeof key === "string" ? key : null,
+            });
             res.statusCode = status;
             res.setHeader("Content-Type", "application/json");
             res.end(JSON.stringify(json));

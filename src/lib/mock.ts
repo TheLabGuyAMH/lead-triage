@@ -182,6 +182,7 @@ export function mockExtract(rawText: string, config: BusinessConfig): Extraction
         category_reason: rule.reason,
         owner_summary: `Filtered: ${rule.reason}.`,
         followup_draft: "",
+        needs_review: null,
       };
       return { record, usage: mockUsage(text), mode: "mock" };
     }
@@ -214,6 +215,7 @@ export function mockExtract(rawText: string, config: BusinessConfig): Extraction
     category_reason: "",
     owner_summary,
     followup_draft: followupDraft({ name, phone, language }, service, config),
+    needs_review: null,
   };
   return { record, usage: mockUsage(text), mode: "mock" };
 }

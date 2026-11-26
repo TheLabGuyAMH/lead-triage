@@ -7,6 +7,7 @@ import { handleExtract } from "./_lib/extract-core.js";
 interface Req {
   method?: string;
   body?: unknown;
+  headers?: Record<string, string | string[] | undefined>;
 }
 
 interface Res {
@@ -20,6 +21,9 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     return;
   }
   const body = (req.body ?? {}) as Record<string, unknown>;
-  const { status, json } = await handleExtract(body);
+  const key = req.headers?.["x-demo-key"];
+  const { status, json } = await handleExtract(body, {
+    demoKey: typeof key === "string" ? key : null,
+  });
   res.status(status).json(json);
 }

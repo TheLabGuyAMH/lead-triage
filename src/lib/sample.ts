@@ -39,4 +39,8 @@ export const SAMPLE_LEADS: string[] = [
   "This is an urgent message regarding your vehicle's extended warranty. Our records show your coverage is about to expire. Press 1 to speak to a warranty specialist now.",
 ];
 
-export const SAMPLE_PASTE = SAMPLE_LEADS.join("\n\n");
+// Pasted in a deliberately shuffled order (the burst-heater emergency is
+// last) so a run visibly re-orders the board instead of confirming the
+// paste order. Ground truth in scripts/verify.mjs keys off SAMPLE_LEADS.
+const SAMPLE_PASTE_ORDER = [5, 10, 2, 8, 11, 4, 6, 9, 3, 7, 1, 0];
+export const SAMPLE_PASTE = SAMPLE_PASTE_ORDER.map((i) => SAMPLE_LEADS[i]).join("\n\n");
