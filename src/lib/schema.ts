@@ -67,6 +67,8 @@ export interface ExtractionResult {
   output_mode?: string;
   /** Which negotiated request variant the API accepted, e.g. "structured+max_tokens" (Ember only). */
   request_variant?: string;
+  /** API finish_reason for the call, e.g. "stop" or "length" (Ember only). */
+  finish_reason?: string | null;
 }
 
 /** The one job every adapter does: raw lead text in, lead record out. */

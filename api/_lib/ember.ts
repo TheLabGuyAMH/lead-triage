@@ -56,10 +56,17 @@ export interface EmberResult {
   outputMode: "structured" | "tool" | "text-fallback";
   /** Negotiated variant the API accepted, e.g. "structured+max_tokens". */
   requestVariant: string;
+  /** API finish_reason ("length" means the output cap truncated the record). */
+  finishReason: string | null;
 }
 
 const TIMEOUT_MS = 20_000;
-const DEFAULT_MAX_TOKENS = 1500;
+// Completion tokens include model reasoning: measured live 2026-11-26,
+// successful records used 1,217–1,454 of the old 1,500 cap and one lead
+// truncated into a 502. The cap only bounds worst-case cost (~$0.0016
+// per lead at 3,000) while billing is per token actually produced, so
+// headroom is nearly free insurance. See docs/adr/README.md.
+const DEFAULT_MAX_TOKENS = 3000;
 
 function parseRate(v: string | undefined): number | null {
   if (!v) return null;
@@ -80,6 +87,7 @@ export function emberEnvFromProcess(): EmberEnv {
 /** Default request options from env, so the deployed path is configurable without a code change. */
 export function emberOptionsFromProcess(): EmberOptions {
   const param = process.env.EMBER_MAX_TOKENS_PARAM;
+  const capRaw = Number(process.env.EMBER_MAX_TOKENS);
   return {
     outputMode: process.env.EMBER_OUTPUT_MODE === "tool" ? "tool" : "structured",
     reasoningEffort: process.env.EMBER_REASONING_EFFORT || null,
@@ -89,7 +97,7 @@ export function emberOptionsFromProcess(): EmberOptions {
           ? null
           : "max_tokens"
         : "max_completion_tokens",
-    maxTokens: DEFAULT_MAX_TOKENS,
+    maxTokens: Number.isInteger(capRaw) && capRaw >= 256 && capRaw <= 8000 ? capRaw : DEFAULT_MAX_TOKENS,
   };
 }
 
@@ -166,6 +174,7 @@ export function normalizeRecord(args: Record<string, unknown>, rawText: string):
 interface ChatResponse {
   model?: string;
   choices?: Array<{
+    finish_reason?: string | null;
     message?: {
       content?: string | null;
       tool_calls?: Array<{ function?: { name?: string; arguments?: string } }>;
@@ -320,6 +329,7 @@ async function attemptExtract(
     systemPrompt,
     outputMode,
     requestVariant: variantLabel(variant),
+    finishReason: typeof data.choices?.[0]?.finish_reason === "string" ? data.choices[0].finish_reason : null,
   };
 }
 
