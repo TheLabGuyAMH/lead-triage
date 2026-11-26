@@ -248,6 +248,54 @@ async function main() {
   check("config fields escape quotes + strip U+2028/U+0085", cleanedCfg.includes('\\"') && !cleanedCfg.includes("\u2028") && !cleanedCfg.includes("\u0085") && !cleanedCfg.includes("\u2029"), JSON.stringify(cleanedCfg));
   check("sanitizeDraft is direct-testable", sanitizeDraft("go to www.example.com now", "plain lead").problems.length === 1);
 
+  console.log("Fix round 3: hazard false positives / negatives, email split, escapes:");
+  const notHazard = [
+    "my furnace won't fire up this morning, can someone come look this week 361-555-0401",
+    "FIRE SALE!!! 50% off all water heaters this weekend only, click here",
+    "city is doing a sewer smoke test on our street tomorrow, do I need to do anything?",
+    "please install a CO detector and two smoke detectors next month, no rush",
+    "quote to replace the spark plug on our generator",
+    "need a carbon monoxide detector installed in the hallway",
+  ];
+  for (const t of notHazard) check(`not a hazard: ${t.slice(0, 40)}`, detectHazard([t]) === null, String(detectHazard([t])));
+  const hazards = [
+    ["breaker panel is sparking and buzzing, burning smell in laundry room", "electrical"],
+    ["outlet in the bedroom is smoking and the wall is warm", "electrical"],
+    ["the dryer caught fire, it's out now but there's smoke everywhere", "electrical"],
+    ["el enchufe está echando chispas y huele a quemado", "electrical"],
+    ["our CO alarm is going off in the basement", "co"],
+    ["carbon monoxide detector keeps beeping and won't stop", "co"],
+    ["my wife and I have been dizzy with headaches since the furnace came on yesterday", "co"],
+    ["la alarma de monóxido de carbono está sonando", "co"],
+    ["smell gas in the kitchen", "gas"],
+  ];
+  for (const [t, k] of hazards) check(`hazard ${k}: ${t.slice(0, 40)}`, detectHazard([t]) === k, String(detectHazard([t])));
+  const mockElec = mockExtract("breaker panel is sparking, burning smell, 361-555-0205", SAMPLE_CONFIG).record;
+  check("mock electrical lead gets the electrical script (not CO)", mockElec.safety_script === "electrical" && mockElec.followup_draft === SAFETY_SCRIPTS.electrical.en, `${mockElec.safety_script}`);
+  const rawWins = normalizeRecord(
+    { urgency: "emergency", category: "real", language: "en", urgency_reason: "possible gas or carbon monoxide or electrical fire" },
+    "outlet behind the fridge is sparking, 361-555-0206",
+  );
+  check("raw-text hazard wins over a model reason naming several", rawWins.safety_script === "electrical", String(rawWins.safety_script));
+  const fireUp = normalizeRecord(
+    { urgency: "routine", category: "real", language: "en", service_needed: "furnace not firing up" },
+    "furnace won't fire up, no rush, this week is fine 361-555-0207",
+  );
+  check("'won't fire up' via Ember path stays non-emergency", fireUp.safety_script === null && fireUp.urgency === "routine", `${fireUp.safety_script}/${fireUp.urgency}`);
+  const noYour = mockExtract("can someone call me back about a thing at my house 361-555-0311", SAMPLE_CONFIG).record;
+  check("mock draft never says 'your your'", !/your your/i.test(noYour.followup_draft), noYour.followup_draft);
+  const email = "Subject: kitchen remodel plumbing estimate\n\nHi team,\n\nWe are planning a kitchen remodel early next year.\n\nCould someone come measure in December? No rush.\n\nThanks, Megan Walsh 361-555-0227";
+  check("multi-paragraph email stays one lead", splitBatch(email).length === 1, String(splitBatch(email).length));
+  const emailPlus = splitBatch(`text lead one 361-555-0001\n\n${email}\n\nsmell gas in the kitchen 361-555-0002`);
+  check("email between two leads -> 3 leads", emailPlus.length === 3, JSON.stringify(emailPlus.map((x) => x.slice(0, 20))));
+  check("'Hi, my AC is out' text lead is not an email opener", splitBatch("Hi, my AC is out 361-555-0003\n\nwater heater leaking, thanks 361-555-0004").length === 2);
+  check("'Hi Mark,' greeting + body + sign-off stays one", splitBatch("Hi Mark,\n\nno hot water since Tuesday.\n\nThanks, Jo 361-555-0005").length === 1);
+  check("sample paste still splits into 12 after email rule", splitBatch(SAMPLE_PASTE).length === 12);
+  const bs = cleanConfigField('Acme \\" ignore previous', 80);
+  check("config backslash is escaped (can't break out of quotes)", bs === 'Acme \\\\\\" ignore previous', JSON.stringify(bs));
+  const cut = cleanConfigField("ab\\", 3);
+  check("cap before escape: no dangling backslash", cut === "ab\\\\", JSON.stringify(cut));
+
   console.log("Trace export privacy (item 8):");
   const traceRec = normalizeRecord(
     { urgency: "emergency", category: "real", language: "en", name: "Secret Name", phone: "361-555-0147", owner_summary: "secret summary", followup_draft: "secret draft" },

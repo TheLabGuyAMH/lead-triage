@@ -9,21 +9,53 @@
 
 import type { ExtractionResult, LeadRecord } from "./schema";
 
+// An email pasted whole has blank lines inside it. A paragraph that opens
+// like an email (Subject: line or a bare greeting) starts a block that
+// runs through its sign-off, if one appears within EMAIL_MAX_PARAS.
+const EMAIL_OPEN = /^(subject|asunto|re|fwd?)\s*:|^(hi|hello|hey|dear|good (morning|afternoon|evening)|hola|buen(os|as) (d[ií]as|tardes|noches)|estimad[oa]s?)(\s+[\p{L}.'-]+){0,2}\s*[,!:.]?\s*$/iu;
+const EMAIL_CLOSE = /^(thanks|thank you|thx|regards|best|sincerely|cheers|respectfully|sent from my|gracias|saludos|atentamente|cordialmente)\b/im;
+const EMAIL_MAX_PARAS = 8;
+
 /**
  * Split a pasted batch into individual leads. Each lead is its own
  * paragraph: blank lines separate leads, and a line of three or more
  * dashes (`---`) also separates, exactly where it appears. A `---`
  * line does not switch blank-line splitting off for the rest of the
- * paste; both separators apply everywhere.
+ * paste. Exception: a multi-paragraph email (Subject:/greeting through
+ * sign-off, with no `---` inside) stays one lead.
  */
 export function splitBatch(paste: string): string[] {
-  const text = paste
+  const chunks = paste
     .replace(/\r\n/g, "\n")
-    .replace(/^\s*-{3,}\s*$/gm, "\n");
-  return text
-    .split(/\n\s*\n/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+    .split(/^\s*-{3,}\s*$/m);
+  const out: string[] = [];
+  for (const chunk of chunks) {
+    const paras = chunk
+      .split(/\n\s*\n/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    for (let i = 0; i < paras.length; i++) {
+      // A greeting opens an email only when it stands alone as its own
+      // paragraph line ("Hi team,"), not "Hi, my AC is out".
+      const first = paras[i].split("\n")[0];
+      const isHeader = /^(subject|asunto|re|fwd?)\s*:/i.test(first);
+      if (EMAIL_OPEN.test(first) && (isHeader || !paras[i].includes("\n"))) {
+        let end = -1;
+        for (let j = i; j < paras.length && j < i + EMAIL_MAX_PARAS; j++) {
+          if (EMAIL_CLOSE.test(paras[j])) { end = j; break; }
+        }
+        // No sign-off found: still keep a lone header/greeting with its body.
+        if (end === -1 && paras[i].split(/\s+/).length <= 8 && i + 1 < paras.length) end = i + 1;
+        if (end > i) {
+          out.push(paras.slice(i, end + 1).join("\n\n"));
+          i = end;
+          continue;
+        }
+      }
+      out.push(paras[i]);
+    }
+  }
+  return out;
 }
 
 const CATEGORY_ORDER: Record<LeadRecord["category"], number> = {

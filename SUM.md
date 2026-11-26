@@ -1,5 +1,12 @@
 # SUM.md — discussion record (newest first)
 
+## 2026-11-26 — Fix round 3 (bug-fix pass), then code freeze
+
+Anthony (verbatim), answering "Should I run that one bug-fix pass now and then freeze the code?": "Yes and then have the council of models determine what can increase the scores as well as the odds of winning the competition". Fixed the round-2 bugs the final four-model review found, with no Ember spend: a sparking panel no longer gets the carbon-monoxide script in practice mode; "fire", "smoke" and "sparks" only count next to something that can burn ("furnace won't fire up", "FIRE SALE", "sewer smoke test" are no longer 911 emergencies); "install a CO detector" is routine while dizziness since the furnace came on is now a CO emergency; a pasted multi-paragraph email stays one lead; the browser budget cap no longer switches off after a failed call; no more "your your" in practice replies; the board quotes practice mode's honest pre-tuning score (4/9 emergencies, 27/40 urgency, re-measured from commit 77d77f2); a backslash in the business name can no longer break the prompt quote; README spend now matches the committed traces ($0.0798 / 167 calls, with the running tally noted); UI no longer claims the server enforces the budget. All 52 eval leads, including the committed Ember outputs, give identical hazard results before and after, so the Ember scores stand. Code is frozen after this commit except for fixes the council finds blocking.
+
+Open points:
+- Anthony: turn `EMBER_ENABLED` off except while recording; check the Meta usage page total before submitting.
+
 ## 2026-11-26 — Safety wording: no approval needed for the hackathon
 
 Anthony (verbatim): "This is just for a hackathon so not sure it's really necessary to treat the safety as customer-ready yet." Decision: the safety scripts stay in the demo as written; approving their wording is no longer a hackathon task. It becomes a step only if the app is ever offered to real customers. This closes the open point "approve the safety script wording" in the entry below.

@@ -11,9 +11,12 @@
 //
 // Wording follows the shape of US federal guidance (PHMSA for gas:
 // leave immediately, call 911 or the gas utility from a safe place).
-// Anthony / a licensed professional should approve the exact wording;
-// it is recorded verbatim in docs/adr/README.md and SUM.md as a gap
-// fill not yet reviewed by Anthony.
+// Anthony accepted it as hackathon demo wording (SUM.md, 2026-11-26);
+// a licensed professional should review it before real-customer use.
+//
+// Detection reads the raw lead first. The model's service/urgency
+// fields are consulted only when the raw text names no hazard, so a
+// generated reason that lists several hazards can't pick the script.
 
 import type { HazardKind, Language, LeadRecord } from "./schema.js";
 
@@ -45,31 +48,53 @@ const GAS_PATTERNS: RegExp[] = [
   /huevos?\s+podridos?/,
 ];
 
-const CO_PATTERNS: RegExp[] = [
-  /carbon\s+monoxide/,
-  /mon[óo]xido\s+de\s+carbono/,
-  /\bco\b\s*(alarm|detector|sensor)/,
-  /(alarm|detector|alarma)\s*(de\s+)?(co|mon[óo]xido)/,
-  /alarma\s+de\s+mon[óo]xido/,
+// Carbon monoxide: an alarm that is actually going off, a named CO
+// leak/poisoning, or CO-type symptoms tied to a fuel-burning appliance.
+// "Install a CO detector next month" is routine work, not an emergency.
+const CO_NAME = String.raw`(carbon\s+monoxide|\bco\b|mon[óo]xido(\s+de\s+carbono)?)`;
+const CO_DEVICE = String.raw`(alarms?|detectors?|sensors?|alarma|detector)`;
+const CO_FIRING = String.raw`(going\s+off|went\s+off|goes\s+off|sounding|beeping|alarming|triggered|reading|est[áa]\s+sonando|sonando|suena|son[óo]|pitando)`;
+const CO_LINK = String.raw`(\s+(is|keeps|has\s+been|started|just|keeps\s+on))?\s+`;
+const CO_ACTIVE_PATTERNS: RegExp[] = [
+  new RegExp(`${CO_NAME}\\s*${CO_DEVICE}?${CO_LINK}${CO_FIRING}`),
+  new RegExp(`${CO_DEVICE}\\s+(de\\s+|for\\s+)?${CO_NAME}${CO_LINK}${CO_FIRING}`),
+  new RegExp(`${CO_NAME}\\s*(leak|leaking|poisoning|fuga|intoxicaci[óo]n|envenenamiento)`),
 ];
+const CO_SYMPTOM = /\b(dizzy|dizziness|headaches?|nause(a|ous|ated)|light-?headed|mareado|mareada|mareos?|dolor(es)?\s+de\s+cabeza|n[áa]useas?)\b/;
+const CO_SOURCE = /\b(furnace|heater|boiler|heat\s+(came|come|comes|turned|kicked)\s+on|gas\s+(stove|range|dryer|fireplace)|generator|calefacci[óo]n|calentador|estufa|caldera|generador)\b/;
 
+function hasCo(hay: string): boolean {
+  if (CO_ACTIVE_PATTERNS.some((p) => p.test(hay))) return true;
+  return CO_SYMPTOM.test(hay) && CO_SOURCE.test(hay);
+}
+
+// Electrical / fire: sparks, smoke or flames tied to something that
+// can actually be on fire. Bare "fire" or "smoke" is not enough:
+// "furnace won't fire up", "FIRE SALE" and "sewer smoke test" are not
+// emergencies.
+const ELEC_THING = String.raw`(panel|outlet|breaker|wires?|wiring|switch|plug|socket|cord|appliance|fixture|light|meter|box|wall|ceiling|fan|dryer|microwave|oven|stove|tv|electrical|electric)`;
+const ELEC_BAD = String.raw`(spark(ing|s|ed)?|smok(e|ing)|burning|on\s+fire|caught\s+fire|melt(ed|ing)|scorch(ed|ing))`;
+const ES_THING = String.raw`(panel|enchufe|tomacorriente|cables?|breaker|interruptor|caja|medidor|el[ée]ctric[oa])`;
 const ELECTRICAL_PATTERNS: RegExp[] = [
-  /spark(ing|s|ed)?\b/,
+  new RegExp(String.raw`spark(ing|s|ed)?\b(?!\s*plug)[^.]{0,60}\b${ELEC_THING}\b`),
+  new RegExp(String.raw`\b${ELEC_THING}\b[^.]{0,60}\b${ELEC_BAD}\b`),
   /burning\s+(smell|wiring|wire|plastic|electrical)/,
-  /smell(s|ing)?\s+(like\s+)?burning/,
+  /smell(s|ing)?\s+(like\s+)?(burning|smoke)/,
   /electrical\s+(hazard|fire)/,
-  /\bsmoke\b.*\b(panel|outlet|breaker|wire|wiring|appliance|wall)\b/,
-  /\b(panel|outlet|breaker)\b.*\b(smoke|smoking|fire|burning)\b/,
-  /\bon\s+fire\b/,
-  /\bsmok(e|ing)\b/,
-  /\bfire\b/,
+  /\bsmoke\s+(is\s+)?(coming|pouring|filling|billowing)\b/,
+  /\b(on|caught|catching)\s+fire\b/,
+  /\b(house|kitchen|garage|attic|electrical|grease)\s+fire\b/,
+  /\bthere'?s\s+(a\s+)?fire\b/,
+  /\bflames?\b/,
   /echando\s+chispas/,
-  /\bchispas\b/,
-  /olor\s+a\s+(quemado|cable)/,
-  /huele\s+a\s+(quemado|cable)/,
+  new RegExp(String.raw`\bchispas\b[^.]{0,60}\b${ES_THING}\b`),
+  new RegExp(String.raw`\b${ES_THING}\b[^.]{0,60}\b(chispas|humo|quemando|quemado|fuego)\b`),
+  /olor\s+a\s+(quemado|cable|humo)/,
+  /huele\s+a\s+(quemado|cable|humo)/,
   /cableado\s+quemado/,
-  /\bhumo\b/,
-  /\bfuego\b/,
+  /\b(sale|saliendo|hay)\s+humo\b/,
+  /\bincendio\b/,
+  /\b(se\s+est[áa]\s+quemando|en\s+llamas|llamas)\b/,
   /riesgo\s+el[ée]ctrico/,
 ];
 
@@ -83,9 +108,9 @@ export function detectHazard(texts: Array<string | null | undefined>): HazardKin
   const hay = texts.filter(Boolean).join("\n").toLowerCase();
   if (!hay.trim()) return null;
   if (GAS_PATTERNS.some((p) => p.test(hay))) return "gas";
-  if (CO_PATTERNS.some((p) => p.test(hay))) return "co";
+  if (hasCo(hay)) return "co";
   // "Install a smoke detector / fireplace" is routine work, not a fire.
-  const elecHay = hay.replace(/smoke\s+(detector|alarm)|fireplace|fire\s+pit|fire\s+extinguisher|detector\s+de\s+humo/g, " ");
+  const elecHay = hay.replace(/smoke\s+(detectors?|alarms?|test(ing|s)?)|fireplace|fire\s+pit|fire\s+extinguishers?|fire\s+sale|detectores?\s+de\s+humo/g, " ");
   if (ELECTRICAL_PATTERNS.some((p) => p.test(elecHay))) return "electrical";
   return null;
 }
@@ -97,7 +122,7 @@ export function detectHazard(texts: Array<string | null | undefined>): HazardKin
  * freshly produced records.
  */
 export function applyHazardSafety(record: LeadRecord): LeadRecord {
-  const kind = detectHazard([record.raw_text, record.service_needed, record.urgency_reason]);
+  const kind = detectHazard([record.raw_text]) ?? detectHazard([record.service_needed, record.urgency_reason]);
   if (!kind) {
     record.safety_script = record.safety_script ?? null;
     return record;

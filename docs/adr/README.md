@@ -2,6 +2,11 @@
 
 One line per decision a later agent could not read from the code, with its reason. Newest first.
 
+- 2026-11-26 (round 3) — Hazard detection reads the raw lead first and uses the model's service/urgency text only when the raw lead names no hazard, because a generated reason that lists "gas / carbon monoxide / electrical" picked the CO script for a sparking panel. Bare "fire", "smoke" and "sparks" no longer trigger (they must sit next to something that can burn, or be phrased as a fire/smoke event), CO needs an alarm actually going off, a named CO leak, or dizziness/headache/nausea tied to a fuel-burning appliance, because "furnace won't fire up", "FIRE SALE", "sewer smoke test" and "install a CO detector" were jumping the queue as 911 emergencies. Checked against all 52 eval leads plus the committed Ember fields: no change.
+- 2026-11-26 (round 3) — A pasted email (Subject:/greeting line through its sign-off, within 8 paragraphs, no `---` inside) stays one lead, because blank lines inside an email split held-out lead 23 into five cards.
+- 2026-11-26 (round 3) — The browser budget cap counts each call that reports no cost at $0.002 (about 6x the measured per-lead cost), because one failed call used to switch the cap off for the rest of the session.
+- 2026-11-26 (round 3) — Config fields are length-capped first, then `\` and `"` escaped, because escaping only `"` let a trailing backslash reopen the quoted prompt slot.
+- 2026-11-26 (round 3) — The board quotes the mock's pre-tuning held-out score (4/9, 27/40), not its tuned score (9/9, 32/40), because the round-2 keywords were widened with those leads in view.
 - 2026-11-26 (round 2) — Hazard leads (gas, carbon monoxide, sparking/burning/smoke/fire electrical) are detected in code from the raw lead and model fields, forced to emergency and visible, and answered with the fixed scripts under "Safety script wording" below instead of any model draft, because "we'll reach out shortly" is dangerous advice for a gas leak; wording follows the leave-now/call-911 shape of PHMSA guidance and is a gap fill not yet reviewed by Anthony (he or a licensed professional should approve it).
 - 2026-11-26 (round 2) — Only critically untrusted records (extraction failure, unknown urgency/category) sort above the whole board; phone-grounding, draft-content, truncation and mock-heuristic flags keep their urgency tier, superseding the "such cards sort first" line below, because a routine lead with a word-spelled phone must not outrank a clean emergency.
 - 2026-11-26 (round 2) — The negotiation ladder has no uncapped rung (explicit `maxTokensParam: null` now means the default capped name; `EMBER_MAX_TOKENS_PARAM=none` is ignored), keeps `reasoning_effort` through every cap/mode change, and remembers nothing across requests, because a ladder that can drop its token cap or stick on a downgrade silently changes cost and behavior per server instance.
@@ -26,7 +31,7 @@ One line per decision a later agent could not read from the code, with its reaso
 
 ## Safety script wording (exact, code-owned in `src/lib/safety.ts`)
 
-Recorded 2026-11-26 as a gap fill not yet reviewed by Anthony; he or a licensed professional should approve this wording before real use.
+Recorded 2026-11-26. Anthony accepted it as hackathon demo wording the same day (SUM.md); a licensed professional should review it before any real-customer use.
 
 - Gas (EN): "If you smell gas, leave the building now. Don't use light switches, phones or flames inside. Call 911 or your gas company from outside. We'll call you as soon as you're safe."
 - Gas (ES): "Si huele a gas, salga del edificio ahora. No use interruptores de luz, teléfonos ni llamas adentro. Llame al 911 o a su compañía de gas desde afuera. Le llamaremos en cuanto esté a salvo."

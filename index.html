@@ -51,9 +51,9 @@
               </select>
             </label>
             <label class="field"><span>Ember demo key</span><input id="cfg-demo-key" type="password" autocomplete="off" placeholder="Required for Ember mode" /></label>
-            <label class="field"><span>Budget cap (USD, advisory)</span><input id="cfg-cap" type="number" min="1" step="0.5" /></label>
+            <label class="field"><span>Budget cap (USD, stops the batch)</span><input id="cfg-cap" type="number" min="1" step="0.5" /></label>
           </div>
-          <p class="hint">Config is saved in this browser; the demo key is kept in session storage only. The Ember API key lives only on the server, which enforces the real limits — the budget cap here is an advisory meter.</p>
+          <p class="hint">Config is saved in this browser; the demo key is kept in session storage only. The Ember API key lives only on the server, which requires the demo key and caps each lead's length. The server does not track total spend; this cap stops a batch in this browser.</p>
         </details>
 
         <div class="row run-row">

@@ -30,10 +30,12 @@ interface UiConfig extends BusinessConfig {
   capUsd: number;
 }
 
-// Measured on the same 40 held-out leads (mock: free local run,
-// evals/results-heldout-mock-2026-11-26.json; Ember: committed eval).
+// Measured on the same 40 held-out leads (mock: local $0 runs of the
+// round-1 mock at 77d77f2 and of the current mock; Ember: committed eval).
+// The current mock's keywords were widened after seeing these leads, so
+// its own score on them is not a fair test; the pre-tuning score is.
 const MOCK_VS_EMBER_LINE =
-  "Mock vs Ember on the same 40 held-out leads: the mock caught 9/9 emergencies but only 32/40 urgency overall (and flags every unseen result for review); Ember caught 9/9 emergencies with 40/40 urgency.";
+  "Practice mode is simple keyword rules. Before its rules were tuned on the 40 test leads it caught 4/9 emergencies and 27/40 urgency overall; Ember caught 9/9 and 40/40 on the same leads. (Tuned on those leads, practice mode now scores 9/9 and 32/40, which overstates it.)";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -57,8 +59,16 @@ interface Totals {
   tokensOut: number;
   cost: number;
   costKnown: boolean;
+  /** Calls that returned no cost (failed or unreported). */
+  unknownCostCalls: number;
 }
-const emptyTotals = (): Totals => ({ tokensIn: 0, tokensOut: 0, cost: 0, costKnown: true });
+const emptyTotals = (): Totals => ({ tokensIn: 0, tokensOut: 0, cost: 0, costKnown: true, unknownCostCalls: 0 });
+
+// A call that reports no cost still may have been billed. The cap check
+// counts each one at this deliberately high figure (about 6x the
+// measured $0.000347/lead) so an unknown cost never switches the cap off.
+const UNKNOWN_CALL_COST_USD = 0.002;
+const capSpend = (t: Totals) => t.cost + t.unknownCostCalls * UNKNOWN_CALL_COST_USD;
 
 let config: UiConfig = loadConfig();
 let results: ExtractionResult[] = [];
@@ -284,7 +294,10 @@ function toTraceEntry(result: ExtractionResult, ts?: string): TraceEntry {
 function addToTotals(t: Totals, result: ExtractionResult) {
   t.tokensIn += result.usage.tokens_in;
   t.tokensOut += result.usage.tokens_out;
-  if (result.usage.cost_usd === null) t.costKnown = false;
+  if (result.usage.cost_usd === null) {
+    t.costKnown = false;
+    t.unknownCostCalls++;
+  }
   else t.cost += result.usage.cost_usd;
 }
 
@@ -320,7 +333,7 @@ function render() {
   fill.style.width = `${pct}%`;
   fill.className = "budget-fill" + (pct >= 90 ? " over" : pct >= 60 ? " warn" : "");
   $<HTMLSpanElement>("m-budget").textContent =
-    `Budget: $${sessionTotals.cost.toFixed(2)} of $${config.capUsd.toFixed(2)} cap (advisory — server enforces)`;
+    `Budget: $${sessionTotals.cost.toFixed(2)} of $${config.capUsd.toFixed(2)} cap (browser-side stop)`;
 
   const calls = trace.filter(Boolean).length;
   costPill.textContent = `${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} · ${calls} call${calls === 1 ? "" : "s"} (session)`;
@@ -351,7 +364,7 @@ async function runTriage() {
   }
   if (config.mode === "ember") {
     const ok = window.confirm(
-      `Ember mode makes one paid API call per lead: ${leads.length} call(s). Session spend so far: $${sessionTotals.cost.toFixed(4)} of your $${config.capUsd.toFixed(2)} advisory cap. Continue?`,
+      `Ember mode makes one paid API call per lead: ${leads.length} call(s). Session spend so far: $${sessionTotals.cost.toFixed(4)} of your $${config.capUsd.toFixed(2)} cap. Continue?`,
     );
     if (!ok) return;
   }
@@ -377,7 +390,7 @@ async function runTriage() {
 
   const worker = async () => {
     while (next < leads.length) {
-      if (sessionTotals.costKnown && sessionTotals.cost >= config.capUsd) {
+      if (capSpend(sessionTotals) >= config.capUsd) {
         stoppedForCap = true;
         return;
       }
@@ -417,7 +430,7 @@ async function runTriage() {
   }
   const notRun = leads.length - done;
   runStatus.textContent = stoppedForCap
-    ? `Stopped at the $${config.capUsd.toFixed(2)} advisory cap: ${done} triaged (${failed} failed, ${flagged} flagged for review), ${notRun} not processed.`
+    ? `Stopped at the $${config.capUsd.toFixed(2)} cap: ${done} triaged (${failed} failed, ${flagged} flagged for review), ${notRun} not processed.`
     : `Done: ${done - failed} triaged, ${failed} failed, ${flagged} flagged for review.`;
 }
 

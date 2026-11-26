@@ -44,16 +44,18 @@ const DEFAULT_CONFIG: BusinessConfig = {
 /**
  * Config fields land inside quoted slots in the system prompt, so they
  * are stripped of control characters and Unicode line separators
- * (U+2028, U+2029, U+0085), have `"` escaped so a field can never close
- * its quote early, and are length-capped.
+ * (U+2028, U+2029, U+0085), length-capped, and then have `\` and `"`
+ * escaped so a field can never close its quote early. Capping happens
+ * before escaping so the cut can't leave a dangling backslash.
  */
 export function cleanConfigField(v: unknown, max: number): string {
   if (typeof v !== "string") return "";
   return v
     .replace(/[\u0000-\u001f\u007f\u0085\u2028\u2029]/g, " ")
-    .replace(/"/g, '\\"')
     .trim()
-    .slice(0, max);
+    .slice(0, max)
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"');
 }
 
 function clean(v: unknown, max: number): string {

@@ -11,6 +11,7 @@ import type {
   BusinessConfig,
   Category,
   ExtractionResult,
+  HazardKind,
   Language,
   LeadAdapter,
   LeadRecord,
@@ -130,13 +131,20 @@ function matchService(text: string): ServiceRule | null {
   return null;
 }
 
+const HAZARD_REASON: Record<HazardKind, string> = {
+  gas: "Gas smell / leak reported",
+  co: "Possible carbon monoxide: alarm or symptoms reported",
+  electrical: "Sparks, smoke or burning reported",
+};
+
 function judgeUrgency(text: string): { urgency: Urgency; reason: string } {
   const t = text.toLowerCase();
   const vulnerable =
     /elderly|grandma|grandmother|grandpa|grandfather|baby|infant|newborn|pregnant|anciano|abuela|abuelo|beb[ée]|\d+\s*month\s*old|mother in law is \d|is 7\d|is 8\d|is 9\d|\b[89]\d\b\s*(and|lives|staying|year)/.test(t) ||
     /9\d degrees|house is 9\d/.test(t);
-  if (detectHazard([text])) {
-    return { urgency: "emergency", reason: "Safety hazard reported (gas / carbon monoxide / electrical)" };
+  const hazard = detectHazard([text]);
+  if (hazard) {
+    return { urgency: "emergency", reason: HAZARD_REASON[hazard] };
   }
   if (/burst|water all over|flooding|flood|water (is )?rising|still leaking|spraying everywhere|inundaci/.test(t)) {
     return { urgency: "emergency", reason: "Active water leak / flooding in progress" };
@@ -178,7 +186,7 @@ function followupDraft(
     const greeting = firstName(record.name) ? `Hola ${firstName(record.name)},` : "Hola,";
     return `${greeting} le escribo de ${config.businessName}. Gracias por contactarnos sobre ${what}. Le llamaremos hoy mismo para coordinar la visita.`;
   }
-  const what = service ? service.shortEn : "your service request";
+  const what = service ? service.shortEn : "service request";
   const greeting = firstName(record.name) ? `Hi ${firstName(record.name)},` : "Hi there,";
   const reach = record.phone
     ? `We'll call you shortly at ${record.phone} to get you scheduled.`
