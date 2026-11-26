@@ -91,6 +91,61 @@ export async function pooled(items, concurrency, fn) {
 
 export const digits = (s) => (s ?? "").replace(/\D/g, "");
 
+/** Cost from an endpoint response's usage at the published rates. */
+export function costFromUsage(usage) {
+  if (!usage) return null;
+  if (typeof usage.cost_usd === "number") return usage.cost_usd;
+  if (!usage.tokens_in && !usage.tokens_out) return null;
+  return (usage.tokens_in * FALLBACK_RATES.inPerMTok + usage.tokens_out * FALLBACK_RATES.outPerMTok) / 1_000_000;
+}
+
+/**
+ * One lead through the deployed, passcode-gated POST /api/extract
+ * (mode "ember"). Used when MODEL_API_KEY cannot leave the host
+ * (Vercel Secret) but EMBER_DEMO_KEY is readable. One retry on 502
+ * or timeout/network failure. A 200 whose mode is not "ember" means
+ * a server gate fell back to mock and is reported as an error, never
+ * scored as an Ember result.
+ */
+export async function endpointExtract(endpoint, demoKey, rawText, config, { timeoutMs = 60_000 } = {}) {
+  const t0 = Date.now();
+  let lastError = null;
+  let lastRaw = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json", "x-demo-key": demoKey },
+        body: JSON.stringify({ mode: "ember", raw_text: rawText, config }),
+      });
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch { /* keep raw text below */ }
+      lastRaw = json ?? text.slice(0, 500);
+      if (res.status === 502 && attempt === 1) {
+        lastError = `HTTP 502 (attempt 1)`;
+        continue;
+      }
+      if (!res.ok) {
+        return { record: null, usage: null, model: null, promptHash: null, outputMode: null, requestVariant: null, finishReason: null, rawResponse: lastRaw, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `HTTP ${res.status}: ${String(json?.error ?? text).slice(0, 200)}` };
+      }
+      if (!json || json.mode !== "ember" || !json.record) {
+        return { record: null, usage: json?.usage ?? null, model: json?.model ?? null, promptHash: json?.prompt_hash ?? null, outputMode: json?.output_mode ?? null, requestVariant: json?.request_variant ?? null, finishReason: json?.finish_reason ?? null, rawResponse: lastRaw, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `gate fallback: mode=${String(json?.mode)} note=${String(json?.note ?? "").slice(0, 160)}` };
+      }
+      return { record: json.record, usage: json.usage ?? null, model: json.model ?? null, promptHash: json.prompt_hash ?? null, outputMode: json.output_mode ?? null, requestVariant: json.request_variant ?? null, finishReason: json.finish_reason ?? null, rawResponse: json, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: null };
+    } catch (err) {
+      lastError = err?.name === "AbortError" ? `timeout after ${timeoutMs}ms` : String(err?.message ?? err).slice(0, 200);
+      if (attempt === 2) break;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return { record: null, usage: null, model: null, promptHash: null, outputMode: null, requestVariant: null, finishReason: null, rawResponse: lastRaw, httpStatus: null, attempts: 2, latency_ms: Date.now() - t0, error: lastError ?? "endpoint call failed" };
+}
+
 /** Trace file in the same shape the UI exports (fictional data only — safe to commit). */
 export function toTraceFile({ label, model, systemPrompt, promptHash, items, spend }) {
   return {
@@ -116,6 +171,10 @@ export function toTraceFile({ label, model, systemPrompt, promptHash, items, spe
       model: i.model ?? model,
       prompt_hash: i.promptHash ?? promptHash,
       output_mode: i.outputMode ?? null,
+      request_variant: i.requestVariant ?? null,
+      finish_reason: i.finishReason ?? null,
+      latency_ms: i.latency_ms ?? null,
+      attempts: i.attempts ?? null,
       tokens_in: i.usage?.tokens_in ?? 0,
       tokens_out: i.usage?.tokens_out ?? 0,
       cost_usd: i.usage?.cost_usd ?? null,

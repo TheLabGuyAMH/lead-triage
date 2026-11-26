@@ -1,33 +1,50 @@
 // Records a real Ember run of the 12-lead sample on the final prompt and
 // bakes it into src/lib/replay-data.ts (the labeled public default) plus
-// traces/ember-sample12-replay-<date>.json. Direct emberExtract calls.
-// Run: node scripts/record-replay.mjs [--effort=low] [--mode=structured]
+// traces/ember-sample12-replay-<date>.json. Direct emberExtract calls by
+// default; with --endpoint=<url> it records through the deployed,
+// passcode-gated POST /api/extract instead (x-demo-key from
+// EMBER_DEMO_KEY, concurrency 3, one retry on 502/timeout).
+// Run: node scripts/record-replay.mjs [--endpoint=https://…/api/extract]
+//        [--effort=low] [--mode=structured]
 //        [--maxparam=max_completion_tokens|max_tokens|none] [--budget=0.05]
 
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { REPO, Spend, costOf, loadEnvFile, loadLib, pooled, toTraceFile } from "./_harness.mjs";
+import { REPO, Spend, costFromUsage, costOf, endpointExtract, loadEnvFile, loadLib, pooled, toTraceFile } from "./_harness.mjs";
 
 const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) ?? "").split("=")[1] || d;
 const spend = new Spend(Number(arg("budget", "0.05")));
+const endpoint = arg("endpoint", "");
 loadEnvFile();
 const { lib, cleanup } = await loadLib();
 try {
   const env = lib.emberEnvFromProcess();
-  if (!env.apiKey) throw new Error("MODEL_API_KEY not loaded (pull env first, see _harness.mjs).");
+  const demoKey = process.env.EMBER_DEMO_KEY || "";
+  if (endpoint) {
+    if (!demoKey) throw new Error("EMBER_DEMO_KEY not loaded (pull production env first, see _harness.mjs).");
+  } else if (!env.apiKey) {
+    throw new Error("MODEL_API_KEY not loaded (pull env first, see _harness.mjs).");
+  }
   const opts = {
     outputMode: arg("mode", "structured"),
     maxTokensParam: arg("maxparam", "max_completion_tokens") === "none" ? null : arg("maxparam", "max_completion_tokens"),
-    maxTokens: 1500,
+    maxTokens: 3000,
     reasoningEffort: arg("effort", "") || null,
   };
-  let systemPrompt = null;
-  const items = await pooled(lib.SAMPLE_LEADS, 4, async (raw, index) => {
+  let systemPrompt = endpoint ? lib.extractionSystemPrompt(lib.SAMPLE_CONFIG, opts.outputMode === "tool" ? "tool" : "structured") : null;
+  const items = await pooled(lib.SAMPLE_LEADS, endpoint ? 3 : 4, async (raw, index) => {
     if (!spend.canAffordNext()) throw new Error("budget guard: refusing further calls");
+    if (endpoint) {
+      const r = await endpointExtract(endpoint, demoKey, raw, lib.SAMPLE_CONFIG);
+      if (r.usage) spend.add(costFromUsage(r.usage));
+      else spend.add(null);
+      if (r.error) throw new Error(`replay lead ${index + 1} failed: ${r.error}`);
+      return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason, latency_ms: r.latency_ms, attempts: r.attempts, rawResponse: r.rawResponse };
+    }
     const r = await lib.emberExtract(raw, lib.SAMPLE_CONFIG, env, opts);
     spend.add(costOf(lib, env, r.usage));
     systemPrompt = r.systemPrompt;
-    return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant };
+    return { id: index + 1, index, record: r.record, usage: r.usage, model: r.model, promptHash: r.promptHash, outputMode: r.outputMode, requestVariant: r.requestVariant, finishReason: r.finishReason };
   });
   const first = items[0];
   const replay = {
@@ -45,6 +62,7 @@ try {
       prompt_hash: i.promptHash,
       output_mode: i.outputMode,
       request_variant: i.requestVariant,
+      finish_reason: i.finishReason ?? null,
     })),
   };
   const ts = `// Recorded Ember run of the 12-lead sample set on the final prompt.
