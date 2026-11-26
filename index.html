@@ -11,39 +11,32 @@
       <div>
         <h1>Lead Triage</h1>
         <p class="tagline">Paste the day's leads. Get the call-back order.</p>
+        <p class="tagline">For the owner of a 1–10 truck plumbing or HVAC shop working the morning pile.</p>
       </div>
-      <div id="mode-badge" class="mode-badge mock">MOCK MODE — no Ember spend</div>
+      <div class="header-side">
+        <div id="mode-badge" class="mode-badge mock">MOCK MODE — no Ember spend</div>
+        <div id="cost-pill" class="cost-pill">$0.0000 · 0 calls</div>
+      </div>
     </header>
-
-    <section id="meter" class="meter" aria-label="Session meter">
-      <div class="meter-cell"><span class="meter-num" id="m-processed">0</span><span class="meter-label">processed</span></div>
-      <div class="meter-cell"><span class="meter-num" id="m-real">0</span><span class="meter-label">real leads</span></div>
-      <div class="meter-cell"><span class="meter-num" id="m-spam">0</span><span class="meter-label">spam filtered</span></div>
-      <div class="meter-cell"><span class="meter-num" id="m-tokens">0</span><span class="meter-label">tokens (in+out)</span></div>
-      <div class="meter-cell"><span class="meter-num" id="m-cost">$0.00</span><span class="meter-label">Ember cost</span></div>
-      <div class="meter-cell meter-budget">
-        <div class="budget-bar"><div id="budget-fill" class="budget-fill"></div></div>
-        <span class="meter-label" id="m-budget">Budget: $10.00 cap</span>
-      </div>
-    </section>
 
     <main>
       <section class="panel input-zone">
         <h2>1 · The day's leads</h2>
         <label class="field">
-          <span>Raw leads (one per block, blank line between leads)</span>
-          <textarea id="paste" rows="10" placeholder="Paste voicemail transcripts, web form submissions, messages — messy is fine."></textarea>
+          <span>Raw leads — separate with a blank line, or a <code>---</code> line when one lead has blank lines inside it</span>
+          <textarea id="paste" rows="12" placeholder="Paste voicemail transcripts, web form submissions, messages — messy is fine."></textarea>
         </label>
         <div class="row">
           <button id="load-sample" type="button" class="btn secondary">Load sample set (12 demo leads)</button>
+          <button id="view-replay" type="button" class="btn secondary">View recorded Ember run</button>
           <button id="clear-input" type="button" class="btn ghost">Clear</button>
         </div>
 
         <details class="config">
           <summary>Business configuration</summary>
           <div class="config-grid">
-            <label class="field"><span>Business name</span><input id="cfg-name" type="text" /></label>
-            <label class="field"><span>Trade</span><input id="cfg-trade" type="text" /></label>
+            <label class="field"><span>Business name</span><input id="cfg-name" type="text" maxlength="80" /></label>
+            <label class="field"><span>Trade</span><input id="cfg-trade" type="text" maxlength="80" /></label>
             <label class="field"><span>Follow-up tone</span>
               <select id="cfg-tone">
                 <option value="friendly-direct">Friendly and direct</option>
@@ -54,12 +47,13 @@
             <label class="field"><span>Engine</span>
               <select id="cfg-mode">
                 <option value="mock">Mock adapter (offline, $0)</option>
-                <option value="ember">Muse Ember (via /api/extract)</option>
+                <option value="ember">Muse Ember (via /api/extract, needs demo key)</option>
               </select>
             </label>
-            <label class="field"><span>Budget cap (USD)</span><input id="cfg-cap" type="number" min="1" step="0.5" /></label>
+            <label class="field"><span>Ember demo key</span><input id="cfg-demo-key" type="password" autocomplete="off" placeholder="Required for Ember mode" /></label>
+            <label class="field"><span>Budget cap (USD, advisory)</span><input id="cfg-cap" type="number" min="1" step="0.5" /></label>
           </div>
-          <p class="hint">Config is saved in this browser. The Ember key lives only on the server (MODEL_API_KEY).</p>
+          <p class="hint">Config is saved in this browser; the demo key is kept in session storage only. The Ember API key lives only on the server, which enforces the real limits — the budget cap here is an advisory meter.</p>
         </details>
 
         <div class="row run-row">
@@ -71,27 +65,40 @@
 
       <section class="panel board-zone">
         <h2>2 · Call-back order</h2>
+        <p id="board-note" class="hint" hidden></p>
         <div id="board-empty" class="empty">No leads yet. Paste a batch or load the sample set, then Run Triage.</div>
         <div id="board"></div>
         <details id="spam-box" class="spam-box" hidden>
           <summary id="spam-summary">Filtered</summary>
           <div id="spam-list"></div>
         </details>
-      </section>
 
-      <section class="panel trace-zone">
-        <h2>3 · Trace</h2>
-        <p class="hint">Every extraction is logged (mode, tokens, cost). This export is the prompt/token evidence for the hackathon submission.</p>
-        <div class="row">
-          <button id="export-trace" type="button" class="btn secondary">Export trace JSON</button>
-          <button id="clear-session" type="button" class="btn ghost">Clear session</button>
-        </div>
-        <pre id="trace-view" class="trace-view">No calls yet.</pre>
+        <details id="cost-trace" class="cost-trace">
+          <summary id="cost-trace-summary">Cost &amp; trace · $0.0000 · 0 calls</summary>
+          <section id="meter" class="meter" aria-label="Session meter">
+            <div class="meter-cell"><span class="meter-num" id="m-processed">0</span><span class="meter-label">processed</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-real">0</span><span class="meter-label">real leads</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-spam">0</span><span class="meter-label">spam filtered</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-tokens">0</span><span class="meter-label">tokens (in+out)</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-cost">$0.00</span><span class="meter-label">Ember cost</span></div>
+            <div class="meter-cell meter-budget">
+              <div class="budget-bar"><div id="budget-fill" class="budget-fill"></div></div>
+              <span class="meter-label" id="m-budget">Budget: $10.00 cap</span>
+            </div>
+          </section>
+          <p class="hint">Every extraction is logged (mode, model, tokens, cost, extracted record). Export is redacted by default — customer text, names, and phones become lengths unless you opt in. A full export contains customer data: handle it that way, and never commit a real one.</p>
+          <label class="field inline-check"><input id="redact-trace" type="checkbox" checked /> <span>Redact customer text in export</span></label>
+          <div class="row">
+            <button id="export-trace" type="button" class="btn secondary">Export trace JSON</button>
+            <button id="clear-session" type="button" class="btn ghost">Clear session</button>
+          </div>
+          <pre id="trace-view" class="trace-view">No calls yet.</pre>
+        </details>
       </section>
     </main>
 
     <footer>
-      <p>Lead Triage · Built for the Muse Ember Hackathon · The owner reviews and sends every follow-up — nothing is auto-sent.</p>
+      <p>Lead Triage · Alchemist Labs · Built for the Muse Ember Hackathon · The owner reviews and sends every follow-up — nothing is auto-sent.</p>
     </footer>
 
     <script type="module" src="/src/main.ts"></script>

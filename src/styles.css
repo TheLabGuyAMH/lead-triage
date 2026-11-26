@@ -32,9 +32,11 @@ body {
   align-items: flex-start;
   gap: 16px;
   padding: 20px 20px 8px;
-  max-width: 880px;
+  max-width: 1240px;
   margin: 0 auto;
 }
+.header-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.cost-pill { font-size: 12px; color: var(--muted); font-weight: 600; }
 
 .app-header h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
 .tagline { margin: 2px 0 0; color: var(--muted); }
@@ -50,14 +52,13 @@ body {
 .mode-badge.mock { background: var(--sameday-soft); color: var(--sameday); border: 1px solid #e7d28a; }
 .mode-badge.ember { background: var(--routine-soft); color: var(--routine); border: 1px solid #bcd8ae; }
 .mode-badge.fallback { background: var(--emergency-soft); color: var(--emergency); border: 1px solid #f0b8b3; }
+.mode-badge.replay { background: #eef1f6; color: var(--ink); border: 1px solid var(--line); }
 
 .meter {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  max-width: 880px;
-  margin: 8px auto 0;
-  padding: 10px 20px;
+  margin: 10px 0;
 }
 .meter-cell {
   background: var(--card);
@@ -76,7 +77,11 @@ body {
 .budget-fill.warn { background: var(--sameday); }
 .budget-fill.over { background: var(--emergency); }
 
-main { max-width: 880px; margin: 0 auto; padding: 10px 20px 24px; display: grid; gap: 16px; }
+main { max-width: 1240px; margin: 0 auto; padding: 10px 20px 24px; display: grid; gap: 16px; align-items: start; }
+@media (min-width: 960px) {
+  main { grid-template-columns: minmax(360px, 5fr) 7fr; }
+  .input-zone { position: sticky; top: 12px; }
+}
 
 .panel {
   background: var(--card);
@@ -137,6 +142,14 @@ textarea { resize: vertical; }
   background: #fff;
 }
 .card.emergency { border-left-color: var(--emergency); background: var(--emergency-soft); }
+.card.called { opacity: 0.62; }
+.review-banner { background: var(--emergency); color: #fff; font-size: 13px; font-weight: 700; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; }
+.card-actions { margin-top: 10px; }
+a.btn { text-decoration: none; display: inline-block; }
+.cost-trace { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.cost-trace > summary { cursor: pointer; font-weight: 600; color: var(--muted); }
+.inline-check { flex-direction: row; align-items: center; gap: 8px; }
+.inline-check input { width: auto; }
 .card.same-day { border-left-color: var(--sameday); background: #fffdf4; }
 .card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rank { font-size: 20px; font-weight: 800; color: var(--muted); }
@@ -184,7 +197,7 @@ textarea { resize: vertical; }
   word-break: break-word;
 }
 
-footer { max-width: 880px; margin: 0 auto; padding: 0 20px 28px; color: var(--muted); font-size: 13px; }
+footer { max-width: 1240px; margin: 0 auto; padding: 0 20px 28px; color: var(--muted); font-size: 13px; }
 
 @media (max-width: 560px) {
   .app-header { flex-direction: column; }
