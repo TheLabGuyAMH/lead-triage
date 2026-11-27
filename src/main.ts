@@ -196,18 +196,20 @@ function readConfigInputs() {
 }
 
 function updateBadge(fallbackNote = false) {
-  runBtn.textContent = config.mode === "mock" ? "Run (mock, free)" : "Run with Ember";
+  runBtn.textContent = config.mode === "mock" ? "Plan these messages (practice, free)" : "Plan these messages with Ember";
+  for (const [id, label] of [["view-freeze", "freeze"], ["view-hard", "hard"], ["view-replay", "sample12"]] as const)
+    $<HTMLButtonElement>(id).setAttribute("aria-pressed", String(showingReplay && replayLabel === label));
   if (showingReplay && !fallbackNote) {
     modeBadge.className = "mode-badge replay";
-    modeBadge.textContent = "REPLAY — recorded Ember run, $0 to view";
+    modeBadge.textContent = "Recorded Ember run, $0 to view";
     return;
   }
   modeBadge.className = "mode-badge " + (fallbackNote ? "fallback" : config.mode);
   modeBadge.textContent = fallbackNote
-    ? "SERVER FELL BACK TO MOCK — see note"
+    ? "The server fell back to practice mode; see the note"
     : config.mode === "mock"
-      ? "MOCK MODE — no Ember spend"
-      : "EMBER MODE — live API calls";
+      ? "Practice mode, no Ember spend"
+      : "Ember mode, live calls";
 }
 
 /** While workers run, the board-changing controls stay disabled. */
@@ -268,17 +270,20 @@ function fieldHtml(label: string, value: string | null): string {
     : `<div><span class="k">${label}</span><span class="missing">missing</span></div>`;
 }
 
-const REPLY_BADGE: Record<Job["replyKind"], string> = {
-  ai: "",
-  safety: `<span class="badge safety">Safety script, not AI text</span>`,
-  water: `<span class="badge script">Water shut-off script, not AI text</span>`,
-  cold: `<span class="badge script">Stay-warm script, not AI text</span>`,
-  frozen: `<span class="badge script">Frozen-pipe script, not AI text</span>`,
-  street: `<span class="badge script">Street-check script, not AI text</span>`,
-  building: `<span class="badge script">Building-check script, not AI text</span>`,
-  urgent: `<span class="badge script">Urgent-list script, not AI text</span>`,
-  not_today: `<span class="badge script">Honest "not today" script, not AI text</span>`,
+const REPLY_KIND: Record<Job["replyKind"], string> = {
+  ai: "Reply drafted by Ember, for you to send",
+  safety: "Fixed safety script, not AI text",
+  water: "Fixed water shut-off script, not AI text",
+  cold: "Fixed stay-warm script, not AI text",
+  frozen: "Fixed frozen-pipe script, not AI text",
+  street: "Fixed street-check script, not AI text",
+  building: "Fixed building-check script, not AI text",
+  urgent: "Fixed urgent-list script, not AI text",
+  not_today: "Fixed honest \"not today\" script, not AI text",
 };
+const URGENCY_LABEL: Record<LeadRecord["urgency"], string> = { emergency: "Emergency", "same-day": "Same day", routine: "Routine" };
+// Tickets that changed lane on the last answer or capacity change, highlighted once.
+let recentlyMoved = new Set<number>();
 
 function contactButtons(record: LeadRecord, reply: string, index: number): string {
   const digits = record.phone?.replace(/\D/g, "") ?? "";
@@ -291,51 +296,49 @@ function contactButtons(record: LeadRecord, reply: string, index: number): strin
     <button type="button" class="btn small" data-called="${index}">${called ? "Called ✓" : "Mark called"}</button>`;
 }
 
-function cardHtml(job: Job, label: string): string {
+/** One job as a carbon ticket: the summary is the stop; opening it shows the reply, proof and actions. */
+function ticketHtml(job: Job, stopLabel: string): string {
   const result = job.primary;
   const record = result.record;
   const index = result.index ?? 0;
   replyByIndex.set(index, job.reply);
-  const langBadge = record.language === "es" ? `<span class="badge lang">ES → EN card</span>` : "";
+  const called = isCalled(record.raw_text);
+  const moved = job.members.some((m) => recentlyMoved.has(m.index ?? 0));
+  const what = [record.service_needed ?? "Service not stated", record.area].filter(Boolean).join(", ");
+  const tags = [
+    `<span class="tag ${esc(record.urgency)}">${URGENCY_LABEL[record.urgency]}</span>`,
+    record.safety_script ? `<span class="tag safety">Safety script</span>` : "",
+    job.members.length > 1 ? `<span class="tag merged">${job.members.length} ${job.sharedCause ? "homes" : "messages"}, one stop</span>` : "",
+    record.language === "es" ? `<span class="tag">Spanish</span>` : "",
+    called ? `<span class="tag">Called</span>` : "",
+  ].join("");
   const cost =
     result.usage.cost_usd === null
-      ? "cost: unknown (usage not reported)"
-      : `cost: $${result.usage.cost_usd.toFixed(4)}${result.usage.estimated ? " (simulated)" : ""}`;
-  const reviewBanner = record.needs_review
-    ? `<div class="review-banner">Needs review: ${esc(record.needs_review)}</div>`
-    : "";
-  const called = isCalled(record.raw_text);
-  return `
-  <article class="card ${esc(record.urgency)}${called ? " called" : ""}">
-    ${reviewBanner}
-    <div class="card-head">
-      <span class="rank">${esc(label)}</span>
-      <span class="card-name">${esc(record.name ?? "Unknown caller")}</span>
-      <span class="badge ${esc(record.urgency)}">${esc(record.urgency.toUpperCase())}</span>
-      ${REPLY_BADGE[job.replyKind]}
-      ${langBadge}
-      ${job.members.length > 1 ? `<span class="badge merged">${job.members.length} messages, one stop</span>` : ""}
-      ${called ? `<span class="badge lang">CALLED</span>` : ""}
+      ? "cost unknown (usage not reported)"
+      : `$${result.usage.cost_usd.toFixed(4)}${result.usage.estimated ? " (simulated)" : ""}`;
+  return `<details class="ticket ${esc(record.urgency)}${called ? " called" : ""}${moved ? " moved" : ""}">
+    <summary>
+      <span class="stop-no" aria-label="${esc(stopLabel)}">${esc(stopLabel)}</span>
+      <span class="t-name">${esc(record.name ?? "Unknown caller")}</span>
+      <span class="t-what">${esc(what)}</span>
+      <span class="t-tags">${tags}</span>
+    </summary>
+    <div class="ticket-body">
+      ${record.needs_review ? `<div class="review-banner">Needs review: ${esc(record.needs_review)}</div>` : ""}
+      <p class="reason">${esc(record.urgency_reason)}</p>
+      <div class="fields">
+        ${fieldHtml("Phone", record.phone)}
+        ${fieldHtml("Area", record.area)}
+        ${fieldHtml("Language", record.language === "es" ? "Spanish" : "English")}
+      </div>
+      <p class="summary">${esc(record.owner_summary)}</p>
+      <div class="reply">${esc(job.reply)}<span class="reply-kind">${REPLY_KIND[job.replyKind]}</span></div>
+      <div class="row">${contactButtons(record, job.reply, index)}</div>
+      ${membersHtml(job)}
+      <div class="card-foot"><span>Message #${index + 1}</span><span>Read by ${result.mode === "ember" ? "Ember" : "practice mode"}</span><span>${result.usage.tokens_in} tokens in, ${result.usage.tokens_out} out</span><span>${cost}</span></div>
+      <details class="raw"><summary>Original message</summary><pre>${esc(record.raw_text)}</pre></details>
     </div>
-    <p class="reason">${esc(record.urgency_reason)}</p>
-    <div class="fields">
-      ${fieldHtml("Phone", record.phone)}
-      ${fieldHtml("Service", record.service_needed)}
-      ${fieldHtml("Area", record.area)}
-      ${fieldHtml("Language", record.language === "es" ? "Spanish" : "English")}
-    </div>
-    <div class="summary"><strong>For the owner:</strong> ${esc(record.owner_summary)}</div>
-    <div class="followup"><blockquote>${esc(job.reply)}</blockquote></div>
-    <div class="row card-actions">${contactButtons(record, job.reply, index)}</div>
-    ${membersHtml(job)}
-    <div class="card-foot">
-      <span>message #${index + 1}</span>
-      <span>engine: ${result.mode}${result.usage.estimated ? " (estimated tokens)" : ""}</span>
-      <span>tokens: ${result.usage.tokens_in} in / ${result.usage.tokens_out} out</span>
-      <span>${cost}</span>
-    </div>
-    <details class="raw"><summary>Original message</summary><pre>${esc(record.raw_text)}</pre></details>
-  </article>`;
+  </details>`;
 }
 
 function who(i: number): string {
@@ -355,23 +358,22 @@ function membersHtml(job: Job): string {
   const active = job.links.filter((l) => linkIsActive(l, resolved) && !isSubsumed(l, job.links.filter((o) => linkIsActive(o, resolved))));
   const others = job.members.slice(1);
   return `<div class="linked">
-    <strong>${job.sharedCause ? `One stop covers ${job.members.length} homes: check the street supply (meter, main) before going house to house.` : "Merged into this stop:"}</strong>
+    <strong>${job.sharedCause ? `One stop covers ${job.members.length} homes: check the shared supply first, then go house to house.` : "Also on this stop"}</strong>
     ${others
       .map((m) => {
         const i = m.index ?? 0;
         const reply = job.memberReplies.get(i) ?? { text: m.record.followup_draft, kind: "ai" as const };
         replyByIndex.set(i, reply.text);
         return `<div class="member">
-          <div>${esc(who(i))}${m.record.phone ? ` · ${esc(m.record.phone)}` : ""} — ${esc(m.record.owner_summary)}</div>
-          <div class="followup"><blockquote>${esc(reply.text)}</blockquote></div>
-          <div>${REPLY_BADGE[reply.kind]}</div>
-          <div class="row card-actions">${contactButtons(m.record, reply.text, i)}</div>
+          <div><strong>${esc(who(i))}</strong>${m.record.phone ? `, ${esc(m.record.phone)}` : ""}. ${esc(m.record.owner_summary)}</div>
+          <div class="reply">${esc(reply.text)}<span class="reply-kind">${REPLY_KIND[reply.kind]}</span></div>
+          <div class="row">${contactButtons(m.record, reply.text, i)}</div>
         </div>`;
       })
       .join("")}
     ${active
       .map(
-        (l) => `<div class="link-proof"><span class="hint">${l.source === "code" ? "Code" : "Ember"}: ${esc(l.explanation)}</span>${evidenceHtml(l)}
+        (l) => `<div class="link-proof"><span class="hint">Why ${l.source === "code" ? "code" : "Ember"} put them together: ${esc(l.explanation)}</span>${evidenceHtml(l)}
         <button type="button" class="btn small" data-answer="${esc(l.key)}|no">Split: ${l.kind === "shared_cause" ? "separate problems" : "different jobs"}</button></div>`,
       )
       .join("")}
@@ -379,28 +381,12 @@ function membersHtml(job: Job): string {
 }
 
 function rowHtml(job: Job): string {
-  const r = job.primary;
-  const rec = r.record;
-  const index = r.index ?? 0;
-  replyByIndex.set(index, job.reply);
-  return `<details class="row-item ${esc(rec.urgency)}">
-    <summary><span class="badge ${esc(rec.urgency)}">${esc(rec.urgency.toUpperCase())}</span>
-      <strong>${esc(rec.name ?? "Unknown caller")}</strong> · ${esc(rec.service_needed ?? "service not stated")}${rec.area ? ` · ${esc(rec.area)}` : ""}
-      ${job.members.length > 1 ? `<span class="badge merged">${job.members.length} messages</span>` : ""}</summary>
-    <div class="row-body">
-      <div class="summary"><strong>For the owner:</strong> ${esc(rec.owner_summary)}</div>
-      <div class="followup"><blockquote>${esc(job.reply)}</blockquote></div>
-      <div>${REPLY_BADGE[job.replyKind]}</div>
-      <div class="row card-actions">${contactButtons(rec, job.reply, index)}</div>
-      ${membersHtml(job)}
-      <details class="raw"><summary>Original message #${index + 1}</summary><pre>${esc(rec.raw_text)}</pre></details>
-    </div>
-  </details>`;
+  return ticketHtml(job, "");
 }
 
 const ANSWER_LABELS = {
-  same_job: { badge: "SAME JOB?", yes: "Yes, same job", no: "No, different jobs" },
-  shared_cause: { badge: "SAME CAUSE?", yes: "Yes, same cause", no: "No, separate problems" },
+  same_job: { badge: "Same job?", yes: "Yes, same job", no: "No, different jobs" },
+  shared_cause: { badge: "Same cause?", yes: "Yes, same cause", no: "No, separate problems" },
 } as const;
 
 function questionHtml(link: LeadLink): string {
@@ -416,16 +402,18 @@ function questionHtml(link: LeadLink): string {
     : `<button type="button" class="btn small" data-answer="${esc(link.key)}|yes">${labels.yes}</button>
        <button type="button" class="btn small" data-answer="${esc(link.key)}|no">${labels.no}</button>`;
   return `<div class="q-item${answer ? " done" : ""}">
-    <div class="q-head"><span class="badge q">${labels.badge}</span>
-      <strong>${link.indices.map((i) => esc(who(i))).join(" · ")}</strong>
-      <span class="hint">${link.confidence}${auto ? ", merged until you say no" : ""} · ${link.source === "code" ? "found by code" : link.source === "mock" ? "practice-mode rule" : (link.investigation ? "found by Ember's investigator, quotes checked by code" : "found by Ember, quotes checked by code")}</span></div>
-    <p>${esc(link.explanation)}</p>
-    ${evidenceHtml(link)}
-    ${link.downgraded ? `<p class="hint">Code kept this at "possible": ${esc(link.downgraded)}.</p>` : ""}
-    ${investigationHtml(link)}
+    <div class="q-head"><span class="q-kind">${labels.badge}</span>
+      <span class="q-who">${link.indices.map((i) => esc(who(i))).join(", ")}</span></div>
     ${ask}
     ${askButtons(link)}
     <div class="row">${buttons}</div>
+    <details class="proof"><summary>Why Ember thinks so</summary>
+      <p>${esc(link.explanation)}</p>
+      ${evidenceHtml(link)}
+      <p class="q-source">${link.confidence === "likely" ? "Likely" : "Possible"}${auto ? ", merged until you say no" : ""}. ${link.source === "code" ? "Found by code" : link.source === "mock" ? "Practice-mode rule" : link.investigation ? "Found by Ember's investigator; every quote checked by code" : "Found by Ember; every quote checked by code"}.</p>
+      ${link.downgraded ? `<p class="q-source">Code kept this at "possible": ${esc(link.downgraded)}.</p>` : ""}
+      ${investigationHtml(link)}
+    </details>
   </div>`;
 }
 
@@ -452,7 +440,7 @@ function askButtons(link: LeadLink): string {
   if (!rec) return "";
   const digits = rec.phone?.replace(/\D/g, "") ?? "";
   replyByIndex.set(-1 - link.ask_index, link.question);
-  return `<div class="row card-actions">${
+  return `<div class="row">${
     digits
       ? `<a class="btn small" href="tel:${digits}">Call ${esc(rec.name ?? "them")}</a>
          <a class="btn small" href="sms:${digits}?&body=${encodeURIComponent(link.question)}">Text the question</a>`
@@ -469,8 +457,8 @@ function laneMap(plan: DispatchPlan): Map<number, Lane> {
 
 const LANE_NAMES: Record<Lane, string> = {
   read_first: "read first",
-  trucks: "the trucks",
-  made_safe: "urgent reply (no truck)",
+  trucks: "a truck",
+  made_safe: "the urgent replies",
   not_today: "not today",
 };
 
@@ -485,12 +473,16 @@ function answerLink(key: string, value: "yes" | "no" | "clear") {
   else answers[key] = value;
   const after = laneMap(currentPlan());
   const moves: string[] = [];
+  recentlyMoved = new Set();
   for (const [i, lane] of after) {
     const was = before.get(i);
-    if (was && was !== lane) moves.push(`${who(i)}: ${LANE_NAMES[was]} → ${LANE_NAMES[lane]}`);
+    if (was && was !== lane) {
+      moves.push(`${who(i)} moved from ${LANE_NAMES[was]} to ${LANE_NAMES[lane]}`);
+      recentlyMoved.add(i);
+    }
   }
   lastChange = moves.length
-    ? `Plan changed: ${moves.slice(0, 6).join("; ")}${moves.length > 6 ? `; and ${moves.length - 6} more` : ""}.`
+    ? `${moves.slice(0, 4).join(". ")}${moves.length > 4 ? `. ${moves.length - 4} more moved` : ""}.`
     : value === "clear"
       ? "Answer cleared; no message changed lanes."
       : "Recorded. No message changed lanes (the jobs were already in the same lane).";
@@ -558,16 +550,15 @@ function render() {
   const trucksUsed = L.trucks.length;
   planSummary.hidden = present.length === 0;
   planSummary.innerHTML = present.length
-    ? `<div class="plan-stats">
-        <span><strong>${config.trucks}</strong> trucks × <strong>${config.stopsPerTruck}</strong> stops = <strong>${plan.slots}</strong> slots</span>
-        <span><strong>${trucksUsed}</strong> on trucks${plan.overflowHazards ? ` (${plan.overflowHazards} hazard${plan.overflowHazards === 1 ? "" : "s"} over capacity)` : ""}</span>
-        <span><strong>${L.made_safe.length}</strong> urgent replies ready (no truck today)</span>
-        <span><strong>${L.not_today.length}</strong> “not today” replies ready</span>
-        <span><strong>${plan.merged}</strong> multi-message stops</span>
-        <span><strong>${plan.pending}</strong> question${plan.pending === 1 ? "" : "s"} open</span>
-      </div>
-      <p class="hint">${planHowLine()} Change the trucks or answer a question and the plan re-flows.</p>
-      ${lastChange ? `<p class="change">${esc(lastChange)}</p>` : ""}`
+    ? `<ul class="legend">
+        <li class="white"><strong>${trucksUsed}</strong> stops on ${config.trucks} truck${config.trucks === 1 ? "" : "s"}${plan.overflowHazards ? `, ${plan.overflowHazards} hazard${plan.overflowHazards === 1 ? "" : "s"} over capacity` : ""}</li>
+        <li class="canary"><strong>${L.made_safe.length}</strong> urgent replies ready to send</li>
+        <li class="pink"><strong>${L.not_today.length}</strong> honest “not today” replies ready</li>
+        <li class="plain"><strong>${plan.merged}</strong> stops carry more than one message</li>
+        <li class="plain"><strong>${plan.pending}</strong> question${plan.pending === 1 ? "" : "s"} for you</li>
+      </ul>
+      <p class="how">${planHowLine()}</p>
+      ${lastChange ? `<p class="change" role="status">${esc(lastChange)}</p>` : ""}`
     : "";
 
   const shownLinks = links.filter((l) => l.indices.filter((i) => results[i] && results[i].record.category === "real").length >= 2);
@@ -576,36 +567,51 @@ function render() {
   const auto = shownLinks.filter((l) => !resolved[l.key] && linkIsActive(l, resolved) && !isSubsumed(l, shownLinks.filter((o) => linkIsActive(o, resolved))));
   questionsEl.hidden = shownLinks.length === 0;
   questionsEl.innerHTML = shownLinks.length
-    ? `<h3>Questions that change the plan <span class="hint">(${open.length} open)</span></h3>
-      ${open.slice(0, 6).map(questionHtml).join("")}
-      ${open.length > 6 ? `<details class="q-group"><summary>${open.length - 6} more open question${open.length - 6 === 1 ? "" : "s"}</summary>${open.slice(6).map(questionHtml).join("")}</details>` : ""}
+    ? `<h3>${open.length ? `${open.length} question${open.length === 1 ? "" : "s"} that change the plan` : "No open questions"}</h3>
+      <p class="sub">Ember found these messages may belong together but code can't prove it. Ask the customer, tap the answer, and the trucks re-plan.</p>
+      ${open.slice(0, 3).map(questionHtml).join("")}
+      ${open.length > 3 ? `<details class="q-group"><summary>${open.length - 3} more question${open.length - 3 === 1 ? "" : "s"}</summary>${open.slice(3).map(questionHtml).join("")}</details>` : ""}
       ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map(questionHtml).join("")}</details>` : ""}
-      ${auto.length ? `<details class="q-group"><summary>Merged automatically: proven by a shared phone or house number + street (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
+      ${auto.length ? `<details class="q-group"><summary>Merged automatically because code found the same phone or address (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
     : "";
 
-  const laneSection = (lane: Lane, title: string, hint: string, open: boolean) =>
+  // Trucks are rows of white tickets, dealt in turn (truck 1, 2, 3...).
+  const byTruck = new Map<number, Job[]>();
+  for (const j of L.trucks) (byTruck.get(j.truck ?? 1) ?? byTruck.set(j.truck ?? 1, []).get(j.truck ?? 1)!).push(j);
+  const trucksHtml = [...byTruck.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([t, jobs]) => {
+      const msgs = jobs.reduce((a, j) => a + j.members.length, 0);
+      return `<section class="truck" aria-label="Truck ${t}">
+        <div class="truck-id"><span class="truck-name">Truck ${t}</span><span class="truck-load">${jobs.length} stop${jobs.length === 1 ? "" : "s"}, ${msgs} message${msgs === 1 ? "" : "s"}</span></div>
+        <ol class="stops">${jobs.map((j) => `<li>${ticketHtml(j, j.stop! > config.stopsPerTruck ? "+" : String(j.stop))}</li>`).join("")}</ol>
+      </section>`;
+    })
+    .join("");
+  const stack = (lane: "made_safe" | "not_today", cls: string, title: string, sub: string) =>
     L[lane].length
-      ? `<details class="lane lane-${lane}"${open ? " open" : ""}><summary>${title} (${L[lane].length})</summary><p class="hint">${hint}</p>${L[lane].map(rowHtml).join("")}</details>`
+      ? `<details class="stack ${cls}"${L[lane].length <= 12 ? " open" : ""}><summary><h3>${title} (${L[lane].length})</h3><span class="sub">${sub}</span></summary>${L[lane].map(rowHtml).join("")}</details>`
       : "";
   boardEl.innerHTML =
     (L.read_first.length
-      ? `<h3 class="lane-head">Read first: couldn't be read automatically (${L.read_first.length})</h3>${L.read_first.map((j) => cardHtml(j, "Read")).join("")}`
+      ? `<section><div class="section-head"><h3>Read these first (${L.read_first.length})</h3><span class="sub">They couldn't be read automatically.</span></div><ol class="stops">${L.read_first.map((j) => `<li>${ticketHtml(j, "!")}</li>`).join("")}</ol></section>`
       : "") +
     (L.trucks.length
-      ? `<h3 class="lane-head">Trucks today (${L.trucks.length} of ${plan.slots} slots)</h3>${L.trucks.map((j) => cardHtml(j, j.stop! > config.stopsPerTruck ? `Truck ${j.truck} · over capacity (hazard)` : `Truck ${j.truck} · stop ${j.stop}`)).join("")}`
+      ? `<section><div class="section-head"><h3>On the trucks</h3><span class="sub">${L.trucks.length} of ${plan.slots} stops used. Tap a ticket for the reply and the proof.</span></div><div class="trucks">${trucksHtml}</div></section>`
       : "") +
-    laneSection("made_safe", "Urgent, no truck today: safety replies ready for you to send", "Each gets a fixed code-written reply, not AI text: water shut-off, frozen-pipe or stay-warm advice where the message fits one, otherwise a plain urgent-list message.", L.made_safe.length <= 25) +
-    laneSection("not_today", "Not today: honest replies ready for you to send", "Routine jobs past today's capacity get an honest “we can't come today” message instead of silence.", false);
+    stack("made_safe", "canary", "Urgent, no truck today", "A fixed safety reply for each, ready for you to send.") +
+    stack("not_today", "pink", "Not today", "An honest reply for each instead of silence, ready for you to send.");
+  recentlyMoved = new Set();
 
   // The filtered fold opens whenever it holds anything, so a real lead
   // misread as spam stays visible instead of disappearing.
   spamBox.hidden = filtered.length === 0;
   spamBox.open = filtered.length > 0;
-  spamSummary.textContent = `Filtered — spam / not-a-lead (${filtered.length})`;
+  spamSummary.textContent = `Spam and wrong numbers, set aside (${filtered.length})`;
   spamList.innerHTML = filtered
     .map((r) => {
       const rec = r.record;
-      return `<div class="spam-item"><strong>${esc(rec.category)}</strong> — ${esc(rec.category_reason)}<br><span class="hint">${esc(rec.raw_text.slice(0, 140))}${rec.raw_text.length > 140 ? "…" : ""}</span></div>`;
+      return `<div class="spam-item"><strong>${rec.category === "spam" ? "Spam" : "Not a lead"}.</strong> ${esc(rec.category_reason)}<br><span class="hint">${esc(rec.raw_text.slice(0, 140))}${rec.raw_text.length > 140 ? "…" : ""}</span></div>`;
     })
     .join("");
 
@@ -625,10 +631,10 @@ function render() {
   const calls = trace.filter(Boolean).length + linkTrace.length;
   // The header pill is this browser's own spend; a replay's recorded calls are not session calls.
   const spent = sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown";
-  costPill.textContent = showingReplay
-    ? `${spent} spent this session · viewing a recording (${calls.toLocaleString()} recorded calls)`
-    : `${spent} · ${calls} call${calls === 1 ? "" : "s"} (session)`;
-  costTraceSummary.textContent = `Cost & trace · ${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} session · ${calls} call${calls === 1 ? "" : "s"} shown`;
+  costPill.textContent = `${spent} spent this session`;
+  costTraceSummary.textContent = showingReplay
+    ? `Cost and trace of this recording (${calls.toLocaleString()} recorded calls)`
+    : `Cost and trace (${calls} call${calls === 1 ? "" : "s"}, ${spent} this session)`;
 
   const shown = trace.filter(Boolean).sort((a, b) => a.index - b.index);
   const linkLines = linkTrace.map(
@@ -880,9 +886,9 @@ interface ReplayCounts { n: number; date: string; cost: string; blocks: number; 
 const plural = (n: number, w: string) => `${n.toLocaleString()} ${w}${n === 1 ? "" : "s"}`;
 const REPLAY_NOTES: Record<"freeze" | "hard", (c: ReplayCounts) => string> = {
   freeze: (c) =>
-    `Replay: Freeze Day, ${c.n.toLocaleString()} fictional messages from the morning after a hard freeze, run through Muse Ember on ${c.date}: ${plural(c.n, "per-message call")} (${c.cost}), ${plural(c.blocks, "cross-message call")} (${c.blockCost}) and ${plural(c.inv, "investigation")} (${c.invCost}). Viewing it spends $0. Trucks, stops and your answers re-plan it live in this browser.`,
+    `${c.n.toLocaleString()} fictional messages from the morning after a hard freeze, run through Muse Ember on ${c.date}. Viewing the recording costs nothing; the run's own cost is under Cost and trace.`,
   hard: (c) =>
-    `Replay: hard links, ${c.n} fictional messages where the ones that belong together share no phone and no house number (a son calling for his mother, a tenant and the property manager, "Bobby" and "Robert"). Run through Muse Ember on ${c.date}: ${plural(c.n, "per-message call")} (${c.cost}), ${plural(c.blocks, "cross-message call")} (${c.blockCost}), ${plural(c.inv, "investigation")} (${c.invCost}). Ember found 8 of 8 linked pairs; code rules alone find 1 of 8. None merged on its own: code can't prove them, so each is a question for you. Viewing it spends $0.`,
+    `${c.n} fictional messages where the ones that belong together share no phone and no house number: a son calling for his mother, a tenant and the property manager, "Bobby" and "Robert". Ember found 8 of 8 linked pairs; plain rules find 1. Code can't prove any of them, so each one is a question for you. Recorded ${c.date}.`,
 };
 
 /** A recorded run with its cross-message pass, loaded on demand. */

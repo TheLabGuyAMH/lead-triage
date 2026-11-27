@@ -3,49 +3,107 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lead Triage — Morning Dispatcher</title>
+    <title>Morning Dispatcher</title>
+    <meta name="description" content="The morning after a hard freeze, a plumbing shop gets a thousand messages. Muse Ember reads them, finds the ones that are the same job, and code fills today's trucks." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <header class="app-header">
-      <div>
-        <h1>Morning Dispatcher <span class="h1-sub">by Lead Triage</span></h1>
-        <p class="tagline">Ember reads the whole morning pile, links the messages that are one job, and code fills today's trucks.</p>
-        <p class="tagline">For the owner of a 1–10 truck plumbing or HVAC shop facing the morning pile, even a freeze-day flood of it.</p>
-      </div>
-      <div class="header-side">
-        <div id="mode-badge" class="mode-badge mock">MOCK MODE — no Ember spend</div>
-        <div id="cost-pill" class="cost-pill">$0.0000 · 0 calls</div>
+    <header class="mast">
+      <a class="brand" href="#top">Morning Dispatcher</a>
+      <div class="mast-side">
+        <span id="mode-badge" class="mode-badge mock">Practice mode, no Ember spend</span>
+        <span id="cost-pill" class="cost-pill">$0.0000 spent this session</span>
       </div>
     </header>
 
+    <section class="hero" id="top">
+      <div class="hero-copy">
+        <h1>A thousand messages after the freeze. One truck plan.</h1>
+        <p class="lede">A small plumbing shop wakes up to voicemails, texts and web forms in English and Spanish, and many of them are the same job. Muse Ember reads every one, finds the ones that belong together, and quotes the words that prove it. Code fills today's trucks. Anything doubtful becomes one question for you.</p>
+        <div class="cta">
+          <a class="btn primary" href="#plan">See the Freeze Day plan</a>
+          <a class="btn" href="#run-own">Run your own messages</a>
+        </div>
+      </div>
+      <ul class="stubs" aria-label="Measured on recorded runs">
+        <li class="stub"><span class="stub-num">0</span><span class="stub-label">wrong merges across 1,000 messages, checked against an answer key</span></li>
+        <li class="stub"><span class="stub-num">8 of 8</span><span class="stub-label">links found where the messages share no phone or address; plain rules find 1</span></li>
+        <li class="stub"><span class="stub-num">48¢</span><span class="stub-label">to read the whole 1,000-message morning, link it and investigate the loose ends</span></li>
+      </ul>
+    </section>
+
     <main>
-      <section class="panel input-zone">
-        <h2>1 · The day's leads</h2>
-        <label class="field">
-          <span>Raw leads — put each lead in its own paragraph (a blank line between leads), or separate leads with a <code>---</code> line</span>
-          <textarea id="paste" rows="12" placeholder="Paste voicemail transcripts, web form submissions, messages — messy is fine."></textarea>
-        </label>
+      <section class="plan" id="plan" aria-labelledby="plan-title">
+        <div class="plan-head">
+          <h2 id="plan-title">Today's plan</h2>
+          <div class="switch" role="group" aria-label="Recorded runs">
+            <button id="view-freeze" type="button" class="switch-btn">Freeze Day, 1,000 messages</button>
+            <button id="view-hard" type="button" class="switch-btn">Hard links, 23</button>
+            <button id="view-replay" type="button" class="switch-btn">Ordinary morning, 12</button>
+          </div>
+        </div>
+        <p id="board-note" class="note-line" hidden></p>
+
+        <div class="capacity">
+          <label><span>Trucks today</span><input id="cfg-trucks" type="number" min="1" max="50" step="1" inputmode="numeric" /></label>
+          <label><span>Stops per truck</span><input id="cfg-stops" type="number" min="1" max="20" step="1" inputmode="numeric" /></label>
+          <p class="capacity-hint">Change either one and the plan re-flows.</p>
+        </div>
+
+        <div id="plan-summary" class="plan-summary" hidden></div>
+        <div id="questions" class="questions" hidden></div>
+        <div id="board-empty" class="empty">No messages yet. Pick a recorded run above, or paste your own below.</div>
+        <div id="board" class="board"></div>
+        <details id="spam-box" class="spam-box" hidden>
+          <summary id="spam-summary">Filtered</summary>
+          <div id="spam-list"></div>
+        </details>
+
+        <details id="cost-trace" class="cost-trace">
+          <summary id="cost-trace-summary">Cost and trace</summary>
+          <section id="meter" class="meter" aria-label="Session meter">
+            <div class="meter-cell"><span class="meter-num" id="m-processed">0</span><span class="meter-label">processed</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-real">0</span><span class="meter-label">real leads</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-spam">0</span><span class="meter-label">spam filtered</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-tokens">0</span><span class="meter-label">tokens this session</span></div>
+            <div class="meter-cell"><span class="meter-num" id="m-cost">$0.00</span><span class="meter-label">Ember cost this session</span></div>
+            <div class="meter-cell meter-budget">
+              <div class="budget-bar"><div id="budget-fill" class="budget-fill"></div></div>
+              <span class="meter-label" id="m-budget">Budget: $10.00 cap</span>
+            </div>
+          </section>
+          <p class="hint">Every call is logged with its model, tokens, cost and time. The default export has operational fields only, no customer text. Unchecking redaction exports full records, which contain customer data and are marked <code>contains_customer_data: true</code>; never commit a real one.</p>
+          <label class="inline-check"><input id="redact-trace" type="checkbox" checked /> <span>Redact the export (no customer text)</span></label>
+          <div class="row">
+            <button id="export-trace" type="button" class="btn">Export trace JSON</button>
+            <button id="clear-session" type="button" class="btn ghost">Clear session</button>
+          </div>
+          <pre id="trace-view" class="trace-view">No calls yet.</pre>
+        </details>
+      </section>
+
+      <section class="run" id="run-own" aria-labelledby="run-title">
+        <h2 id="run-title">Run your own messages</h2>
+        <p class="run-intro">Paste the morning's voicemail transcripts, texts and web forms, one message per paragraph (or separated by a line of <code>---</code>). Practice mode is free keyword rules; Ember needs the demo key.</p>
         <div class="row">
-          <button id="view-freeze" type="button" class="btn secondary">View Freeze Day run (1,000 messages)</button>
-          <button id="view-hard" type="button" class="btn secondary">View hard-links run (Ember 8/8, rules 1/8)</button>
-          <button id="load-freeze" type="button" class="btn secondary">Load freeze morning (20 messages)</button>
-          <button id="load-sample" type="button" class="btn secondary">Load sample set (12 demo leads)</button>
-          <button id="view-replay" type="button" class="btn secondary">View recorded 12-lead run</button>
+          <button id="load-freeze" type="button" class="btn">Load the freeze morning (20)</button>
+          <button id="load-sample" type="button" class="btn">Load an ordinary morning (12)</button>
           <button id="clear-input" type="button" class="btn ghost">Clear</button>
         </div>
-
-        <div class="config-grid capacity">
-          <label class="field"><span>Trucks today</span><input id="cfg-trucks" type="number" min="1" max="50" step="1" /></label>
-          <label class="field"><span>Stops per truck</span><input id="cfg-stops" type="number" min="1" max="20" step="1" /></label>
-        </div>
+        <label class="field">
+          <span class="sr-only">Messages</span>
+          <textarea id="paste" rows="10" placeholder="Paste messages here. Messy is fine."></textarea>
+        </label>
 
         <details class="config">
-          <summary>Business configuration</summary>
+          <summary>Shop settings and engine</summary>
           <div class="config-grid">
             <label class="field"><span>Business name</span><input id="cfg-name" type="text" maxlength="80" /></label>
             <label class="field"><span>Trade</span><input id="cfg-trade" type="text" maxlength="80" /></label>
-            <label class="field"><span>Follow-up tone</span>
+            <label class="field"><span>Reply tone</span>
               <select id="cfg-tone">
                 <option value="friendly-direct">Friendly and direct</option>
                 <option value="professional">Professional</option>
@@ -54,61 +112,26 @@
             </label>
             <label class="field"><span>Engine</span>
               <select id="cfg-mode">
-                <option value="mock">Mock adapter (offline, $0)</option>
-                <option value="ember">Muse Ember (via /api/extract, needs demo key)</option>
+                <option value="mock">Practice mode (keyword rules, $0)</option>
+                <option value="ember">Muse Ember (needs the demo key)</option>
               </select>
             </label>
-            <label class="field"><span>Ember demo key</span><input id="cfg-demo-key" type="password" autocomplete="off" placeholder="Required for Ember mode" /></label>
-            <label class="field"><span>Budget cap (USD, stops the batch)</span><input id="cfg-cap" type="number" min="1" step="0.5" /></label>
+            <label class="field"><span>Ember demo key</span><input id="cfg-demo-key" type="password" autocomplete="off" placeholder="Needed for Ember" /></label>
+            <label class="field"><span>Budget cap in dollars (stops the run)</span><input id="cfg-cap" type="number" min="1" step="0.5" /></label>
           </div>
-          <p class="hint">Config is saved in this browser; the demo key is kept in session storage only. The Ember API key lives only on the server, which requires the demo key and caps each lead's length. The server does not track total spend; this cap stops a batch in this browser.</p>
+          <p class="hint">Settings stay in this browser; the demo key only for this session. The Ember API key lives on the server, which checks the demo key and caps each message's length. The cap stops a run in this browser; the server does not track total spend.</p>
         </details>
 
         <div class="row run-row">
-          <button id="run" type="button" class="btn primary">Run Triage</button>
+          <button id="run" type="button" class="btn primary">Plan these messages</button>
           <span id="run-status" class="run-status" role="status"></span>
         </div>
         <p id="run-note" class="note" hidden></p>
       </section>
-
-      <section class="panel board-zone">
-        <h2>2 · Morning dispatch plan</h2>
-        <p id="board-note" class="hint" hidden></p>
-        <div id="plan-summary" class="plan-summary" hidden></div>
-        <div id="questions" class="questions" hidden></div>
-        <div id="board-empty" class="empty">No leads yet. Paste a batch or load the sample set, then Run Triage.</div>
-        <div id="board"></div>
-        <details id="spam-box" class="spam-box" hidden>
-          <summary id="spam-summary">Filtered</summary>
-          <div id="spam-list"></div>
-        </details>
-
-        <details id="cost-trace" class="cost-trace">
-          <summary id="cost-trace-summary">Cost &amp; trace · $0.0000 · 0 calls</summary>
-          <section id="meter" class="meter" aria-label="Session meter">
-            <div class="meter-cell"><span class="meter-num" id="m-processed">0</span><span class="meter-label">processed</span></div>
-            <div class="meter-cell"><span class="meter-num" id="m-real">0</span><span class="meter-label">real leads</span></div>
-            <div class="meter-cell"><span class="meter-num" id="m-spam">0</span><span class="meter-label">spam filtered</span></div>
-            <div class="meter-cell"><span class="meter-num" id="m-tokens">0</span><span class="meter-label">tokens (in+out)</span></div>
-            <div class="meter-cell"><span class="meter-num" id="m-cost">$0.00</span><span class="meter-label">Ember cost</span></div>
-            <div class="meter-cell meter-budget">
-              <div class="budget-bar"><div id="budget-fill" class="budget-fill"></div></div>
-              <span class="meter-label" id="m-budget">Budget: $10.00 cap</span>
-            </div>
-          </section>
-          <p class="hint">Every extraction is logged (mode, model, tokens, cost, latency). The redacted export (default) contains only operational fields — no customer text at all. Uncheck redaction only to export full records: <strong>that export contains customer data</strong> (lead text, names, phones, drafts), is marked <code>contains_customer_data: true</code>, and a real one must never be committed.</p>
-          <label class="field inline-check"><input id="redact-trace" type="checkbox" checked /> <span>Redact export (operational fields only, no customer text)</span></label>
-          <div class="row">
-            <button id="export-trace" type="button" class="btn secondary">Export trace JSON</button>
-            <button id="clear-session" type="button" class="btn ghost">Clear session</button>
-          </div>
-          <pre id="trace-view" class="trace-view">No calls yet.</pre>
-        </details>
-      </section>
     </main>
 
     <footer>
-      <p>Lead Triage · Alchemist Labs · Built for the Muse Ember Hackathon · The owner reviews and sends every follow-up — nothing is auto-sent.</p>
+      <p>Built solo for the Meta Muse Ember Hackathon by Anthony Hinojosa, Alchemist Labs. All messages shown are fictional. The owner reviews and sends every reply; nothing is sent automatically.</p>
     </footer>
 
     <script type="module" src="/src/main.ts"></script>
