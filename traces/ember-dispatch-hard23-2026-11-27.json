@@ -10,7 +10,15 @@
   "totals": {
     "extract_calls": 23,
     "link_calls": 1,
-    "spend_usd": 0.010832
+    "investigations": 1,
+    "tokens_in": 22035,
+    "tokens_out": 17257,
+    "cost_usd_all_rows": 0.010832,
+    "cost_usd_extract": 0.009085,
+    "cost_usd_links": 0.001048,
+    "cost_usd_investigations": 0.000699,
+    "new_spend_this_run_usd": 0.010832,
+    "reused_from": null
   },
   "extract_calls": [
     {
@@ -418,15 +426,15 @@
           "evidence": [
             {
               "index": 6,
-              "quote": "se reventó un tubo debajo del lavabo y está mojado todo el piso. Estoy en Gollihar cerca de la escuela"
+              "quote": "se revent\u00f3 un tubo debajo del lavabo y est\u00e1 mojado todo el piso. Estoy en Gollihar cerca de la escuela"
             },
             {
               "index": 16,
-              "quote": "calling for my grandma Alma Treviño, she doesn't speak much English. Pipe under her sink burst, she's near the school on Gollihar"
+              "quote": "calling for my grandma Alma Trevi\u00f1o, she doesn't speak much English. Pipe under her sink burst, she's near the school on Gollihar"
             }
           ],
-          "explanation": "Daniel says he is calling for his grandma Alma Treviño about the same burst sink pipe on Gollihar near the school.",
-          "question": "Is this the same burst pipe under Alma Treviño's sink on Gollihar?",
+          "explanation": "Daniel says he is calling for his grandma Alma Trevi\u00f1o about the same burst sink pipe on Gollihar near the school.",
+          "question": "Is this the same burst pipe under Alma Trevi\u00f1o's sink on Gollihar?",
           "ask_index": 16,
           "source": "ember",
           "downgraded": "code found no shared phone or house number + street"

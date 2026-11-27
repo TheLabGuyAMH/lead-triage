@@ -85,7 +85,9 @@ const ELECTRICAL_PATTERNS: RegExp[] = [
   /\b(on|caught|catching)\s+fire\b/,
   /\b(house|kitchen|garage|attic|electrical|grease)\s+fire\b/,
   /\bthere'?s\s+(a\s+)?fire\b/,
-  /\bflames?\b/,
+  // Flames only as an event ("flames coming out", "in flames"); a pilot
+  // flame, a flame sensor or "the flame won't stay lit" is routine work.
+  /\bflames?\s+(are\s+|were\s+)?(coming|shooting|pouring|everywhere|out\s+of|from|in\s+the|on\s+the)\b/,
   /echando\s+chispas/,
   new RegExp(String.raw`\bchispas\b[^.]{0,60}\b${ES_THING}\b`),
   new RegExp(String.raw`\b${ES_THING}\b[^.]{0,60}\b(chispas|humo|quemando|quemado|fuego)\b`),

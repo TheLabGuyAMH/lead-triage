@@ -576,7 +576,8 @@ function render() {
   questionsEl.hidden = shownLinks.length === 0;
   questionsEl.innerHTML = shownLinks.length
     ? `<h3>Questions that change the plan <span class="hint">(${open.length} open)</span></h3>
-      ${open.map(questionHtml).join("")}
+      ${open.slice(0, 6).map(questionHtml).join("")}
+      ${open.length > 6 ? `<details class="q-group"><summary>${open.length - 6} more open question${open.length - 6 === 1 ? "" : "s"}</summary>${open.slice(6).map(questionHtml).join("")}</details>` : ""}
       ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map(questionHtml).join("")}</details>` : ""}
       ${auto.length ? `<details class="q-group"><summary>Merged automatically: proven by a shared phone or house number + street (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
     : "";
@@ -592,7 +593,7 @@ function render() {
     (L.trucks.length
       ? `<h3 class="lane-head">Trucks today (${L.trucks.length} of ${plan.slots} slots)</h3>${L.trucks.map((j) => cardHtml(j, j.stop! > config.stopsPerTruck ? `Truck ${j.truck} · over capacity (hazard)` : `Truck ${j.truck} · stop ${j.stop}`)).join("")}`
       : "") +
-    laneSection("made_safe", "Made safe by text: urgent, no truck today", "Each gets a fixed code-written reply, not AI text: water shut-off, frozen-pipe or stay-warm advice where the message fits one, otherwise a plain urgent-list message.", true) +
+    laneSection("made_safe", "Made safe by text: urgent, no truck today", "Each gets a fixed code-written reply, not AI text: water shut-off, frozen-pipe or stay-warm advice where the message fits one, otherwise a plain urgent-list message.", L.made_safe.length <= 25) +
     laneSection("not_today", "Told the truth: not today", "Routine jobs past today's capacity get an honest “we can't come today” message instead of silence.", false);
 
   // The filtered fold opens whenever it holds anything, so a real lead
@@ -870,11 +871,13 @@ function loadReplay() {
   render();
 }
 
-const REPLAY_NOTES: Record<"freeze" | "hard", (n: number, date: string, cost: string, linkCalls: number, linkCost: string) => string> = {
-  freeze: (n, date, cost, linkCalls, linkCost) =>
-    `Replay: Freeze Day, ${n.toLocaleString()} fictional messages from the morning after a hard freeze, run through Muse Ember on ${date}: ${n.toLocaleString()} per-message calls (${cost}) plus ${linkCalls} cross-message calls (${linkCost}). Viewing it spends $0. Trucks, stops and your answers re-plan it live in this browser.`,
-  hard: (n, date, cost, linkCalls, linkCost) =>
-    `Replay: hard links, ${n} fictional messages where the ones that belong together share no phone and no house number (a son calling for his mother, a tenant and the property manager, "Bobby" and "Robert"). Run through Muse Ember on ${date} (${cost} + ${linkCalls} cross-message call, ${linkCost}). Ember found 8 of 8 linked pairs; code rules alone find 1 of 8. None merged on its own: code can't prove them, so each is a question for you. Viewing it spends $0.`,
+interface ReplayCounts { n: number; date: string; cost: string; blocks: number; blockCost: string; inv: number; invCost: string }
+const plural = (n: number, w: string) => `${n.toLocaleString()} ${w}${n === 1 ? "" : "s"}`;
+const REPLAY_NOTES: Record<"freeze" | "hard", (c: ReplayCounts) => string> = {
+  freeze: (c) =>
+    `Replay: Freeze Day, ${c.n.toLocaleString()} fictional messages from the morning after a hard freeze, run through Muse Ember on ${c.date}: ${plural(c.n, "per-message call")} (${c.cost}), ${plural(c.blocks, "cross-message call")} (${c.blockCost}) and ${plural(c.inv, "investigation")} (${c.invCost}). Viewing it spends $0. Trucks, stops and your answers re-plan it live in this browser.`,
+  hard: (c) =>
+    `Replay: hard links, ${c.n} fictional messages where the ones that belong together share no phone and no house number (a son calling for his mother, a tenant and the property manager, "Bobby" and "Robert"). Run through Muse Ember on ${c.date}: ${plural(c.n, "per-message call")} (${c.cost}), ${plural(c.blocks, "cross-message call")} (${c.blockCost}), ${plural(c.inv, "investigation")} (${c.invCost}). Ember found 8 of 8 linked pairs; code rules alone find 1 of 8. None merged on its own: code can't prove them, so each is a question for you. Viewing it spends $0.`,
 };
 
 /** A recorded run with its cross-message pass, loaded on demand. */
@@ -907,7 +910,14 @@ async function loadDispatchReplay(which: "freeze" | "hard"): Promise<boolean> {
   boardPrompt = { system_prompt: null, prompt_hash: results[0]?.prompt_hash ?? null, model: data.model };
   showingReplay = true;
   const cost = (t: Totals) => (t.costKnown ? `$${t.cost.toFixed(4)}` : "unknown");
-  boardNote.textContent = REPLAY_NOTES[which](results.length, data.recorded_at.slice(0, 10), cost(replayTotals), linkTrace.length, cost(replayLinkTotals));
+  const blockT = emptyTotals();
+  const invT = emptyTotals();
+  for (const t of linkTrace) addUsage(t.kind === "investigate" ? invT : blockT, { tokens_in: t.tokens_in, tokens_out: t.tokens_out, cost_usd: t.cost_usd, estimated: t.estimated });
+  boardNote.textContent = REPLAY_NOTES[which]({
+    n: results.length, date: data.recorded_at.slice(0, 10), cost: cost(replayTotals),
+    blocks: linkTrace.filter((t) => t.kind !== "investigate").length, blockCost: cost(blockT),
+    inv: linkTrace.filter((t) => t.kind === "investigate").length, invCost: cost(invT),
+  });
   boardNote.hidden = false;
   runNote.hidden = true;
   runStatus.textContent = "";

@@ -188,7 +188,21 @@ try {
     extract_prompt_hash: results.find(Boolean)?.prompt_hash ?? null,
     link_system_prompt: lib.linkSystemPrompt(config),
     link_prompt_hash: linkCalls.find((c) => c.promptHash)?.promptHash ?? null,
-    totals: { extract_calls: items.length, link_calls: linkCalls.length, spend_usd: summary.spend_usd },
+    // Totals computed from the rows written below, so the file can't contradict itself.
+    totals: (() => {
+      const rows = [...items.map((i) => i.usage), ...linkCalls.map((c) => c.usage), ...invCalls.map((c) => c.usage)];
+      const known = rows.every((u) => u && typeof costFromUsage(u) === "number");
+      return {
+        extract_calls: items.length,
+        link_calls: linkCalls.length,
+        investigations: invCalls.length,
+        tokens_in: rows.reduce((a, u) => a + (u?.tokens_in ?? 0), 0),
+        tokens_out: rows.reduce((a, u) => a + (u?.tokens_out ?? 0), 0),
+        cost_usd_all_rows: known ? Number(rows.reduce((a, u) => a + costFromUsage(u), 0).toFixed(6)) : null,
+        new_spend_this_run_usd: Number(spend.total.toFixed(6)),
+        reused_from: reuse ? reuse.split("/").pop() : null,
+      };
+    })(),
     extract_calls: items.map((i) => ({ call: i.index + 1, model: i.model ?? null, request_variant: i.requestVariant ?? null, finish_reason: i.finishReason ?? null, latency_ms: i.latency_ms ?? null, attempts: i.attempts ?? null, tokens_in: i.usage?.tokens_in ?? 0, tokens_out: i.usage?.tokens_out ?? 0, cost_usd: i.usage?.cost_usd ?? null, error: i.error ?? null })),
     link_calls: [...linkTrace, ...invTrace],
   }, null, 2) + "\n");

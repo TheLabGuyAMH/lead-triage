@@ -384,6 +384,12 @@ async function main() {
   const dBig = await handleDispatch({ leads: many.slice(0, 31), mode: "mock" });
   check("dispatch endpoint rejects a block over the cap", dBig.status === 400);
   check("answer key covers 4 groups", FREEZE_GROUPS.length === 4);
+  // Muse review: "flame" only as an event
+  check("'water heater flame won't stay lit' is not a fire", detectHazard(["Water heater flame wont stay lit, no hot water, no rush this week"]) === null);
+  check("'furnace flame sensor dirty' is not a fire", detectHazard(["Furnace flame sensor dirty I think, can someone clean it next week?"]) === null);
+  check("'flames coming out of the furnace' is still a fire", detectHazard(["flames coming out of the furnace!!"]) === "electrical");
+  check("'the dryer is on fire' is still a fire", detectHazard(["the dryer is on fire"]) === "electrical");
+
   // Investigator (bounded Ember tool loop): pure parts and gates, $0
   const orph = INV.pickOrphans(fzLeads, []);
   check("orphans are messages that point back at someone", orph.some((l) => l.index === 6) && !orph.some((l) => l.index === 3), JSON.stringify(orph.map((l) => l.index)));

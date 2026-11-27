@@ -291,6 +291,10 @@ export function scoreLinks(lib, links, truth) {
   const byKind = (set, kind) => [...truthPairs].filter(([p, k]) => k === kind && set.has(p)).length;
   const nKind = (kind) => [...truthPairs.values()].filter((k) => k === kind).length;
   const wrongAuto = [...autoPairs].filter((p) => !truthPairs.has(p));
+  // A pair suggested under the wrong kind (same_job vs shared_cause) is counted, not hidden.
+  const kindOf = new Map();
+  for (const l of links) for (const p of pairsOf(l.indices)) if (!kindOf.has(p)) kindOf.set(p, l.kind);
+  const kindMismatches = [...kindOf].filter(([p, k]) => truthPairs.has(p) && truthPairs.get(p) !== k).length;
   return {
     true_link_pairs: truthPairs.size,
     true_groups: truth.length,
@@ -311,5 +315,6 @@ export function scoreLinks(lib, links, truth) {
     wrong_auto_merges: wrongAuto.length,
     wrong_auto_merge_examples: wrongAuto.slice(0, 5).map((p) => p.split("-").map((n) => `#${Number(n) + 1}`).join(" + ")),
     likely_downgraded_by_code: links.filter((l) => l.downgraded).length,
+    right_pair_wrong_kind: kindMismatches,
   };
 }

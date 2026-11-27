@@ -22,7 +22,7 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 | True linked pairs found, Ember + same-phone code (recall) | 176 of 205 (86%) |
 | Suggested pairs that were right (precision) | 176 of 190 (93%) |
 | Found by Ember's own links / no-model rules on the same messages | 138 of 205 / 115 of 205 |
-| Investigator (Ember tool loop) on 9 unplaced follow-ups | 3 links proposed: 2 right, 1 wrong (left as a question, not merged) |
+| Investigator (Ember tool loop) on 9 unplaced follow-ups | 5 proposals: 2 repeated links the pass already had, 3 new (2 right, 1 wrong, left as a question, not merged); 4 "no link" |
 | Shared-cause pairs: Ember / no-model rules | 76 of 87 / 24 of 87 |
 | Questions left for the owner | 30 |
 | Category matches the generator's label | 999 of 1,000 |
@@ -45,7 +45,9 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 - The link prompt was tightened once **after** seeing the first Freeze Day results (v1: precision 173/292, mostly "possible shared cause" guesses between same-street homes with ordinary freeze damage; still 0 wrong merges). Both runs are committed (`*-v1-*` and the final files).
 - Urgency agreed with the generator's labels on 771 of 884 labeled messages. Of the 113 disagreements, 75 are same-day read as routine (mostly "kitchen pipes frozen, bathroom still works" and "toilet won't fill"), 32 are emergency read lower, 6 routine read as same-day.
 - A review found and we fixed: a phone's last four digits could pass for a house number, a shared full name counted as proof, and one Spanish no-water message got the electrical safety script because hazard detection read the model's explanation ("no ... electrical hazard is stated"). That message was re-read on fixed code, and the stored links were re-checked under the stricter rule (2 lowered to "possible"); numbers above are after the fix.
-- Stops are filled in priority order, not routed by geography. The safety and holding scripts are demo wording; a licensed professional should review them before real use.
+- Stops are filled in priority order and dealt to trucks in turn, not routed by geography.
+- The quote check proves the words are in the message, not that they are good evidence (a short quote like a street name passes); the anchor rule and the owner's answer are what stop a weak link from merging.
+- The hard-links set was written after the Freeze Day run by the same team that wrote the prompt; a set written by someone else would prove more. The safety and holding scripts are demo wording; a licensed professional should review them before real use.
 - Ember spend for this build is in the committed traces and on the account's usage page, far under the $10 cap (see Evaluation).
 
 **Try it:** the live link opens on the recorded Freeze Day run; change "Trucks today", or answer a question, and watch the plan move. "Load freeze morning" plus "Run Triage" runs the 20-message set in free practice mode (keyword rules, clearly labeled as not Ember). Live Ember runs need the private demo key, which keeps strangers from spending the budget.

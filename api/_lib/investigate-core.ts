@@ -68,9 +68,13 @@ export async function handleInvestigate(
   if (blocked) return { status: 200, json: { links: [], dropped: [], outcome: "skipped", steps: [], turns: 0, usage: zero, mode: "mock", note: `${blocked}; the investigator did not run.` } };
   try {
     const r = await emberInvestigate(target, pile, config, env);
-    const v = r.proposal
+    const targetId = pile.findIndex((l) => l.index === target.index) + 1;
+    const ids = Array.isArray(r.proposal?.ids) ? (r.proposal!.ids as unknown[]) : [];
+    // A proposal must include the message under investigation; anything else is off-task.
+    const onTask = r.proposal && ids.includes(targetId);
+    const v = onTask
       ? validateLinks({ links: [{ ...r.proposal, confidence: "possible" }] }, pile, "ember")
-      : { links: [], dropped: [] };
+      : { links: [], dropped: r.proposal ? ["proposal did not include the investigated message (dropped)"] : [] };
     // Agent links start at "possible"; validateLinks keeps them there (only anchored block links are "likely").
     const links = v.links.map((l) => ({ ...l, investigation: { turns: r.turns, steps: r.steps } }));
     return {
