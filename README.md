@@ -1,16 +1,33 @@
-# Lead Triage: a morning call-back list for plumbing and HVAC shops, built on Muse Ember
+# Lead Triage: the Morning Dispatcher for plumbing and HVAC shops, built on Muse Ember
 
-**Live:** https://lead-triage-nine.vercel.app (opens on a recorded Ember run, $0 to view) · Built solo for the Meta Muse Ember Hackathon by Anthony Hinojosa / Alchemist Labs.
+**Live:** https://lead-triage-nine.vercel.app (opens on a recorded 1,000-message Freeze Day run, $0 to view) · Built solo for the Meta Muse Ember Hackathon by Anthony Hinojosa / Alchemist Labs.
 
-A 1–10 truck plumbing or HVAC shop starts the day with a pile of voicemails, texts and web forms, in English and Spanish, with the burst pipe buried under the spam. The owner pastes the whole pile in. Muse Ember reads each lead, and the app returns a ranked call-back list: emergencies first, spam folded away, a missing phone number flagged instead of invented, and a reply drafted in the customer's own language. Gas, carbon-monoxide and electrical hazards never get AI-written text: code swaps in a fixed "leave now, call 911" script. The owner reviews and sends everything; nothing is sent automatically.
+The morning after a hard freeze, a 1–10 truck plumbing shop wakes up to hundreds of voicemails, texts and web forms, in English and Spanish. Some are the same burst pipe reported three times by three family members. Some are five houses on one street with no water, which is one problem at the city main, not five truck rolls. Lead Triage reads the whole pile and hands the owner a truck plan:
 
-**Why it matters.** Invoca's platform data found that [27% of calls to home services businesses go unanswered, and fewer than 3% of callers sent to voicemail leave a message](https://www.invoca.com/blog/how-much-missed-sales-calls-cost-home-services-businesses) (May 2024). The leads that do arrive in writing are the ones a busy owner can still win, if they get called back in the right order.
+1. **Ember reads every message** into a strict schema (urgency, service, phone, area, language, a reply draft).
+2. **Ember reads the pile.** A second pass looks across messages for ones that belong together, quotes the exact words that prove it, and writes the one question that would settle a doubtful link ("Is the leak in unit B what's coming through unit A's wall?").
+3. **Code decides what's safe.** A link survives only if every quote is really in the message it cites, and it merges automatically only when code finds a shared phone, house number + street, or full name. Anything weaker waits for the owner's answer. Code then fills today's truck slots in priority order.
+4. **Nobody is left guessing.** Urgent jobs that miss the trucks get a fixed shut-off-your-water or stay-warm-safely script; routine ones get an honest "we can't come today". Gas, carbon-monoxide and electrical hazards always get a truck and a fixed "leave now, call 911" script, never AI text.
 
-**Why Ember.** One lead costs **$0.000347** on Ember (measured over 40 held-out leads), which is **about 35 cents per 1,000 leads**. The whole $10 hackathon budget would cover roughly 28,000 leads. Each lead takes about 1.6 seconds (median), with four leads processed at a time. At that price a shop can run every message it gets, every day, without thinking about cost.
+Answer a question or change the number of trucks and the plan re-flows on screen. The owner reviews and sends everything; nothing is sent automatically.
 
-**Ember reads; code decides what's safe.** Ember fills a strict JSON schema for each lead (structured output). Plain code then ranks the leads, checks that every phone number actually appears in the lead, strips links and prices from drafts, and owns the hazard scripts.
+**Why Ember.** One message costs about **$0.0004** to read (measured: $0.3907 for 1,000 Freeze Day messages; $0.000347 per lead on the 40 held-out leads). Reading the pile for links cost **$0.0694** for the same 1,000 messages (122 calls of up to 30 messages each). The whole 1,000-message morning, both passes, is about **46 cents**, and took 297 s + 76 s at six calls at a time. That is what makes "read everything, twice, every morning" a normal thing for a small shop to do.
 
-| Measured on 40 held-out synthetic leads | Result |
+**Why it matters.** Invoca's platform data found that [27% of calls to home services businesses go unanswered, and fewer than 3% of callers sent to voicemail leave a message](https://www.invoca.com/blog/how-much-missed-sales-calls-cost-home-services-businesses) (May 2024). During the February 2021 Texas freeze, an Austin plumbing company had [triple its normal number of calls and more than 2,500 customers awaiting service](https://www.texastribune.org/2021/02/26/texas-plumber-shortage-winter-storm).
+
+| Freeze Day: 1,000 fictional messages, answer key by construction | Result |
+|---|---|
+| Message pairs merged automatically / merged wrongly | 99 / **0** |
+| True linked pairs Ember suggested (recall) | 174 of 205 (85%) |
+| Suggested pairs that were right (precision) | 174 of 187 (93%) |
+| Questions left for the owner | 27 |
+| Category matches the generator's label | 999 of 1,000 |
+| Calls failed / quotes that weren't really in the message | 0 / 0 |
+| Cost, both passes | $0.3907 + $0.0694 |
+
+On the hand-written 20-message freeze morning, Ember found all 4 true groups (6 of 6 linked pairs) with no wrong suggestions, and turned the doubtful duplex leak into the question "Is the duplex at 2240 Ocean Dr the same one where unit B has a kitchen sink leak?".
+
+| Per-message reading, 40 held-out synthetic leads | Result |
 |---|---|
 | Emergencies caught | 9 of 9 |
 | Urgency and category correct | 40 of 40 each |
@@ -19,9 +36,21 @@ A 1–10 truck plumbing or HVAC shop starts the day with a pile of voicemails, t
 | Prompt-injection attempts that worked | 0 of 3 |
 | Cost per lead / median time per lead | $0.000347 / 1.64 s |
 
-**Honest limits.** The test leads are synthetic and were written by the same AI that helped build the app. No contractor has used it yet. The safety scripts are demo wording; a licensed professional should review them before real use. Total Ember spend for the whole build is in the committed traces ($0.0798 over 167 calls) and on the account's usage page, far under the $10 cap.
+**Honest limits.**
+- All messages are synthetic. The Freeze Day set comes from templates in `scripts/gen-freeze.mjs`, so it is more repetitive than real texts; the 20-message set and the 40 held-out leads were written by AI models that also helped build the app. No contractor has used it yet.
+- The link prompt was tightened once **after** seeing the first Freeze Day results (v1: precision 173/292, mostly "possible shared cause" guesses between same-street homes with ordinary freeze damage; still 0 wrong merges). Both runs are committed (`*-v1-*` and the final files).
+- Urgency agreed with the generator's labels on 770 of 884 labeled messages; most disagreements are "kitchen pipes frozen, bathroom still works" read as routine where the template said same-day.
+- Stops are filled in priority order, not routed by geography. The safety and holding scripts are demo wording; a licensed professional should review them before real use.
+- Ember spend for this build is in the committed traces and on the account's usage page, far under the $10 cap (see Evaluation).
 
-**Try it:** open the live link to see the recorded Ember run, or press "Load sample set" and run it in free practice mode (simple keyword rules, clearly labeled as not Ember). Live Ember runs need the private demo key, which keeps strangers from spending the budget.
+**Try it:** the live link opens on the recorded Freeze Day run; change "Trucks today", or answer a question, and watch the plan move. "Load freeze morning" plus "Run Triage" runs the 20-message set in free practice mode (keyword rules, clearly labeled as not Ember). Live Ember runs need the private demo key, which keeps strangers from spending the budget.
+
+## How the Morning Dispatcher works
+
+- **Blocks** (`src/lib/dispatch.ts` `planBlocks`): a pile of 30 or fewer is one block. A bigger pile is grouped so related messages meet: by street (a house-number street, or a bare street name seen elsewhere with a house number), by sender name for messages that point back at someone ("Linda's husband", "calling for my mom"), else by area. Blocks are capped at 30 messages. The 1,000-message Freeze Day became 122 blocks.
+- **Ember link call** (`api/_lib/ember.ts` `emberLink`, endpoint `POST /api/dispatch`, same three gates as `/api/extract`): strict JSON-schema output of links, each with kind (`same_job` / `shared_cause`), confidence, exact quotes per message, a one-line explanation and one deciding question.
+- **Code checks** (`validateLinks`): every member needs a quote that is really in its own message, or it is removed; "likely" `same_job` stays "likely" only if code finds a shared phone, house number + street, or full name; the same phone alone is linked by code with no model at all (`codeLinks`).
+- **Plan** (`buildPlan`): merges only anchored "likely" same-job links and links the owner confirms; ranks jobs (hazards, urgency, more messages, paste order); fills trucks × stops; urgent overflow gets the water shut-off, stay-warm (with the carbon-monoxide warning) or urgent-list script; routine overflow gets an honest "not today". Hazards always get a truck, even past capacity. Answers and capacity changes re-plan instantly in the browser and the board says who moved.
 
 ## How it works
 
@@ -66,12 +95,25 @@ node scripts/record-replay.mjs --endpoint=https://lead-triage-nine.vercel.app/ap
 
 Each run writes `evals/results-<name>.json` (every record, the endpoint response JSON as received, usage, `request_variant`, `finish_reason`, latency, misses) and `traces/ember-<name>.json`, and stops itself before crossing its budget. In endpoint mode `meta.settings` records the server-reported variants, and the compliance metric counts only the exact requested output mode.
 
+### Morning Dispatcher evaluation (2026-11-27)
+
+Run through the deployed, passcode-gated endpoints with `scripts/record-dispatch.mjs` (per-message `/api/extract`, then `/api/dispatch` per block; six calls at a time; hard spend guard). The answer key for the 1,000-message Freeze Day comes from the generator itself (`scripts/gen-freeze.mjs`, fixed seed): 72 households that wrote more than once, 12 streets where several homes lost water together, 12 hazards, 55 spam / not-a-lead, and singles, including same-street homes with unrelated damage as traps. The 20-message freeze morning has a hand-written answer key (`FREEZE_GROUPS` in `src/lib/sample.ts`).
+
+| Set | Link prompt | Pairs suggested (right / total) | True pairs found | Auto-merged (wrong) | Open questions | Link calls | Spend |
+|---|---|---|---|---|---|---|---|
+| Freeze Day 1,000 | v1 | 173 / 292 | 173 / 205 | 100 (0) | 49 | 122 | $0.3907 extract + $0.0857 links |
+| Freeze Day 1,000 | final (shared cause needs a message saying it goes beyond one home) | 174 / 187 | 174 / 205 | 99 (0) | 27 | 122 | $0.0694 links (per-message pass reused) |
+| Freeze morning 20 | v1 | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0091 |
+| Freeze morning 20 | final | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0091 |
+
+Results: [Freeze Day final](evals/results-dispatch-freeze1000-2026-11-27.json) · [Freeze Day v1](evals/results-dispatch-freeze1000-v1-2026-11-27.json) · [freeze morning final](evals/results-dispatch-freeze20-2026-11-27.json) · [freeze morning v1](evals/results-dispatch-freeze20-v1-2026-11-27.json), traces with every call's tokens and cost under [traces/](traces/) (`ember-dispatch-*`). Per-message pass on the Freeze Day: 1,000 of 1,000 calls succeeded in 297 s, category agreed with the generator's label on 999 of 1,000, urgency on 770 of 884 labeled. "Pairs" counts every pair of messages inside a link, so a three-home street is three pairs. Spend for this round, from the traces: **$0.5641 over 1,286 billed calls**; with the earlier rounds' committed traces ($0.0798 over 167 calls) the build total is **$0.6439**, far under the $10 cap. The account's usage page is the authority for the submission.
+
 ## Run it locally
 
 ```bash
 npm ci
 npm run dev        # http://localhost:5173 — full app incl. /api/extract (mock until key + gates are set)
-npm run verify     # mock ground truth (12 leads) + splitter, hazard scripts, capped ladder, failed-call cost, ranking tiers, draft safety, trace privacy, endpoint gates/413 — $0, no network
+npm run verify     # mock ground truth (12 leads) + dispatcher (quote checks, anchors, blocks, plan lanes, answers re-flow) + splitter, hazard scripts, capped ladder, failed-call cost, ranking tiers, draft safety, trace privacy, endpoint gates/413 — $0, no network
 npm run build      # typecheck + production build
 ```
 

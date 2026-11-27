@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T15:38:14.868Z",
+  "recorded_at": "2026-11-27T15:50:27.185Z",
   "summary": {
     "set": "freeze20",
     "messages": 20,
@@ -32,12 +32,13 @@
       "open_questions": 2
     },
     "wall_clock_seconds": {
-      "per_message_pass": 13,
-      "cross_message_pass": 3,
+      "per_message_pass": 10,
+      "cross_message_pass": 4,
       "concurrency": 4
     },
-    "spend_usd": 0.009109,
-    "spend_detail": "$0.009109 over 21 billed call(s)"
+    "spend_usd": 0.009116,
+    "per_message_pass_reused_from": null,
+    "spend_detail": "$0.009116 over 21 billed call(s)"
   },
   "links": [
     {
@@ -51,14 +52,14 @@
       "evidence": [
         {
           "index": 0,
-          "quote": "418 Mesquite St"
+          "quote": "Linda Garza, 418 Mesquite St, 361-555-0110"
         },
         {
           "index": 6,
-          "quote": "Linda's husband, about the burst pipe at 418 Mesquite"
+          "quote": "This is Ray, Linda's husband, about the burst pipe at 418 Mesquite."
         }
       ],
-      "explanation": "Ray identifies as Linda's husband about the same burst pipe at 418 Mesquite.",
+      "explanation": "Ray identifies himself as Linda's husband and references the same burst pipe at 418 Mesquite.",
       "question": "Are you calling about Linda Garza's burst pipe at 418 Mesquite St?",
       "ask_index": 6,
       "source": "ember",
@@ -80,10 +81,18 @@
         {
           "index": 10,
           "quote": "361-555-0142"
+        },
+        {
+          "index": 1,
+          "quote": "please call 361-555-0142"
+        },
+        {
+          "index": 10,
+          "quote": "Still no heat here, she's wrapped up in blankets. Can you send someone this morning? 361-555-0142"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same household with the 81-year-old mother and no heat?",
+      "question": "Is this the same home where your 81-year-old mom has no heat?",
       "ask_index": 10,
       "source": "code",
       "downgraded": null
@@ -100,19 +109,19 @@
       "evidence": [
         {
           "index": 2,
-          "quote": "1207 Laguna Dr"
+          "quote": "No water at all since about 6am at 1207 Laguna Dr. My neighbor says hers is out too."
         },
         {
           "index": 7,
-          "quote": "1215 Laguna Dr"
+          "quote": "Whole street on Laguna has no water?? 1215 Laguna Dr."
         },
         {
           "index": 12,
-          "quote": "1230 Laguna Dr"
+          "quote": "no tenemos agua desde la mañana en la calle Laguna, 1230 Laguna Dr. Mis vecinos tampoco."
         }
       ],
-      "explanation": "Three different Laguna Dr addresses report no water this morning, suggesting a street-wide outage.",
-      "question": "Has the whole Laguna Dr street been without water since about 6am?",
+      "explanation": "Three different Laguna Dr addresses report no water this morning and say neighbors are also out, indicating a street-level outage.",
+      "question": "Has the city reported a water main outage on Laguna Dr this morning?",
       "ask_index": 2,
       "source": "ember",
       "downgraded": null
@@ -128,15 +137,19 @@
       "evidence": [
         {
           "index": 5,
-          "quote": "unit B of the duplex on Ocean Dr"
+          "quote": "Leak under the kitchen sink in unit B of the duplex on Ocean Dr"
         },
         {
           "index": 14,
-          "quote": "Tenant in unit A says water is coming through the shared wall from next door"
+          "quote": "Tenant in unit A says water is coming through the shared wall from next door."
+        },
+        {
+          "index": 14,
+          "quote": "2240 Ocean Dr."
         }
       ],
-      "explanation": "Unit B kitchen leak on Ocean Dr and unit A water through shared wall may be the same duplex leak.",
-      "question": "Is the leak in unit B causing water through the shared wall to unit A at 2240 Ocean Dr?",
+      "explanation": "Unit B reports a kitchen sink leak on Ocean Dr while unit A at 2240 Ocean Dr reports water through the shared wall from next door, suggesting the same duplex.",
+      "question": "Is the duplex at 2240 Ocean Dr the same one where unit B has a kitchen sink leak?",
       "ask_index": 14,
       "source": "ember",
       "downgraded": null

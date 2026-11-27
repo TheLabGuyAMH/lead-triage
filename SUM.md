@@ -1,5 +1,15 @@
 # SUM.md — discussion record (newest first)
 
+## 2026-11-27 — Morning Dispatcher built, Ember off again
+
+Anthony's words: "No, because you owe me a better understanding of what the models will give an 8/10 for creativity…" then, to "Should I build the combined Morning Dispatcher?": "Yes and then have the council review it".
+
+- Built: second Ember pass across the pile (links with quotes and a deciding question), code quote checks and anchors, truck plan with holding scripts and honest "not today", 20-message freeze morning and 1,000-message generated Freeze Day with answer keys. Live site opens on the recorded Freeze Day.
+- Measured (Freeze Day, final prompt): 0 wrong merges, 174/187 suggested pairs right, 174/205 true pairs found, 27 open questions. Link prompt tightened once after seeing v1 (precision 173/292); both runs committed and disclosed.
+- Spend this round $0.5641 over 1,286 calls (ceiling I set: $2). Build total from traces $0.6439. `EMBER_ENABLED` set back to `0`.
+- Gaps I filled (not yet reviewed by Anthony): holding-script wording for jobs that miss the trucks (water shut-off; stay warm, never heat with an oven, grill or generator; urgent list; honest "not today"), exact text in `src/lib/dispatch.ts` `HOLDING_SCRIPTS`, following ready.gov / CDC winter-storm guidance. Default capacity 4 trucks × 5 stops live, 8 × 5 for the Freeze Day replay.
+- Next: four-model council review of the built feature (requested).
+
 ## 2026-11-27 — README top for judges, submission text, Ember switched off
 
 Anthony's words: "It's the holidays, yesterday was just Thanksgiving, and I don't know anyone who's a plumber or HVAC owner. And can't you or a different agent of the providers check eligibility for me? And can't you rewrite the README as well as turn off Ember? And besides all of this those scores even with the improvements is still low, I would like to know besides all those variables I just mentioned, would help them score it as an 8/10 across the board?"

@@ -1,22 +1,22 @@
 {
-  "recorded_at": "2026-11-27T15:47:28.670Z",
+  "recorded_at": "2026-11-27T15:50:02.312Z",
   "summary": {
     "set": "freeze1000",
     "messages": 1000,
     "true_link_pairs": 205,
     "true_groups": 84,
-    "links_found": 128,
-    "pairs_suggested": 292,
-    "pairs_suggested_correct": 173,
-    "recall_any_link": "173/205",
-    "recall_same_job": "99/118",
-    "recall_shared_cause": "74/87",
-    "precision_any_link": "173/292",
-    "auto_merged_pairs": 100,
-    "auto_merged_correct": 100,
+    "links_found": 105,
+    "pairs_suggested": 187,
+    "pairs_suggested_correct": 174,
+    "recall_any_link": "174/205",
+    "recall_same_job": "98/118",
+    "recall_shared_cause": "76/87",
+    "precision_any_link": "174/187",
+    "auto_merged_pairs": 99,
+    "auto_merged_correct": 99,
     "wrong_auto_merges": 0,
     "wrong_auto_merge_examples": [],
-    "likely_downgraded_by_code": 2,
+    "likely_downgraded_by_code": 1,
     "member_quotes_dropped_by_code": 0,
     "link_calls": 122,
     "link_calls_failed": 0,
@@ -30,19 +30,20 @@
     "plan_at_capacity": {
       "trucks": 40,
       "made_safe": 597,
-      "not_today": 226,
+      "not_today": 227,
       "read_first": 0,
       "filtered": 56,
-      "merged_links": 79,
-      "open_questions": 49
+      "merged_links": 78,
+      "open_questions": 27
     },
     "wall_clock_seconds": {
-      "per_message_pass": 297,
-      "cross_message_pass": 90,
+      "per_message_pass": 0,
+      "cross_message_pass": 76,
       "concurrency": 6
     },
-    "spend_usd": 0.476462,
-    "spend_detail": "$0.476462 over 1122 billed call(s)"
+    "spend_usd": 0.069369,
+    "per_message_pass_reused_from": "/private/tmp/claude-501/-Users-owner-Library-Mobile-Documents-com-apple-CloudDocs-T3-Code/0871e11f-b00b-484a-8cb1-d2f58ea83208/scratchpad/replay-freeze-v1.json",
+    "spend_detail": "$0.069369 over 122 billed call(s)"
   },
   "links": [
     {
@@ -64,15 +65,15 @@
         },
         {
           "index": 13,
-          "quote": "158 Weber Rd, Bay Area. Alma 254-555-0118"
+          "quote": "158 Weber Rd"
         },
         {
           "index": 164,
-          "quote": "Me again at 158 Weber Rd, the pipe in the attic is still not fixed, please hurry. 254-555-0118"
+          "quote": "Me again at 158 Weber Rd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this a follow-up to your earlier burst pipe message at 158 Weber Rd?",
+      "question": "Are you following up on the burst attic pipe at 158 Weber Rd?",
       "ask_index": 164,
       "source": "code",
       "downgraded": null
@@ -95,156 +96,9 @@
           "quote": "Everybody on our block of Rodd Field lost water this morning."
         }
       ],
-      "explanation": "Both report the whole block on Rodd Field losing water this morning, indicating one shared outage.",
-      "question": "Did your whole block on Rodd Field lose water at the same time this morning?",
+      "explanation": "Both report the whole block of Rodd Field lost water this morning from different addresses on that street.",
+      "question": "Did other homes on your block of Rodd Field also lose water this morning?",
       "ask_index": 17,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:20,30,31,176,267,639,802",
-      "indices": [
-        20,
-        30,
-        31,
-        176,
-        267,
-        639,
-        802
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 20,
-          "quote": "No water at all this morning, I think the pipes froze. 4883 Waldron Rd."
-        },
-        {
-          "index": 30,
-          "quote": "Se congelaron las tuberías y no sale agua. 5089 Waldron Rd."
-        },
-        {
-          "index": 31,
-          "quote": "Se congelaron las tuberías y no sale agua. 3702 Waldron Rd."
-        },
-        {
-          "index": 176,
-          "quote": "Se congelaron las tuberías y no sale agua. 1615 Waldron Rd."
-        },
-        {
-          "index": 267,
-          "quote": "Se congelaron las tuberías y no sale agua. 5478 Waldron Rd."
-        },
-        {
-          "index": 639,
-          "quote": "Se congelaron las tuberías y no sale agua. 2193 Waldron Rd."
-        },
-        {
-          "index": 802,
-          "quote": "Se congelaron las tuberías y no sale agua. 1840 Waldron Rd."
-        }
-      ],
-      "explanation": "Different Waldron Rd homes reporting frozen pipes and no water this morning, suggesting a street-wide freeze.",
-      "question": "Did other homes on Waldron Rd lose water at the same time this morning?",
-      "ask_index": 20,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:21,129,206,731,797,842,978",
-      "indices": [
-        21,
-        129,
-        206,
-        731,
-        797,
-        842,
-        978
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 21,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 129,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 206,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 731,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 797,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 842,
-          "quote": "El calentador de agua no prende desde que regresó la luz."
-        },
-        {
-          "index": 978,
-          "quote": "El calentador de agua no prende desde que regresó la luz."
-        }
-      ],
-      "explanation": "Different Padre Island homes report water heaters failing at the same time, since power returned, suggesting a shared power-related cause.",
-      "question": "Did your power outage and restoration happen at the same time as other Padre Island homes, and are neighbors reporting the same water heater issue?",
-      "ask_index": 21,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:32,70,202,580,589,653,912",
-      "indices": [
-        32,
-        70,
-        202,
-        580,
-        589,
-        653,
-        912
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 32,
-          "quote": "no water pressure since the freeze. Marcus at 4209 Gollihar Rd"
-        },
-        {
-          "index": 70,
-          "quote": "Kitchen pipes frozen, nothing comes out of the faucet. Bathroom still works. 2237 Gollihar Rd"
-        },
-        {
-          "index": 202,
-          "quote": "No water at all this morning, I think the pipes froze. 3540 Gollihar Rd"
-        },
-        {
-          "index": 580,
-          "quote": "Se congelaron las tuberías y no sale agua. 5177 Gollihar Rd"
-        },
-        {
-          "index": 589,
-          "quote": "no water pressure since the freeze. Marcus at 4909 Gollihar Rd"
-        },
-        {
-          "index": 653,
-          "quote": "Se congelaron las tuberías y no sale agua. 1135 Gollihar Rd"
-        },
-        {
-          "index": 912,
-          "quote": "Kitchen pipes frozen, nothing comes out of the faucet. Bathroom still works. 670 Gollihar Rd"
-        }
-      ],
-      "explanation": "Different homes on Gollihar Rd all report frozen pipes/no water this morning after the freeze.",
-      "question": "Did your water stop at the same time as other homes on Gollihar Rd, or only in your home?",
-      "ask_index": 202,
       "source": "ember",
       "downgraded": null
     },
@@ -258,31 +112,31 @@
         769
       ],
       "kind": "shared_cause",
-      "confidence": "possible",
+      "confidence": "likely",
       "evidence": [
         {
           "index": 36,
-          "quote": "Whole street on McArdle has no water??"
+          "quote": "Whole street on McArdle has no water?? 985 McArdle Rd. nothing from any faucet. Irene 432-555-0154"
         },
         {
           "index": 109,
-          "quote": "Water pressure dropped to nothing at 2740 McArdle Rd around 7am, and the house next door is the same."
+          "quote": "Water pressure dropped to nothing at 2740 McArdle Rd around 7am, and the house next door is the same. Andre Thomas 210-555-0156"
         },
         {
           "index": 250,
-          "quote": "No water since about 7am at 496 McArdle Rd. My neighbor says theirs is out too."
+          "quote": "No water since about 7am at 496 McArdle Rd. My neighbor says theirs is out too. Is it the city? Arturo 830-555-0110"
         },
         {
           "index": 423,
-          "quote": "Everybody on our block of McArdle lost water this morning."
+          "quote": "Everybody on our block of McArdle lost water this morning. 2113 McArdle Rd, David Rodriguez, 956-555-0192"
         },
         {
           "index": 769,
-          "quote": "Everybody on our block of McArdle lost water this morning."
+          "quote": "Everybody on our block of McArdle lost water this morning. 1881 McArdle Rd, Robert Jackson, 915-555-0147"
         }
       ],
-      "explanation": "Different McArdle homes reporting a street/block-wide water loss this morning around 7am.",
-      "question": "Did your water go out this morning around 7am on McArdle along with the rest of the street?",
+      "explanation": "Different McArdle addresses all report no water this morning and explicitly say neighbors or the whole street/block are affected.",
+      "question": "Has the city confirmed a water main outage affecting McArdle this morning?",
       "ask_index": 36,
       "source": "ember",
       "downgraded": null
@@ -298,15 +152,15 @@
       "evidence": [
         {
           "index": 46,
-          "quote": "Water heater tank burst in the garage, water running out under the door. 3565 Doddridge St. call 210-555-0188 Felipe"
+          "quote": "3565 Doddridge St."
         },
         {
           "index": 319,
-          "quote": "Calling for my sister Felipe at 3565 Doddridge St, they messaged you earlier about the water heater. I'm Gabe, 956-555-0129"
+          "quote": "at 3565 Doddridge St, they messaged you earlier about the water heater."
         }
       ],
-      "explanation": "Same address and explicit reference to the earlier water heater message.",
-      "question": "Is this about the burst water heater at 3565 Doddridge St.?",
+      "explanation": "Same address and explicit reference to earlier water heater message.",
+      "question": "Is this about the same burst water heater at 3565 Doddridge St. reported earlier?",
       "ask_index": 319,
       "source": "ember",
       "downgraded": null
@@ -347,46 +201,22 @@
       "evidence": [
         {
           "index": 46,
-          "quote": "3565 Doddridge St. call 210-555-0188 Felipe"
+          "quote": "3565 Doddridge St"
         },
         {
           "index": 95,
-          "quote": "Me again at 3565 Doddridge St, the water heater is still not fixed"
+          "quote": "Me again at 3565 Doddridge St"
         },
         {
           "index": 319,
-          "quote": "Calling for my sister Felipe at 3565 Doddridge St, they messaged you earlier about the water heater"
+          "quote": "Calling for my sister Felipe at 3565 Doddridge St"
         }
       ],
-      "explanation": "All three reference the same water heater problem at 3565 Doddridge St, with Felipe named in messages 2 and 9 and message 4 saying 'Me again'.",
-      "question": "Is this the same water heater burst at 3565 Doddridge St that Felipe reported earlier?",
+      "explanation": "Same address and phone for 2 and 4, and 9 explicitly says Felipe at that address messaged earlier about the water heater.",
+      "question": "Is this the same burst water heater at 3565 Doddridge St that Felipe reported?",
       "ask_index": 319,
       "source": "ember",
       "downgraded": null
-    },
-    {
-      "key": "same_job:52,271",
-      "indices": [
-        52,
-        271
-      ],
-      "kind": "same_job",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 52,
-          "quote": "Water heater won't light since the power came back, no hot water. Rosa, Bay Area, 979-555-0123"
-        },
-        {
-          "index": 271,
-          "quote": "This is Gabe, Rosa's daughter, about the water heater at 4153 Alameda. Any ETA? 713-555-0100"
-        }
-      ],
-      "explanation": "Gabe identifies as Rosa's daughter following up on Rosa's water heater problem.",
-      "question": "Is 4153 Alameda the address for Rosa's water heater that won't light?",
-      "ask_index": 271,
-      "source": "ember",
-      "downgraded": "code found no shared phone, house number + street, or full name"
     },
     {
       "key": "same_job:62,127,284",
@@ -404,11 +234,11 @@
         },
         {
           "index": 127,
-          "quote": "familiar de Daniel, por lo del tubo reventado en 1286 Sunnybrook"
+          "quote": "1286 Sunnybrook"
         },
         {
           "index": 284,
-          "quote": "Daniel's daughter, about the burst pipe at 1286 Sunnybrook"
+          "quote": "1286 Sunnybrook"
         },
         {
           "index": 62,
@@ -423,9 +253,53 @@
           "quote": "This is Diana, Daniel's daughter, about the burst pipe at 1286 Sunnybrook. Any ETA? 512-555-0169"
         }
       ],
-      "explanation": "All three reference the burst pipe at the same address, 1286 Sunnybrook, with Laura and Diana identifying as Daniel's family.",
-      "question": "Are you calling about the burst pipe at 1286 Sunnybrook Rd reported by Daniel?",
+      "explanation": "All three reference the burst pipe at the same address 1286 Sunnybrook.",
+      "question": "Is this about the same burst pipe at 1286 Sunnybrook Rd that Daniel reported?",
       "ask_index": 127,
+      "source": "ember",
+      "downgraded": null
+    },
+    {
+      "key": "shared_cause:73,119,128,539,796,973",
+      "indices": [
+        73,
+        119,
+        128,
+        539,
+        796,
+        973
+      ],
+      "kind": "shared_cause",
+      "confidence": "possible",
+      "evidence": [
+        {
+          "index": 73,
+          "quote": "No water at all this morning, I think the pipes froze. 1830 Carroll Ln."
+        },
+        {
+          "index": 119,
+          "quote": "Everybody on our block of Carroll lost water this morning. 5669 Carroll Ln, Juan Diaz, 979-555-0110"
+        },
+        {
+          "index": 128,
+          "quote": "Water pressure dropped to nothing at 1947 Carroll Ln around 6:15, and the house next door is the same."
+        },
+        {
+          "index": 539,
+          "quote": "Everybody on our block of Carroll lost water this morning. 2202 Carroll Ln, Sandra Ortiz, 254-555-0108"
+        },
+        {
+          "index": 796,
+          "quote": "Water pressure dropped to nothing at 2730 Carroll Ln around 6:15, and the house next door is the same."
+        },
+        {
+          "index": 973,
+          "quote": "Whole street on Carroll has no water?? 1078 Carroll Ln. nothing from any faucet."
+        }
+      ],
+      "explanation": "Different Carroll Ln homes report no water or pressure this morning, several explicitly saying neighbors or the whole block/street are affected.",
+      "question": "Did everyone on your Carroll block lose water at the same time this morning?",
+      "ask_index": 119,
       "source": "ember",
       "downgraded": null
     },
@@ -451,40 +325,6 @@
       "question": "",
       "ask_index": null,
       "source": "code",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:93,567,596,809",
-      "indices": [
-        93,
-        567,
-        596,
-        809
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 93,
-          "quote": "No tenemos calefacción desde anoche"
-        },
-        {
-          "index": 567,
-          "quote": "No tenemos calefacción desde anoche"
-        },
-        {
-          "index": 596,
-          "quote": "No tenemos calefacción desde anoche"
-        },
-        {
-          "index": 809,
-          "quote": "No tenemos calefacción desde anoche"
-        }
-      ],
-      "explanation": "Four different Brawner Pkwy homes report no heating since the same night, suggesting a shared street-level outage.",
-      "question": "Did other homes on Brawner Pkwy also lose heating last night?",
-      "ask_index": 93,
-      "source": "ember",
       "downgraded": null
     },
     {
@@ -526,11 +366,11 @@
         },
         {
           "index": 293,
-          "quote": "Following up for Carlos Garcia about the heat pump on Agnes, nobody has called back yet."
+          "quote": "Following up for Carlos Garcia about the heat pump on Agnes, nobody has called back yet. Robert 713-555-0113"
         }
       ],
-      "explanation": "Same full name Carlos Garcia and same heat pump problem, with message 7 explicitly following up on it.",
-      "question": "Is this follow-up about the heat pump reported by Carlos Garcia in Westside?",
+      "explanation": "Same full name Carlos Garcia and same heat pump problem, with an explicit follow-up reference.",
+      "question": "Is this follow-up about Carlos Garcia's heat pump blowing cold air?",
       "ask_index": 293,
       "source": "ember",
       "downgraded": null
@@ -547,7 +387,7 @@
       "evidence": [
         {
           "index": 98,
-          "quote": "No water since about 7am at 3549 Kingston Dr. My neighbor says theirs is out too."
+          "quote": "No water since about 7am at 3549 Kingston Dr. My neighbor says theirs is out too. Is it the city?"
         },
         {
           "index": 772,
@@ -558,8 +398,8 @@
           "quote": "no tenemos agua desde la mañana en la calle Kingston, 2723 Kingston Dr. Mis vecinos tampoco."
         }
       ],
-      "explanation": "Three different Kingston addresses report no water this morning with neighbors also out, suggesting a street-wide outage.",
-      "question": "Did neighbors on Kingston also lose water this morning around 7am?",
+      "explanation": "Different Kingston Dr homes all report no water this morning extending beyond their own home to neighbors/block.",
+      "question": "Has the city confirmed a water outage affecting Kingston Dr this morning?",
       "ask_index": 98,
       "source": "ember",
       "downgraded": null
@@ -589,35 +429,6 @@
       "downgraded": null
     },
     {
-      "key": "shared_cause:119,539,973",
-      "indices": [
-        119,
-        539,
-        973
-      ],
-      "kind": "shared_cause",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "index": 119,
-          "quote": "Everybody on our block of Carroll lost water this morning. 5669 Carroll Ln, Juan Diaz, 979-555-0110"
-        },
-        {
-          "index": 539,
-          "quote": "Everybody on our block of Carroll lost water this morning. 2202 Carroll Ln, Sandra Ortiz, 254-555-0108"
-        },
-        {
-          "index": 973,
-          "quote": "Whole street on Carroll has no water?? 1078 Carroll Ln. nothing from any faucet. Miguel 713-555-0152"
-        }
-      ],
-      "explanation": "Different Carroll Ln homes explicitly reporting block/whole-street water loss this morning.",
-      "question": "Did your whole block on Carroll lose water this morning at the same time as the others?",
-      "ask_index": 119,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
       "key": "same_job:122,281",
       "indices": [
         122,
@@ -642,83 +453,6 @@
       "downgraded": null
     },
     {
-      "key": "shared_cause:128,796",
-      "indices": [
-        128,
-        796
-      ],
-      "kind": "shared_cause",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "index": 128,
-          "quote": "Water pressure dropped to nothing at 1947 Carroll Ln around 6:15, and the house next door is the same. Priya Ramirez 979-555-0193"
-        },
-        {
-          "index": 796,
-          "quote": "Water pressure dropped to nothing at 2730 Carroll Ln around 6:15, and the house next door is the same. Daniel Price 409-555-0132"
-        }
-      ],
-      "explanation": "Different Carroll Ln homes with identical 6:15 pressure drop and next-door affected detail.",
-      "question": "Did your water pressure drop around 6:15 with the next door also affected?",
-      "ask_index": 128,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:129,547",
-      "indices": [
-        129,
-        547
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 129,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 547,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        }
-      ],
-      "explanation": "Both report identical water-heater failure since power returned, suggesting a shared outage cause.",
-      "question": "When exactly did your power come back on?",
-      "ask_index": 129,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:133,199,939",
-      "indices": [
-        133,
-        199,
-        939
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 133,
-          "quote": "2937 Rodd Field Rd"
-        },
-        {
-          "index": 199,
-          "quote": "3440 Rodd Field Rd."
-        },
-        {
-          "index": 939,
-          "quote": "3009 Rodd Field Rd around 6am, and the house next door is the same."
-        }
-      ],
-      "explanation": "Three different homes on Rodd Field Rd report morning water loss, and one says the next door house is the same.",
-      "question": "Did the water loss on Rodd Field Rd start around 6am and affect neighboring homes on the same street?",
-      "ask_index": 939,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
       "key": "same_job:138,242",
       "indices": [
         138,
@@ -736,12 +470,16 @@
           "quote": "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers. ¿A qué hora vienen? 956-555-0126"
         },
         {
+          "index": 138,
+          "quote": "Calling for my mom Sandra at 3321 Ayers St"
+        },
+        {
           "index": 242,
-          "quote": "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers."
+          "quote": "familiar de Sandra, por lo del calentador en 3321 Ayers"
         }
       ],
-      "explanation": "Both reference Sandra's water heater at the same address 3321 Ayers.",
-      "question": "Are you and Beth calling about the same water heater at 3321 Ayers St?",
+      "explanation": "Both reference Sandra's water heater at the same address 3321 Ayers St.",
+      "question": "Is this the same water heater job at 3321 Ayers St that Beth asked about?",
       "ask_index": 138,
       "source": "ember",
       "downgraded": null
@@ -760,85 +498,17 @@
           "quote": "Angela at 3808 Cimarron Blvd, 432-555-0116"
         },
         {
-          "index": 144,
-          "quote": "Toilet won't fill and there's no water pressure since the freeze."
+          "index": 225,
+          "quote": "about the no water pressure at 3808 Cimarron."
         },
         {
           "index": 225,
-          "quote": "This is Victor, Angela's neighbor, about the no water pressure at 3808 Cimarron."
+          "quote": "about the no water pressure at 3808 Cimarron"
         }
       ],
-      "explanation": "Both messages cite 3808 Cimarron and the same no-water-pressure problem, with Victor identifying himself as Angela's neighbor.",
-      "question": "Are you following up on Angela's no-water-pressure issue at 3808 Cimarron Blvd?",
+      "explanation": "Victor identifies as Angela's neighbor and references the same 3808 Cimarron address and no-water-pressure problem as message 3.",
+      "question": "Are you following up on the no-water-pressure issue at 3808 Cimarron Blvd for Angela?",
       "ask_index": 225,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:158,197,223,289,330",
-      "indices": [
-        158,
-        197,
-        223,
-        289,
-        330
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 158,
-          "quote": "No water at all this morning, I think the pipes froze. 576 Staples St."
-        },
-        {
-          "index": 197,
-          "quote": "Se congelaron las tuberías y no sale agua. 3695 Staples St."
-        },
-        {
-          "index": 223,
-          "quote": "Se congelaron las tuberías y no sale agua. 5253 Staples St."
-        },
-        {
-          "index": 289,
-          "quote": "Se congelaron las tuberías y no sale agua. 5051 Staples St."
-        },
-        {
-          "index": 330,
-          "quote": "No water at all this morning, I think the pipes froze. 5422 Staples St."
-        }
-      ],
-      "explanation": "Five different homes on Staples St all report frozen pipes and no water this morning, suggesting a street-wide cause.",
-      "question": "Did your water go out this morning at the same time as others on Staples St?",
-      "ask_index": 158,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:174,425,507",
-      "indices": [
-        174,
-        425,
-        507
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 174,
-          "quote": "No tenemos calefacción desde anoche y mi abuela tiene 78 años. Hace mucho frío en la casa. 264 Sunnybrook Rd. 713-555-0148"
-        },
-        {
-          "index": 425,
-          "quote": "No heat since last night and my mom is 86, house is 52 degrees inside. 1114 Sunnybrook Rd 432-555-0194 - Ricardo"
-        },
-        {
-          "index": 507,
-          "quote": "No heat since last night and my mom is 84, house is 46 degrees inside. 5102 Sunnybrook Rd 281-555-0128 - Gloria"
-        }
-      ],
-      "explanation": "Three different Sunnybrook Rd homes report no heat since last night / desde anoche, suggesting a possible street-wide cause.",
-      "question": "Did your heating go out last night at the same time as the other Sunnybrook Rd homes reporting no heat since last night?",
-      "ask_index": 174,
       "source": "ember",
       "downgraded": null
     },
@@ -865,37 +535,13 @@
         },
         {
           "index": 321,
-          "quote": "Me again at 2831 Pharaoh Dr"
+          "quote": "Me again at 2831 Pharaoh Dr, the split pipe is still not fixed, please hurry. 915-555-0142"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 2831 Pharaoh Dr you reported earlier today?",
+      "question": "Are you calling again about the split pipe at 2831 Pharaoh Dr?",
       "ask_index": 321,
       "source": "code",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:179,536",
-      "indices": [
-        179,
-        536
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 179,
-          "quote": "2831 Pharaoh Dr"
-        },
-        {
-          "index": 536,
-          "quote": "2822 Pharaoh Dr"
-        }
-      ],
-      "explanation": "Both are on Pharaoh Dr at close numbers with water problems this morning.",
-      "question": "Is 2831 Pharaoh Dr the next-door house with the same water problem?",
-      "ask_index": 536,
-      "source": "ember",
       "downgraded": null
     },
     {
@@ -909,14 +555,14 @@
       "evidence": [
         {
           "index": 187,
-          "quote": "Marcus Martin, 3082 Kingston Dr"
+          "quote": "Frozen pipe split under the kitchen sink, water all over the floor. Turned the main off but need someone today. Marcus Martin, 3082 Kingston Dr, 979-555-0178"
         },
         {
           "index": 307,
-          "quote": "Following up for Marcus Martin about the split pipe on Kingston"
+          "quote": "Following up for Marcus Martin about the split pipe on Kingston, nobody has called back yet."
         }
       ],
-      "explanation": "Message 9 explicitly follows up for Marcus Martin about the split pipe described in message 6.",
+      "explanation": "Message 9 explicitly follows up on Marcus Martin's split pipe from message 6.",
       "question": "Are you following up on Marcus Martin's split pipe at 3082 Kingston Dr?",
       "ask_index": 307,
       "source": "ember",
@@ -947,38 +593,6 @@
       "downgraded": null
     },
     {
-      "key": "shared_cause:188,405",
-      "indices": [
-        188,
-        405
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 188,
-          "quote": "No water at all this morning, I think the pipes froze."
-        },
-        {
-          "index": 188,
-          "quote": "4900 Del Mar Blvd."
-        },
-        {
-          "index": 405,
-          "quote": "No water at all this morning, I think the pipes froze."
-        },
-        {
-          "index": 405,
-          "quote": "939 Del Mar Blvd."
-        }
-      ],
-      "explanation": "Both report complete loss of water this morning from frozen pipes on Del Mar Blvd, suggesting a shared street-level cause.",
-      "question": "Did other homes on Del Mar Blvd lose all water at the same time this morning?",
-      "ask_index": 188,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
       "key": "same_job:190,280",
       "indices": [
         190,
@@ -989,40 +603,24 @@
       "evidence": [
         {
           "index": 190,
-          "quote": "5373 Brawner Pkwy, Annaville. Jose"
+          "quote": "5373 Brawner Pkwy, Annaville. Jose 361-555-0134"
         },
         {
           "index": 280,
-          "quote": "Following up for Jose Cruz about the burst pipe on Brawner"
-        }
-      ],
-      "explanation": "Message 7 explicitly follows up for Jose about a burst pipe on Brawner, matching Jose's burst-pipe message on Brawner Pkwy.",
-      "question": "Is Jose Cruz the Jose at 5373 Brawner Pkwy with the burst pipe?",
-      "ask_index": 280,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:190,623",
-      "indices": [
-        190,
-        623
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 190,
-          "quote": "5373 Brawner Pkwy, Annaville."
+          "quote": "Following up for Jose Cruz about the burst pipe on Brawner, nobody has called back yet."
         },
         {
-          "index": 623,
-          "quote": "1588 Brawner Pkwy, Annaville."
+          "index": 190,
+          "quote": "Se reventó un tubo en el cuarto de lavado y sale agua por todos lados. 5373 Brawner Pkwy, Annaville. Jose 361-555-0134"
+        },
+        {
+          "index": 280,
+          "quote": "Following up for Jose Cruz about the burst pipe on Brawner, nobody has called back yet. Nancy 956-555-0123"
         }
       ],
-      "explanation": "Different homes on the same street both report burst pipes with water everywhere, suggesting a possible shared street-level cause.",
-      "question": "Did your pipe burst at the same time as a water problem on Brawner Pkwy?",
-      "ask_index": 190,
+      "explanation": "Message 5 is a follow-up about Jose's burst pipe on Brawner, matching message 3's burst pipe at 5373 Brawner Pkwy.",
+      "question": "Is the burst pipe on Brawner the one at 5373 Brawner Pkwy?",
+      "ask_index": 280,
       "source": "ember",
       "downgraded": null
     },
@@ -1051,70 +649,34 @@
       "downgraded": null
     },
     {
-      "key": "shared_cause:204,471,499",
+      "key": "shared_cause:203,562",
       "indices": [
-        204,
-        471,
-        499
+        203,
+        562
       ],
       "kind": "shared_cause",
       "confidence": "possible",
       "evidence": [
         {
-          "index": 204,
-          "quote": "No heat since last night"
+          "index": 203,
+          "quote": "Frozen pipe split under the kitchen sink, water all over the floor. Turned the main off but need someone today. Maria Okafor, 4827 Whiteley Dr, 915-555-0133"
         },
         {
-          "index": 471,
-          "quote": "No tenemos calefacción desde anoche"
-        },
-        {
-          "index": 499,
-          "quote": "No tenemos calefacción desde anoche"
+          "index": 562,
+          "quote": "Whole street on Whiteley has no water?? 1284 Whiteley Dr. nothing from any faucet. Maria 830-555-0164"
         }
       ],
-      "explanation": "Different Pharaoh Dr homes all lost heat since last night, suggesting one street-wide outage.",
-      "question": "Did your heat go out last night at the same time as others on Pharaoh Dr?",
-      "ask_index": 204,
+      "explanation": "Both are on Whiteley and message 7 says the whole street has no water, suggesting a street-wide cause.",
+      "question": "Is the no-water problem affecting other homes on Whiteley Dr, including 4827 Whiteley Dr?",
+      "ask_index": 562,
       "source": "ember",
       "downgraded": null
     },
     {
-      "key": "same_job:206,659,852",
-      "indices": [
-        206,
-        659,
-        852
-      ],
-      "kind": "same_job",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 206,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 659,
-          "quote": "Water heater won't light since the power came back, no hot water."
-        },
-        {
-          "index": 852,
-          "quote": "familiar de Irene, por lo del calentador en 586 Lipes"
-        }
-      ],
-      "explanation": "Amy says she is Irene's relative following up on Irene's water heater, matching the identical water-heater wording in both Irene messages.",
-      "question": "Is 586 Lipes the address for Irene's water heater that won't light since the power came back?",
-      "ask_index": 852,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:211,538,608,908",
+      "key": "shared_cause:211,538",
       "indices": [
         211,
-        538,
-        608,
-        908
+        538
       ],
       "kind": "shared_cause",
       "confidence": "possible",
@@ -1126,18 +688,10 @@
         {
           "index": 538,
           "quote": "No water since about 6am at 5612 Purdue Rd. My neighbor says theirs is out too. Is it the city?"
-        },
-        {
-          "index": 608,
-          "quote": "Water pressure dropped to nothing at 3559 Purdue Rd around 6am, and the house next door is the same."
-        },
-        {
-          "index": 908,
-          "quote": "Water pressure dropped to nothing at 5144 Purdue Rd around 6am, and the house next door is the same."
         }
       ],
-      "explanation": "Different Purdue Rd homes all report no water or pressure around 6am with neighbors also out, suggesting one street-wide outage.",
-      "question": "Did homes around you on Purdue Rd also lose water around 6am today?",
+      "explanation": "Both on Purdue Rd report no water since about 6am with neighbors also out and ask if it is the city.",
+      "question": "Is the neighbor who is also out on Purdue Rd without water since about 6am?",
       "ask_index": 211,
       "source": "ember",
       "downgraded": null
@@ -1184,7 +738,7 @@
           "quote": "Following up for Carlos Sanchez about the no heat on Leopard, nobody has called back yet."
         }
       ],
-      "explanation": "Message 13 explicitly follows up on Carlos Sanchez's no-heat issue, matching message 6 from Carlos about no heat.",
+      "explanation": "Message 13 explicitly follows up on a Carlos no-heat call on Leopard, matching message 6.",
       "question": "Are you following up on Carlos's no-heat call from 1463 Leopard St?",
       "ask_index": 455,
       "source": "ember",
@@ -1201,23 +755,23 @@
       "evidence": [
         {
           "index": 220,
-          "quote": "Pipe burst in the laundry room, water spraying everywhere and I can't find the shut off. 1295 Waldron Rd. Ken 915-555-0126"
+          "quote": "1295 Waldron Rd"
         },
         {
           "index": 502,
-          "quote": "Calling for my grandma Ken at 1295 Waldron Rd, they messaged you earlier about the burst pipe. I'm David, 956-555-0132"
+          "quote": "at 1295 Waldron Rd, they messaged you earlier about the burst pipe"
         },
         {
           "index": 220,
-          "quote": "Pipe burst in the laundry room, water spraying everywhere and I can't find the shut off. 1295 Waldron Rd."
+          "quote": "1295 Waldron Rd. Ken 915-555-0126"
         },
         {
           "index": 502,
           "quote": "Calling for my grandma Ken at 1295 Waldron Rd, they messaged you earlier about the burst pipe."
         }
       ],
-      "explanation": "Same address 1295 Waldron Rd and explicit reference to the earlier burst pipe message.",
-      "question": "Is this about the burst pipe in the laundry room at 1295 Waldron Rd?",
+      "explanation": "Same address and explicit reference to the earlier burst-pipe message.",
+      "question": "Is this about the burst pipe in the laundry room at 1295 Waldron Rd reported earlier?",
       "ask_index": 502,
       "source": "ember",
       "downgraded": null
@@ -1237,11 +791,11 @@
         },
         {
           "index": 443,
-          "quote": "familiar de Sofia, por lo del tuberías congeladas en 5253 Staples"
+          "quote": "en 5253 Staples."
         }
       ],
-      "explanation": "Jose says he is Sofia's relative asking about the frozen pipes at the same 5253 Staples address Sofia reported.",
-      "question": "Is this about Sofia's frozen pipes at 5253 Staples St?",
+      "explanation": "Jose says he is Sofia's relative about frozen pipes at the same 5253 Staples address as Sofia's message.",
+      "question": "Is Jose calling about the frozen pipes at 5253 Staples St.?",
       "ask_index": 443,
       "source": "ember",
       "downgraded": null
@@ -1258,7 +812,7 @@
       "evidence": [
         {
           "index": 223,
-          "quote": "Se congelaron las tuberías y no sale agua. 5253 Staples St. Sofia 281-555-0118"
+          "quote": "5253 Staples St. Sofia 281-555-0118"
         },
         {
           "index": 443,
@@ -1269,9 +823,9 @@
           "quote": "Me again at 5253 Staples St, the frozen pipes is still not fixed, please hurry. 281-555-0118"
         }
       ],
-      "explanation": "Same address, same phone for Sofia's follow-up, and Jose identifies as Sofia's relative about the same job.",
-      "question": "Are you calling about Sofia's frozen pipes at 5253 Staples St?",
-      "ask_index": 443,
+      "explanation": "Same address and phone for Sofia, Jose identifies as her relative about the same frozen pipes, and the follow-up says 'Me again' at that address.",
+      "question": "Are Jose's message and the follow-up about your frozen pipes at 5253 Staples St?",
+      "ask_index": 223,
       "source": "ember",
       "downgraded": null
     },
@@ -1313,7 +867,7 @@
       "evidence": [
         {
           "index": 229,
-          "quote": "no tenemos agua desde la mañana en la calle Baldwin"
+          "quote": "Mis vecinos tampoco."
         },
         {
           "index": 260,
@@ -1325,15 +879,15 @@
         },
         {
           "index": 418,
-          "quote": "no tenemos agua desde la mañana en la calle Baldwin"
+          "quote": "Mis vecinos tampoco."
         },
         {
           "index": 780,
           "quote": "Whole street on Baldwin has no water??"
         }
       ],
-      "explanation": "Different Baldwin Blvd homes all report no water street-wide since this morning.",
-      "question": "Has your water been out since this morning like your Baldwin neighbors?",
+      "explanation": "All report no water on Baldwin with neighbors / whole street affected, indicating a shared street supply problem.",
+      "question": "Do your neighbors on Baldwin also have no water this morning?",
       "ask_index": 229,
       "source": "ember",
       "downgraded": null
@@ -1357,15 +911,15 @@
         },
         {
           "index": 233,
-          "quote": "Melissa at 1377 Everhart Rd, 956-555-0165"
+          "quote": "1377 Everhart Rd, 956-555-0165"
         },
         {
           "index": 350,
-          "quote": "Me again at 1377 Everhart Rd, the no water pressure is still not fixed, please hurry. 956-555-0165"
+          "quote": "Me again at 1377 Everhart Rd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same no water pressure issue at 1377 Everhart Rd you reported earlier?",
+      "question": "Is this a follow-up on the no water pressure at 1377 Everhart Rd from earlier today?",
       "ask_index": 350,
       "source": "code",
       "downgraded": null
@@ -1426,7 +980,7 @@
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this a follow-up to your earlier water heater burst message for 4777 Airline Rd?",
+      "question": "Is this the same burst water heater at 4777 Airline Rd from your earlier message?",
       "ask_index": 302,
       "source": "code",
       "downgraded": null
@@ -1472,19 +1026,19 @@
       "evidence": [
         {
           "index": 243,
-          "quote": "no tenemos agua desde la mañana en la calle Cayo"
+          "quote": "no tenemos agua desde la mañana en la calle Cayo, 1502 Cayo Ct. Mis vecinos tampoco."
         },
         {
           "index": 703,
-          "quote": "no tenemos agua desde la mañana en la calle Cayo"
+          "quote": "no tenemos agua desde la mañana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco."
         },
         {
           "index": 707,
-          "quote": "no tenemos agua desde la mañana en la calle Cayo"
+          "quote": "no tenemos agua desde la mañana en la calle Cayo, 300 Cayo Ct. Mis vecinos tampoco."
         }
       ],
-      "explanation": "Three different Cayo Ct homes report no water since this morning and neighbors also out, indicating a street-wide outage.",
-      "question": "Is the water out for the whole Cayo Ct street since this morning?",
+      "explanation": "Three different Cayo Ct homes report no water since morning and say neighbors also have none, indicating a street-wide supply problem.",
+      "question": "Is this no-water outage affecting other homes on Cayo Ct?",
       "ask_index": 243,
       "source": "ember",
       "downgraded": null
@@ -1500,15 +1054,15 @@
       "evidence": [
         {
           "index": 248,
-          "quote": "985 Everhart Rd. 979-555-0181"
+          "quote": "985 Everhart Rd"
         },
         {
           "index": 378,
-          "quote": "Calling for my dad Rosa at 985 Everhart Rd, they messaged you earlier about the no heat."
+          "quote": "at 985 Everhart Rd, they messaged you earlier about the no heat"
         }
       ],
-      "explanation": "Same address 985 Everhart Rd and explicit reference to an earlier no-heat message for that home.",
-      "question": "Is Rosa at 985 Everhart Rd the same no-heat case reported earlier this morning?",
+      "explanation": "Same address 985 Everhart Rd and message 7 explicitly references the earlier no-heat message.",
+      "question": "Is this about the no-heat call from 985 Everhart Rd earlier today?",
       "ask_index": 378,
       "source": "ember",
       "downgraded": null
@@ -1524,19 +1078,15 @@
       "evidence": [
         {
           "index": 251,
-          "quote": "3767 Glenoak Dr"
+          "quote": "Kitchen pipes frozen, nothing comes out of the faucet. Bathroom still works. 3767 Glenoak Dr Raul Nguyen 979-555-0143"
         },
         {
           "index": 345,
-          "quote": "3767 Glenoak"
-        },
-        {
-          "index": 345,
-          "quote": "This is Rosa, Raul's tenant, about the frozen kitchen pipes at 3767 Glenoak."
+          "quote": "This is Rosa, Raul's tenant, about the frozen kitchen pipes at 3767 Glenoak. Any ETA? 432-555-0149"
         }
       ],
-      "explanation": "Rosa identifies as Raul's tenant and references the same frozen kitchen pipes at the same Glenoak address as message 3.",
-      "question": "Is this about Raul Nguyen's frozen kitchen pipes at 3767 Glenoak Dr?",
+      "explanation": "Same address and same frozen kitchen pipes, with Rosa identifying as Raul's tenant.",
+      "question": "Are you Rosa, Raul's tenant at 3767 Glenoak about the frozen kitchen pipes?",
       "ask_index": 345,
       "source": "ember",
       "downgraded": null
@@ -1555,12 +1105,8 @@
           "quote": "1476 Kostoryz Rd"
         },
         {
-          "index": 252,
-          "quote": "Kitchen pipes frozen, nothing comes out of the faucet. Bathroom still works."
-        },
-        {
           "index": 490,
-          "quote": "This is Karen, Laura's tenant, about the frozen kitchen pipes at 1476 Kostoryz"
+          "quote": "about the frozen kitchen pipes at 1476 Kostoryz"
         },
         {
           "index": 252,
@@ -1571,8 +1117,8 @@
           "quote": "This is Karen, Laura's tenant, about the frozen kitchen pipes at 1476 Kostoryz."
         }
       ],
-      "explanation": "Karen identifies herself as Laura's tenant about the same frozen kitchen pipes at the same address.",
-      "question": "Is this the same frozen kitchen pipe job at 1476 Kostoryz Rd that Laura Taylor reported?",
+      "explanation": "Same address and same frozen kitchen pipe problem, with Karen identifying as Laura's tenant.",
+      "question": "Is the frozen kitchen pipe at 1476 Kostoryz the same job Laura Taylor reported?",
       "ask_index": 490,
       "source": "ember",
       "downgraded": null
@@ -1596,11 +1142,11 @@
         },
         {
           "index": 258,
-          "quote": "2163 McArdle Rd"
+          "quote": "2163 McArdle Rd Sam Taylor 915-555-0198"
         },
         {
           "index": 469,
-          "quote": "Me again at 2163 McArdle Rd"
+          "quote": "Me again at 2163 McArdle Rd, the frozen kitchen pipes is still not fixed, please hurry. 915-555-0198"
         }
       ],
       "explanation": "Same phone number in each message.",
@@ -1621,19 +1167,19 @@
       "evidence": [
         {
           "index": 260,
-          "quote": "Whole street on Baldwin has no water?? 5205 Baldwin Blvd."
+          "quote": "Whole street on Baldwin has no water??"
         },
         {
           "index": 269,
-          "quote": "Whole street on Baldwin has no water?? 755 Baldwin Blvd."
+          "quote": "Whole street on Baldwin has no water??"
         },
         {
           "index": 780,
-          "quote": "Whole street on Baldwin has no water?? 3547 Baldwin Blvd."
+          "quote": "Whole street on Baldwin has no water??"
         }
       ],
       "explanation": "Three different Baldwin Blvd addresses all report the whole street has no water.",
-      "question": "Did your water go out at the same time as others on Baldwin Blvd?",
+      "question": "Are neighbors on Baldwin Blvd also without water this morning?",
       "ask_index": 260,
       "source": "ember",
       "downgraded": null
@@ -1660,7 +1206,7 @@
         },
         {
           "index": 562,
-          "quote": "Whole street on Whiteley has no water?? 1284 Whiteley Dr. nothing from any faucet."
+          "quote": "Whole street on Whiteley has no water?? 1284 Whiteley Dr."
         },
         {
           "index": 645,
@@ -1668,11 +1214,11 @@
         },
         {
           "index": 804,
-          "quote": "Whole street on Whiteley has no water?? 2410 Whiteley Dr. nothing from any faucet."
+          "quote": "Whole street on Whiteley has no water?? 2410 Whiteley Dr."
         }
       ],
-      "explanation": "Different Whiteley Dr homes report no water or pressure around 7am with neighbors or the whole street affected.",
-      "question": "Did your water go out around 7am along with neighbors on Whiteley Dr?",
+      "explanation": "Different Whiteley Dr homes report no water or pressure loss around 7am extending beyond their own home.",
+      "question": "Is the no-water outage also affecting your neighbors on Whiteley Dr?",
       "ask_index": 277,
       "source": "ember",
       "downgraded": null
@@ -1693,16 +1239,16 @@
         },
         {
           "index": 341,
-          "quote": "no tenemos agua desde la mañana en la calle Leopard, 543 Leopard St. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Leopard, 543 Leopard St."
         },
         {
           "index": 651,
-          "quote": "No water since about 7am at 2804 Leopard St. My neighbor says theirs is out too."
+          "quote": "My neighbor says theirs is out too."
         }
       ],
-      "explanation": "All three report a block-wide Leopard St water outage this morning with neighbors also out.",
-      "question": "Did your neighbors on Leopard lose water this morning around 7am too?",
-      "ask_index": 651,
+      "explanation": "All three report no water on Leopard extending beyond their own homes to neighbors/block.",
+      "question": "Is the water still out for your neighbors on Leopard this morning?",
+      "ask_index": 290,
       "source": "ember",
       "downgraded": null
     },
@@ -1721,19 +1267,15 @@
         },
         {
           "index": 373,
-          "quote": "1200 Holly Rd"
-        },
-        {
-          "index": 373,
-          "quote": "they messaged you earlier about the water heater"
-        },
-        {
-          "index": 373,
           "quote": "Calling for my dad Yolanda at 1200 Holly Rd, they messaged you earlier about the water heater."
+        },
+        {
+          "index": 373,
+          "quote": "Calling for my dad Yolanda at 1200 Holly Rd"
         }
       ],
-      "explanation": "Brian explicitly references Yolanda's earlier water heater message at the same 1200 Holly Rd address.",
-      "question": "Is this about the burst water heater at 1200 Holly Rd?",
+      "explanation": "Same address 1200 Holly Rd and explicit reference to earlier water heater message.",
+      "question": "Are you calling about the burst water heater at 1200 Holly Rd?",
       "ask_index": 373,
       "source": "ember",
       "downgraded": null
@@ -1753,11 +1295,11 @@
         },
         {
           "index": 546,
-          "quote": "por lo del falta de calefacción en 1388 Kostoryz"
+          "quote": "por lo del falta de calefacción en 1388 Kostoryz."
         }
       ],
-      "explanation": "Gabe references the lack of heating at the same 1388 Kostoryz address as the earlier no-heat message.",
-      "question": "Is this about the no-heat call at 1388 Kostoryz Rd?",
+      "explanation": "Both messages report no heat at the same address, 1388 Kostoryz.",
+      "question": "Is this about the no-heat problem at 1388 Kostoryz reported earlier?",
       "ask_index": 546,
       "source": "ember",
       "downgraded": null
@@ -1772,31 +1314,31 @@
         668
       ],
       "kind": "shared_cause",
-      "confidence": "possible",
+      "confidence": "likely",
       "evidence": [
         {
           "index": 313,
-          "quote": "Everybody on our block of Alameda lost water this morning. 4763 Alameda St"
+          "quote": "Everybody on our block of Alameda lost water this morning."
         },
         {
           "index": 324,
-          "quote": "Water pressure dropped to nothing at 3049 Alameda St around 6:45, and the house next door is the same."
+          "quote": "the house next door is the same."
         },
         {
           "index": 555,
-          "quote": "no tenemos agua desde la mañana en la calle Alameda, 3451 Alameda St. Mis vecinos tampoco."
+          "quote": "Mis vecinos tampoco."
         },
         {
           "index": 622,
-          "quote": "Whole street on Alameda has no water?? 5491 Alameda St."
+          "quote": "Whole street on Alameda has no water??"
         },
         {
           "index": 668,
-          "quote": "Everybody on our block of Alameda lost water this morning. 4674 Alameda St"
+          "quote": "Everybody on our block of Alameda lost water this morning."
         }
       ],
-      "explanation": "Different Alameda St homes all report no water/pressure this morning and explicitly say neighbors or the whole block/street are affected.",
-      "question": "Did all of these Alameda St homes lose water at the same time this morning from the same street outage?",
+      "explanation": "Different Alameda addresses all report no water extending beyond their own home to neighbors/block/street.",
+      "question": "Did other homes on Alameda lose water at the same time this morning?",
       "ask_index": 313,
       "source": "ember",
       "downgraded": null
@@ -1812,15 +1354,15 @@
       "evidence": [
         {
           "index": 324,
-          "quote": "Water pressure dropped to nothing at 3049 Alameda St around 6:45"
+          "quote": "Water pressure dropped to nothing at 3049 Alameda St around 6:45, and the house next door is the same."
         },
         {
           "index": 882,
-          "quote": "Se congelaron las tuberías y no sale agua. 4502 Alameda St."
+          "quote": "4502 Alameda St."
         }
       ],
-      "explanation": "Both are no-water reports this morning on Alameda St, suggesting a possible street-wide cause despite different house numbers.",
-      "question": "Did your pressure loss at 3049 Alameda St start at the same time as the no-water report from 4502 Alameda St?",
+      "explanation": "Message 5 says the problem extends to the next door on Alameda St, and message 14 reports no water from another home on the same street.",
+      "question": "Is the water loss affecting other homes on Alameda St beyond your next-door neighbor?",
       "ask_index": 324,
       "source": "ember",
       "downgraded": null
@@ -1865,43 +1407,39 @@
         {
           "index": 447,
           "quote": "Michael Miller, Downtown."
+        },
+        {
+          "index": 447,
+          "quote": "El calentador de agua no prende desde que regresó la luz. Michael Miller, Downtown. 956-555-0175"
         }
       ],
-      "explanation": "Luis explicitly follows up for Michael Miller about a water heater, matching Michael Miller's water heater message, though location wording differs.",
-      "question": "Is Michael Miller's water heater on Whiteley the same one in Downtown that won't turn on since the power came back?",
+      "explanation": "Message 6 explicitly follows up for Michael Miller about a water heater, matching message 8's Michael Miller water heater report.",
+      "question": "Is the water heater on Whiteley the same one Michael Miller reported from Downtown?",
       "ask_index": 336,
       "source": "ember",
       "downgraded": null
     },
     {
-      "key": "shared_cause:357,572",
+      "key": "same_job:340,648",
       "indices": [
-        357,
-        572
+        340,
+        648
       ],
-      "kind": "shared_cause",
+      "kind": "same_job",
       "confidence": "possible",
       "evidence": [
         {
-          "index": 357,
-          "quote": "No heat since last night and my dad is 72"
+          "index": 340,
+          "quote": "Heat pump is blowing cold air and the house keeps getting colder. Ana Martin 254-555-0177 Northwest"
         },
         {
-          "index": 357,
-          "quote": "1291 Up River Rd"
-        },
-        {
-          "index": 572,
-          "quote": "No tenemos calefacción desde anoche y mi papá tiene 90 años"
-        },
-        {
-          "index": 572,
-          "quote": "2606 Up River Rd"
+          "index": 648,
+          "quote": "This is Priya, Ana's son, about the heat pump at 1449 Lipes. Any ETA? 432-555-0100"
         }
       ],
-      "explanation": "Both homes on Up River Rd report no heat since last night with an elderly father at home, suggesting a shared cause.",
-      "question": "Is your no-heat outage affecting other Up River Rd homes since last night, or is it only your home?",
-      "ask_index": 357,
+      "explanation": "Priya says he is Ana's son following up on a heat pump, matching Ana Martin's heat pump report, but no address in message 4 confirms the same property.",
+      "question": "Is the heat pump at 1449 Lipes the one Ana Martin reported blowing cold air?",
+      "ask_index": 648,
       "source": "ember",
       "downgraded": null
     },
@@ -1916,23 +1454,19 @@
       "evidence": [
         {
           "index": 359,
-          "quote": "4643 Agnes St"
+          "quote": "4643 Agnes St."
         },
         {
           "index": 485,
-          "quote": "tubo reventado en 4643 Agnes"
-        },
-        {
-          "index": 359,
-          "quote": "4643 Agnes St. Hector Brown 830-555-0117"
+          "quote": "por lo del tubo reventado en 4643 Agnes."
         },
         {
           "index": 485,
-          "quote": "familiar de Hector, por lo del tubo reventado en 4643 Agnes"
+          "quote": "4643 Agnes"
         }
       ],
       "explanation": "Maria says she is Hector's relative asking about the burst pipe at the same 4643 Agnes address as Hector Brown.",
-      "question": "Is this about the burst pipe at 4643 Agnes St?",
+      "question": "Is this about Hector Brown's burst pipe at 4643 Agnes St?",
       "ask_index": 485,
       "source": "ember",
       "downgraded": null
@@ -1956,11 +1490,11 @@
         },
         {
           "index": 379,
-          "quote": "Kitchen pipes frozen, nothing comes out of the faucet. Bathroom still works. 265 Alameda St"
+          "quote": "Kitchen pipes frozen, nothing comes out of the faucet. Bathroom still works. 265 Alameda St Kim Nguyen 956-555-0134"
         }
       ],
-      "explanation": "Ana explicitly says she is calling for her dad Kim at the same 265 Alameda St address who messaged earlier about the frozen kitchen pipes.",
-      "question": "Is this the same frozen kitchen pipe job at 265 Alameda St reported earlier?",
+      "explanation": "Same address 265 Alameda St and Ana explicitly says her dad Kim messaged earlier about the frozen kitchen pipes.",
+      "question": "Are you calling about the frozen kitchen pipes at 265 Alameda St?",
       "ask_index": 655,
       "source": "ember",
       "downgraded": null
@@ -1977,31 +1511,31 @@
       "evidence": [
         {
           "index": 393,
-          "quote": "5228 Carroll Ln"
+          "quote": "5228 Carroll Ln."
         },
         {
           "index": 617,
-          "quote": "5228 Carroll"
+          "quote": "about the water heater at 5228 Carroll"
         },
         {
           "index": 680,
-          "quote": "5228 Carroll"
+          "quote": "por lo del calentador en 5228 Carroll"
         },
         {
           "index": 393,
-          "quote": "Water heater tank burst in the garage, water running out under the door. 5228 Carroll Ln. call 713-555-0119 Yolanda"
+          "quote": "Water heater tank burst in the garage, water running out under the door. 5228 Carroll Ln."
         },
         {
           "index": 617,
-          "quote": "This is Raul, Yolanda's neighbor, about the water heater at 5228 Carroll. Any ETA? 979-555-0198"
+          "quote": "This is Raul, Yolanda's neighbor, about the water heater at 5228 Carroll."
         },
         {
           "index": 680,
-          "quote": "Soy Andre, familiar de Yolanda, por lo del calentador en 5228 Carroll. ¿A qué hora vienen? 254-555-0125"
+          "quote": "Soy Andre, familiar de Yolanda, por lo del calentador en 5228 Carroll."
         }
       ],
-      "explanation": "Raul and Andre both reference Yolanda's water heater job at the same 5228 Carroll address as message 9.",
-      "question": "Is this about the burst water heater at 5228 Carroll Ln?",
+      "explanation": "All reference Yolanda's water heater at the same address 5228 Carroll.",
+      "question": "Are you asking about Yolanda's burst water heater at 5228 Carroll Ln.?",
       "ask_index": 617,
       "source": "ember",
       "downgraded": null
@@ -2013,7 +1547,7 @@
         625
       ],
       "kind": "same_job",
-      "confidence": "likely",
+      "confidence": "possible",
       "evidence": [
         {
           "index": 394,
@@ -2024,8 +1558,8 @@
           "quote": "Following up for Carmen Guerra about the heat pump on Lipes, nobody has called back yet. Omar 915-555-0143"
         }
       ],
-      "explanation": "Message 16 explicitly follows up for Carmen Guerra about the heat pump reported in message 10.",
-      "question": "Is this follow-up for the Carmen Guerra heat pump reported from Robstown earlier?",
+      "explanation": "Both messages name Carmen Guerra and the heat pump, and message 16 explicitly says it is following up.",
+      "question": "Is Omar's follow-up about the same Carmen Guerra heat pump reported from Robstown this morning?",
       "ask_index": 625,
       "source": "ember",
       "downgraded": null
@@ -2080,50 +1614,9 @@
           "quote": "about the split pipe at 3639 Ocean"
         }
       ],
-      "explanation": "Gloria as Rosa's son follows up on the split pipe at the same 3639 Ocean address.",
-      "question": "Is 3639 Ocean the address Rosa Jones reported for the frozen split pipe?",
+      "explanation": "Gloria follows up as Rosa's son about the split pipe at the same 3639 Ocean address Rosa Jones reported.",
+      "question": "Is the split pipe at 3639 Ocean Dr the same one Rosa Jones reported?",
       "ask_index": 606,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:411,561,858",
-      "indices": [
-        411,
-        561,
-        858
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 411,
-          "quote": "5142 Airline Rd"
-        },
-        {
-          "index": 411,
-          "quote": "no water pressure since the freeze"
-        },
-        {
-          "index": 561,
-          "quote": "4326 Airline Rd"
-        },
-        {
-          "index": 561,
-          "quote": "no sale agua"
-        },
-        {
-          "index": 858,
-          "quote": "866 Airline Rd"
-        },
-        {
-          "index": 858,
-          "quote": "No water at all this morning"
-        }
-      ],
-      "explanation": "Three different Airline Rd homes report no water/pressure after freezing this morning, suggesting a possible street-wide outage.",
-      "question": "Are other homes on Airline Rd also without water this morning since the freeze?",
-      "ask_index": 411,
       "source": "ember",
       "downgraded": null
     },
@@ -2150,36 +1643,12 @@
         },
         {
           "index": 612,
-          "quote": "This is Tina, Michael's son, about the split pipe at 776 Laguna."
+          "quote": "Michael's son, about the split pipe at 776 Laguna"
         }
       ],
-      "explanation": "Same address and same split pipe problem, with Tina identifying as Michael's son.",
+      "explanation": "Both describe a split pipe at 776 Laguna, with Tina identifying as Michael's son.",
       "question": "Is this about the frozen pipe split under the kitchen sink at 776 Laguna Dr?",
       "ask_index": 612,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:421,619",
-      "indices": [
-        421,
-        619
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 421,
-          "quote": "No water at all this morning, I think the pipes froze. 1660 Sunnybrook Rd. 713-555-0199 Lucia"
-        },
-        {
-          "index": 619,
-          "quote": "No water at all this morning, I think the pipes froze. 141 Sunnybrook Rd. 830-555-0138 Victor"
-        }
-      ],
-      "explanation": "Two different Sunnybrook Rd homes report no water at all this morning from frozen pipes, suggesting a possible street-wide freeze cause.",
-      "question": "Did your water go out this morning at the same time as the other Sunnybrook Rd homes reporting no water this morning from frozen pipes?",
-      "ask_index": 421,
       "source": "ember",
       "downgraded": null
     },
@@ -2199,6 +1668,14 @@
         },
         {
           "index": 706,
+          "quote": "about the pipe in the attic at 5871 Tiger"
+        },
+        {
+          "index": 709,
+          "quote": "about the pipe in the attic at 5871 Tiger"
+        },
+        {
+          "index": 706,
           "quote": "5871 Tiger"
         },
         {
@@ -2206,8 +1683,8 @@
           "quote": "5871 Tiger"
         }
       ],
-      "explanation": "All three reference the pipe in the attic at 5871 Tiger, indicating the same property/job.",
-      "question": "Is this about the burst attic pipe at 5871 Tiger Ln?",
+      "explanation": "All three reference the same attic pipe at 5871 Tiger, with Marcus and Ana identifying as Linda's daughter and neighbor.",
+      "question": "Are you following up on Linda's burst attic pipe at 5871 Tiger Ln?",
       "ask_index": 706,
       "source": "ember",
       "downgraded": null
@@ -2223,23 +1700,19 @@
       "evidence": [
         {
           "index": 432,
-          "quote": "Eric, 4746 Mesquite St, 979-555-0174"
+          "quote": "4746 Mesquite St"
         },
         {
           "index": 628,
           "quote": "por lo del tubo partido en 4746 Mesquite"
         },
         {
-          "index": 432,
-          "quote": "4746 Mesquite St"
-        },
-        {
           "index": 628,
           "quote": "familiar de Eric, por lo del tubo partido en 4746 Mesquite"
         }
       ],
-      "explanation": "Ken explicitly references Eric's split pipe at the same 4746 Mesquite address.",
-      "question": "Are you calling about the split pipe under the kitchen sink at 4746 Mesquite St?",
+      "explanation": "Ken says he is Eric's relative about the split pipe at the same Mesquite address as Eric's message.",
+      "question": "Are you calling about Eric's split pipe at 4746 Mesquite St?",
       "ask_index": 628,
       "source": "ember",
       "downgraded": null
@@ -2269,64 +1742,6 @@
       "downgraded": null
     },
     {
-      "key": "shared_cause:442,681,710,892",
-      "indices": [
-        442,
-        681,
-        710,
-        892
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 442,
-          "quote": "No water at all this morning, I think the pipes froze."
-        },
-        {
-          "index": 681,
-          "quote": "No water at all this morning, I think the pipes froze."
-        },
-        {
-          "index": 710,
-          "quote": "No water at all this morning, I think the pipes froze."
-        },
-        {
-          "index": 892,
-          "quote": "No water at all this morning, I think the pipes froze."
-        }
-      ],
-      "explanation": "Four different Brawner Pkwy homes report total water loss this morning, suggesting a shared street-level cause.",
-      "question": "Did other homes on Brawner Pkwy also lose all water this morning?",
-      "ask_index": 442,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:447,923",
-      "indices": [
-        447,
-        923
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 447,
-          "quote": "El calentador de agua no prende desde que regresó la luz."
-        },
-        {
-          "index": 923,
-          "quote": "El calentador de agua no prende desde que regresó la luz."
-        }
-      ],
-      "explanation": "Both different properties report the identical unusual timing: water heater not turning on since the power returned.",
-      "question": "Did your water heater stop working right after the power came back?",
-      "ask_index": 447,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
       "key": "shared_cause:458,521,545,751,893",
       "indices": [
         458,
@@ -2340,27 +1755,27 @@
       "evidence": [
         {
           "index": 458,
-          "quote": "no tenemos agua desde la mañana en la calle Williams, 4100 Williams Dr. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Williams"
         },
         {
           "index": 521,
-          "quote": "Everybody on our block of Williams lost water this morning. 318 Williams Dr"
+          "quote": "Everybody on our block of Williams lost water this morning."
         },
         {
           "index": 545,
-          "quote": "No water since about 5:30 at 1196 Williams Dr. My neighbor says theirs is out too."
+          "quote": "My neighbor says theirs is out too. Is it the city?"
         },
         {
           "index": 751,
-          "quote": "Everybody on our block of Williams lost water this morning. 2819 Williams Dr"
+          "quote": "Everybody on our block of Williams lost water this morning."
         },
         {
           "index": 893,
-          "quote": "no tenemos agua desde la mañana en la calle Williams, 3249 Williams Dr. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Williams"
         }
       ],
-      "explanation": "Different Williams Dr homes all report no water this morning with neighbors also out, indicating one street-wide outage.",
-      "question": "Is the water outage affecting your whole block on Williams Dr this morning?",
+      "explanation": "All report no water on Williams with neighbors/block also out, indicating a street-wide supply outage.",
+      "question": "Has the city reported a water outage on Williams affecting your neighbors?",
       "ask_index": 458,
       "source": "ember",
       "downgraded": null
@@ -2392,7 +1807,7 @@
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 4953 Ocean Dr reported earlier today?",
+      "question": "Is this a follow-up to Amy Hernandez's split pipe at 4953 Ocean Dr?",
       "ask_index": 718,
       "source": "code",
       "downgraded": null
@@ -2411,13 +1826,21 @@
           "quote": "1518 Whiteley Dr"
         },
         {
+          "index": 467,
+          "quote": "Toilet won't fill and there's no water pressure since the freeze."
+        },
+        {
+          "index": 804,
+          "quote": "Whole street on Whiteley has no water??"
+        },
+        {
           "index": 804,
           "quote": "2410 Whiteley Dr"
         }
       ],
-      "explanation": "Both messages report no water pressure/water on Whiteley Dr at different addresses on the same street, suggesting a shared street-wide cause.",
-      "question": "Is the lack of water on Whiteley Dr affecting homes across the street, including around 1518 Whiteley Dr?",
-      "ask_index": 804,
+      "explanation": "Both are on Whiteley Dr and message 13 says the whole street has no water, matching message 6's no-pressure problem.",
+      "question": "Is your Whiteley Dr water-pressure loss part of the whole-street outage on Whiteley?",
+      "ask_index": 467,
       "source": "ember",
       "downgraded": null
     },
@@ -2433,31 +1856,27 @@
       "evidence": [
         {
           "index": 472,
-          "quote": "4314 Yorktown Blvd"
-        },
-        {
-          "index": 748,
-          "quote": "at 4314 Yorktown"
-        },
-        {
-          "index": 792,
-          "quote": "at 4314 Yorktown Blvd"
-        },
-        {
-          "index": 472,
           "quote": "Monica at 4314 Yorktown Blvd, 956-555-0116"
         },
         {
           "index": 748,
-          "quote": "about the no water pressure at 4314 Yorktown."
+          "quote": "about the no water pressure at 4314 Yorktown"
         },
         {
           "index": 792,
           "quote": "Calling for my sister Monica at 4314 Yorktown Blvd, they messaged you earlier about the no water pressure."
+        },
+        {
+          "index": 472,
+          "quote": "Monica at 4314 Yorktown Blvd"
+        },
+        {
+          "index": 792,
+          "quote": "Calling for my sister Monica at 4314 Yorktown Blvd"
         }
       ],
-      "explanation": "All three cite 4314 Yorktown and the same no water pressure issue, with family follow-ups.",
-      "question": "Is the no water pressure at 4314 Yorktown Blvd your property?",
+      "explanation": "All three cite 4314 Yorktown and the same no-water-pressure problem, with family/explicit follow-up references.",
+      "question": "Are you all reporting the same no-water-pressure issue at 4314 Yorktown Blvd?",
       "ask_index": 472,
       "source": "ember",
       "downgraded": null
@@ -2473,11 +1892,15 @@
       "evidence": [
         {
           "index": 486,
+          "quote": "Frozen pipe split under the kitchen sink"
+        },
+        {
+          "index": 486,
           "quote": "4507 Sunnybrook Rd"
         },
         {
           "index": 750,
-          "quote": "4507 Sunnybrook"
+          "quote": "familiar de Juan, por lo del tubo partido en 4507 Sunnybrook"
         },
         {
           "index": 486,
@@ -2488,8 +1911,8 @@
           "quote": "Soy Yolanda, familiar de Juan, por lo del tubo partido en 4507 Sunnybrook. ¿A qué hora vienen? 956-555-0119"
         }
       ],
-      "explanation": "Yolanda says she is Juan's relative asking about the burst pipe at the same 4507 Sunnybrook address as Juan Ortiz's split pipe.",
-      "question": "Are you calling about Juan Ortiz's split pipe under the kitchen sink at 4507 Sunnybrook Rd?",
+      "explanation": "Yolanda says she is Juan's relative about the split pipe at the same Sunnybrook address as Juan Ortiz.",
+      "question": "Are you asking about Juan Ortiz's split kitchen pipe at 4507 Sunnybrook Rd?",
       "ask_index": 750,
       "source": "ember",
       "downgraded": null
@@ -2513,15 +1936,15 @@
         },
         {
           "index": 510,
-          "quote": "3691 Saratoga Blvd, 512-555-0182"
+          "quote": "3691 Saratoga Blvd"
         },
         {
           "index": 662,
-          "quote": "Me again at 3691 Saratoga Blvd, the split pipe is still not fixed, please hurry. 512-555-0182"
+          "quote": "Me again at 3691 Saratoga Blvd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 3691 Saratoga Blvd you reported earlier today?",
+      "question": "Is this the same split pipe at 3691 Saratoga Blvd from your earlier message?",
       "ask_index": 662,
       "source": "code",
       "downgraded": null
@@ -2591,7 +2014,7 @@
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 5639 Cimarron Blvd from your earlier message?",
+      "question": "Is this the same split pipe at 5639 Cimarron Blvd from your earlier message today?",
       "ask_index": 663,
       "source": "code",
       "downgraded": null
@@ -2612,35 +2035,27 @@
         },
         {
           "index": 604,
-          "quote": "4278 Ayers St"
-        },
-        {
-          "index": 604,
-          "quote": "they messaged you earlier about the pipe in the attic"
+          "quote": "Calling for my dad Gloria at 4278 Ayers St, they messaged you earlier about the pipe in the attic."
         },
         {
           "index": 814,
-          "quote": "4278 Ayers St"
-        },
-        {
-          "index": 814,
-          "quote": "they messaged you earlier about the pipe in the attic"
+          "quote": "Calling for my dad Gloria at 4278 Ayers St, they messaged you earlier about the pipe in the attic."
         },
         {
           "index": 517,
-          "quote": "HELP water pouring through the ceiling, a pipe in the attic must have burst. 4278 Ayers St, Southside. Gloria Reyes 979-555-0103"
+          "quote": "4278 Ayers St, Southside. Gloria Reyes"
         },
         {
           "index": 604,
-          "quote": "Calling for my dad Gloria at 4278 Ayers St, they messaged you earlier about the pipe in the attic."
+          "quote": "Calling for my dad Gloria at 4278 Ayers St"
         },
         {
           "index": 814,
-          "quote": "Calling for my dad Gloria at 4278 Ayers St, they messaged you earlier about the pipe in the attic."
+          "quote": "Calling for my dad Gloria at 4278 Ayers St"
         }
       ],
-      "explanation": "All three reference the same address and attic pipe, with 10 and 17 explicitly saying they messaged earlier.",
-      "question": "Is this about the burst attic pipe at 4278 Ayers St reported by Gloria Reyes?",
+      "explanation": "All three cite the same address and attic pipe, with 10 and 17 explicitly referencing the earlier message.",
+      "question": "Are you calling about Gloria Reyes's burst attic pipe at 4278 Ayers St?",
       "ask_index": 604,
       "source": "ember",
       "downgraded": null
@@ -2681,20 +2096,20 @@
       "evidence": [
         {
           "index": 520,
-          "quote": "Pipe burst in the kitchen, water spraying everywhere and I can't find the shut off. 5102 Alameda St."
+          "quote": "Pipe burst in the kitchen, water spraying everywhere and I can't find the shut off. 5102 Alameda St. David Sanchez 830-555-0140"
         },
         {
           "index": 578,
-          "quote": "Me again at 5102 Alameda St, the burst pipe is still not fixed, please hurry."
+          "quote": "Me again at 5102 Alameda St, the burst pipe is still not fixed, please hurry. 830-555-0140"
         },
         {
           "index": 595,
           "quote": "Calling for my mom David at 5102 Alameda St, they messaged you earlier about the burst pipe."
         }
       ],
-      "explanation": "Same address, same phone for 13 and 15, and Sandra explicitly references David's earlier burst-pipe message at that address.",
-      "question": "Is Sandra calling about the same burst pipe at 5102 Alameda St that David Sanchez reported?",
-      "ask_index": 520,
+      "explanation": "Same address, same phone, and explicit follow-up about the same burst pipe at 5102 Alameda St.",
+      "question": "Are you following up on David Sanchez's burst kitchen pipe at 5102 Alameda St?",
+      "ask_index": 578,
       "source": "ember",
       "downgraded": null
     },
@@ -2709,19 +2124,15 @@
       "evidence": [
         {
           "index": 520,
-          "quote": "5102 Alameda St"
+          "quote": "5102 Alameda St. David Sanchez 830-555-0140"
         },
         {
           "index": 595,
-          "quote": "5102 Alameda St"
-        },
-        {
-          "index": 595,
-          "quote": "they messaged you earlier about the burst pipe"
+          "quote": "Calling for my mom David at 5102 Alameda St, they messaged you earlier about the burst pipe. I'm Sandra, 281-555-0183"
         }
       ],
-      "explanation": "Message 10 gives the same address as message 8 and explicitly says they messaged earlier about the burst pipe.",
-      "question": "Is this about the burst pipe at 5102 Alameda St reported earlier today?",
+      "explanation": "Both messages give the same address 5102 Alameda St and the second explicitly references the earlier burst pipe message.",
+      "question": "Is this the same burst pipe at 5102 Alameda St reported earlier today?",
       "ask_index": 595,
       "source": "ember",
       "downgraded": null
@@ -2741,41 +2152,21 @@
           "quote": "no tenemos agua desde la mañana en la calle Pharaoh"
         },
         {
+          "index": 531,
+          "quote": "Mis vecinos tampoco"
+        },
+        {
           "index": 536,
-          "quote": "Water pressure dropped to nothing at 2822 Pharaoh Dr around 6:15"
+          "quote": "Water pressure dropped to nothing at 2822 Pharaoh Dr around 6:15, and the house next door is the same."
         },
         {
           "index": 807,
-          "quote": "Water pressure dropped to nothing at 3979 Pharaoh Dr around 6:15"
+          "quote": "Water pressure dropped to nothing at 3979 Pharaoh Dr around 6:15, and the house next door is the same."
         }
       ],
-      "explanation": "Different Pharaoh Dr homes lost water/pressure this morning around 6:15, with neighbors also affected.",
-      "question": "Did your water pressure drop around 6:15 this morning like others on Pharaoh Dr?",
+      "explanation": "Different Pharaoh Dr homes report no water/pressure this morning with neighbors also affected, at the same time.",
+      "question": "Did other homes on Pharaoh Dr also lose water pressure around 6:15 this morning?",
       "ask_index": 536,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:537,611",
-      "indices": [
-        537,
-        611
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 537,
-          "quote": "Frozen pipe split under the kitchen sink, water all over the floor. Turned the main off but need someone today. Carmen Reyes, 686 Glenoak Dr, 361-555-0166"
-        },
-        {
-          "index": 611,
-          "quote": "Se congelaron las tuberías y no sale agua. 1598 Glenoak Dr. Carmen White 210-555-0118"
-        }
-      ],
-      "explanation": "Both homes are on Glenoak Dr with frozen pipes and no water this morning, suggesting a shared street freeze.",
-      "question": "Did the frozen pipes on Glenoak Dr start at the same time at both homes?",
-      "ask_index": 537,
       "source": "ember",
       "downgraded": null
     },
@@ -2798,15 +2189,15 @@
         },
         {
           "index": 554,
-          "quote": "2209 Lipes Blvd"
+          "quote": "2209 Lipes Blvd."
         },
         {
           "index": 660,
-          "quote": "2209 Lipes Blvd"
+          "quote": "Me again at 2209 Lipes Blvd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same water heater at 2209 Lipes Blvd you called about earlier?",
+      "question": "Is this the same burst water heater at 2209 Lipes Blvd reported by Monica?",
       "ask_index": 660,
       "source": "code",
       "downgraded": null
@@ -2822,15 +2213,15 @@
       "evidence": [
         {
           "index": 562,
-          "quote": "Whole street on Whiteley has no water?? 1284 Whiteley Dr."
+          "quote": "Whole street on Whiteley has no water??"
         },
         {
           "index": 804,
-          "quote": "Whole street on Whiteley has no water?? 2410 Whiteley Dr."
+          "quote": "Whole street on Whiteley has no water??"
         }
       ],
       "explanation": "Two different Whiteley Dr addresses both report the whole street has no water.",
-      "question": "Did your water go out at the same time as others on Whiteley Dr?",
+      "question": "Are neighbors on Whiteley Dr also without water this morning?",
       "ask_index": 562,
       "source": "ember",
       "downgraded": null
@@ -2853,12 +2244,12 @@
           "quote": "Calling for my sister Arturo at 1683 Yorktown Blvd, they messaged you earlier about the burst pipe."
         },
         {
-          "index": 568,
-          "quote": "1683 Yorktown Blvd, Downtown."
+          "index": 687,
+          "quote": "Calling for my sister Arturo at 1683 Yorktown Blvd"
         }
       ],
-      "explanation": "Same address and explicit reference to earlier burst pipe message for sister Arturo.",
-      "question": "Is this the same burst pipe at 1683 Yorktown Blvd reported earlier today?",
+      "explanation": "Beth is calling about the same burst pipe at the same address Arturo reported earlier.",
+      "question": "Is this the same burst pipe at 1683 Yorktown Blvd reported earlier?",
       "ask_index": 687,
       "source": "ember",
       "downgraded": null
@@ -2882,15 +2273,15 @@
         },
         {
           "index": 571,
-          "quote": "2750 Kingston Dr. Yolanda Flores 956-555-0170"
+          "quote": "Pipe burst in the kitchen, water spraying everywhere and I can't find the shut off. 2750 Kingston Dr. Yolanda Flores 956-555-0170"
         },
         {
           "index": 672,
-          "quote": "Me again at 2750 Kingston Dr"
+          "quote": "Me again at 2750 Kingston Dr, the burst pipe is still not fixed, please hurry. 956-555-0170"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same burst pipe at 2750 Kingston Dr from the earlier message?",
+      "question": "Is this the same burst pipe at 2750 Kingston Dr reported earlier today?",
       "ask_index": 672,
       "source": "code",
       "downgraded": null
@@ -2913,12 +2304,16 @@
           "quote": "about the frozen pipes at 248 Flynn"
         },
         {
+          "index": 579,
+          "quote": "No water at all this morning, I think the pipes froze. 248 Flynn Pkwy."
+        },
+        {
           "index": 775,
-          "quote": "Eric's wife, about the frozen pipes at 248 Flynn"
+          "quote": "This is Yolanda, Eric's wife, about the frozen pipes at 248 Flynn. Any ETA? 979-555-0114"
         }
       ],
-      "explanation": "Yolanda, Eric's wife, follows up on the frozen pipes at the same 248 Flynn address.",
-      "question": "Is this about the no-water frozen pipes at 248 Flynn Pkwy?",
+      "explanation": "Yolanda identifies as Eric's wife about frozen pipes at the same Flynn address as Eric's message.",
+      "question": "Are you Eric's wife calling about the frozen pipes at 248 Flynn?",
       "ask_index": 775,
       "source": "ember",
       "downgraded": null
@@ -2934,22 +2329,14 @@
       "evidence": [
         {
           "index": 580,
-          "quote": "5177 Gollihar Rd"
+          "quote": "5177 Gollihar Rd. Elena White 713-555-0106"
         },
         {
           "index": 640,
-          "quote": "5177 Gollihar"
-        },
-        {
-          "index": 580,
-          "quote": "Se congelaron las tuberías y no sale agua. 5177 Gollihar Rd"
-        },
-        {
-          "index": 640,
-          "quote": "familiar de Elena, por lo del tuberías congeladas en 5177 Gollihar"
+          "quote": "familiar de Elena, por lo del tuberías congeladas en 5177 Gollihar."
         }
       ],
-      "explanation": "Monica says she is Elena's relative and asks about the frozen pipes at the same address Elena White gave.",
+      "explanation": "Monica says she is Elena's relative asking about the frozen pipes at the same 5177 Gollihar address as Elena White.",
       "question": "Are you calling about Elena White's frozen pipes at 5177 Gollihar Rd?",
       "ask_index": 640,
       "source": "ember",
@@ -2990,15 +2377,23 @@
       "evidence": [
         {
           "index": 583,
+          "quote": "4050 Holly Rd. Andre Diaz 979-555-0135"
+        },
+        {
+          "index": 759,
+          "quote": "at 4050 Holly Rd, they messaged you earlier about the frozen pipes"
+        },
+        {
+          "index": 583,
           "quote": "4050 Holly Rd"
         },
         {
           "index": 759,
-          "quote": "Calling for my brother Andre at 4050 Holly Rd, they messaged you earlier about the frozen pipes."
+          "quote": "Calling for my brother Andre at 4050 Holly Rd"
         }
       ],
-      "explanation": "Same address 4050 Holly Rd and Diana explicitly references Andre's earlier frozen-pipes message.",
-      "question": "Are you calling about the frozen pipes at 4050 Holly Rd that Andre Diaz reported earlier?",
+      "explanation": "Diana says she is calling for her brother Andre at the same address and references the earlier frozen-pipes message.",
+      "question": "Is this about Andre Diaz's frozen pipes at 4050 Holly Rd?",
       "ask_index": 759,
       "source": "ember",
       "downgraded": null
@@ -3045,8 +2440,8 @@
           "quote": "This is Monica, Carlos's son, about the split pipe at 4558 Carroll. Any ETA? 956-555-0128"
         }
       ],
-      "explanation": "Same split pipe at the same address 4558 Carroll, with Monica writing as Carlos's son about Carlos's job.",
-      "question": "Is this about the split pipe under the kitchen sink at 4558 Carroll Ln?",
+      "explanation": "Same address 4558 Carroll and same split pipe, with Monica identifying as Carlos's son following up.",
+      "question": "Is the split pipe at 4558 Carroll the kitchen sink pipe reported this morning?",
       "ask_index": 749,
       "source": "ember",
       "downgraded": null
@@ -3067,16 +2462,16 @@
         },
         {
           "index": 749,
-          "quote": "This is Monica, Carlos's son, about the split pipe at 4558 Carroll. Any ETA? 956-555-0128"
+          "quote": "This is Monica, Carlos's son, about the split pipe at 4558 Carroll."
         },
         {
           "index": 886,
           "quote": "Me again at 4558 Carroll Ln, the split pipe is still not fixed, please hurry. 210-555-0187"
         }
       ],
-      "explanation": "Same address 4558 Carroll, same split pipe, Carlos reference and same phone for Carlos.",
-      "question": "Is the split pipe at 4558 Carroll Ln the same job Carlos reported?",
-      "ask_index": 593,
+      "explanation": "All three reference the same split pipe at 4558 Carroll, with matching phone and explicit follow-up.",
+      "question": "Is this about Carlos's split pipe at 4558 Carroll?",
+      "ask_index": 749,
       "source": "ember",
       "downgraded": null
     },
@@ -3130,8 +2525,8 @@
           "quote": "Following up for Eric Okafor about the water heater on Purdue, nobody has called back yet."
         }
       ],
-      "explanation": "Both messages are identical follow-ups for Eric Okafor's Purdue water heater.",
-      "question": "Is this the same Purdue water heater follow-up for Eric Okafor as the other message?",
+      "explanation": "Both messages explicitly follow up for Eric Okafor about the same water heater on Purdue.",
+      "question": "Are you following up on Eric Okafor's water heater on Purdue?",
       "ask_index": 658,
       "source": "ember",
       "downgraded": "code found no shared phone, house number + street, or full name"
@@ -3147,23 +2542,19 @@
       "evidence": [
         {
           "index": 598,
-          "quote": "5281 Staples St"
+          "quote": "Pipe burst in the utility closet, water spraying everywhere and I can't find the shut off. 5281 Staples St. Debbie 281-555-0154"
         },
         {
           "index": 803,
-          "quote": "5281 Staples"
-        },
-        {
-          "index": 598,
-          "quote": "Pipe burst in the utility closet, water spraying everywhere and I can't find the shut off. 5281 Staples St. Debbie 281-555-0154"
+          "quote": "Soy Alma, familiar de Debbie, por lo del tubo reventado en 5281 Staples. ¿A qué hora vienen? 830-555-0175"
         },
         {
           "index": 803,
           "quote": "Soy Alma, familiar de Debbie, por lo del tubo reventado en 5281 Staples."
         }
       ],
-      "explanation": "Both report a burst pipe at the same 5281 Staples address, with Alma identifying as Debbie's relative.",
-      "question": "Is this about the burst pipe at 5281 Staples St?",
+      "explanation": "Both report the same burst pipe at 5281 Staples, with Alma identifying as Debbie's relative following up.",
+      "question": "Is the burst pipe at 5281 Staples the same utility closet leak Debbie reported?",
       "ask_index": 803,
       "source": "ember",
       "downgraded": null
@@ -3186,33 +2577,9 @@
           "quote": "5782 Tiger"
         }
       ],
-      "explanation": "Both messages report no heat at the same address, 5782 Tiger.",
-      "question": "Is this no-heat call about the same home at 5782 Tiger Ln as the earlier call?",
+      "explanation": "Both reference the no-heat problem at the same 5782 Tiger address.",
+      "question": "Is this follow-up about the no-heat problem at 5782 Tiger Ln?",
       "ask_index": 652,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "same_job:607,614",
-      "indices": [
-        607,
-        614
-      ],
-      "kind": "same_job",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 607,
-          "quote": "Water heater tank burst in the garage, water running out under the door."
-        },
-        {
-          "index": 614,
-          "quote": "Water heater tank burst in the garage, water running out under the door."
-        }
-      ],
-      "explanation": "Both messages are from Ernesto with the identical burst-water-heater description, though they list different addresses and phones.",
-      "question": "Ernesto, are these two reports for the same burst water heater at one property?",
-      "ask_index": 607,
       "source": "ember",
       "downgraded": null
     },
@@ -3241,6 +2608,30 @@
       "downgraded": null
     },
     {
+      "key": "shared_cause:608,908",
+      "indices": [
+        608,
+        908
+      ],
+      "kind": "shared_cause",
+      "confidence": "possible",
+      "evidence": [
+        {
+          "index": 608,
+          "quote": "Water pressure dropped to nothing at 3559 Purdue Rd around 6am, and the house next door is the same."
+        },
+        {
+          "index": 908,
+          "quote": "Water pressure dropped to nothing at 5144 Purdue Rd around 6am, and the house next door is the same."
+        }
+      ],
+      "explanation": "Both on Purdue Rd report pressure dropping to nothing around 6am with the next-door house the same.",
+      "question": "Is the house next door on Purdue Rd also at zero pressure since around 6am?",
+      "ask_index": 608,
+      "source": "ember",
+      "downgraded": null
+    },
+    {
       "key": "same_job:616,868",
       "indices": [
         616,
@@ -3251,23 +2642,23 @@
       "evidence": [
         {
           "index": 616,
+          "quote": "5192 Waldron Rd."
+        },
+        {
+          "index": 868,
+          "quote": "en 5192 Waldron"
+        },
+        {
+          "index": 616,
           "quote": "5192 Waldron Rd. call 210-555-0149 Omar"
         },
         {
           "index": 868,
-          "quote": "por lo del calentador en 5192 Waldron"
-        },
-        {
-          "index": 616,
-          "quote": "Water heater tank burst in the garage, water running out under the door. 5192 Waldron Rd."
-        },
-        {
-          "index": 868,
-          "quote": "Soy Debbie, familiar de Omar, por lo del calentador en 5192 Waldron. ¿A qué hora vienen?"
+          "quote": "Soy Debbie, familiar de Omar, por lo del calentador en 5192 Waldron."
         }
       ],
-      "explanation": "Debbie, a relative of Omar, follows up about the water heater at the same 5192 Waldron address as Omar's burst tank.",
-      "question": "Is this about the same burst water heater at 5192 Waldron Rd reported by Omar?",
+      "explanation": "Both messages reference the same water heater problem at 5192 Waldron Rd, with Debbie identifying as Omar's relative.",
+      "question": "Is this about the burst water heater at 5192 Waldron Rd?",
       "ask_index": 868,
       "source": "ember",
       "downgraded": null
@@ -3291,15 +2682,15 @@
         },
         {
           "index": 618,
-          "quote": "1768 Weber Rd 512-555-0172 - Raul"
+          "quote": "1768 Weber Rd"
         },
         {
           "index": 741,
-          "quote": "Me again at 1768 Weber Rd, the no heat is still not fixed, please hurry. 512-555-0172"
+          "quote": "Me again at 1768 Weber Rd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this a follow-up to your earlier no-heat message at 1768 Weber Rd?",
+      "question": "Are you following up on the no-heat call for 1768 Weber Rd?",
       "ask_index": 741,
       "source": "code",
       "downgraded": null
@@ -3339,23 +2730,23 @@
       "evidence": [
         {
           "index": 635,
-          "quote": "1469 Navigation Blvd. Maria Guerra 361-555-0161"
-        },
-        {
-          "index": 932,
-          "quote": "Calling for my mom Maria at 1469 Navigation Blvd, they messaged you earlier about the frozen pipes."
-        },
-        {
-          "index": 635,
           "quote": "Se congelaron las tuberías y no sale agua. 1469 Navigation Blvd. Maria Guerra 361-555-0161"
         },
         {
           "index": 932,
           "quote": "Calling for my mom Maria at 1469 Navigation Blvd, they messaged you earlier about the frozen pipes. I'm Yolanda, 281-555-0169"
+        },
+        {
+          "index": 635,
+          "quote": "1469 Navigation Blvd. Maria Guerra 361-555-0161"
+        },
+        {
+          "index": 932,
+          "quote": "Calling for my mom Maria at 1469 Navigation Blvd, they messaged you earlier about the frozen pipes."
         }
       ],
-      "explanation": "Yolanda says she is calling for her mom Maria at the same address who messaged earlier about the frozen pipes.",
-      "question": "Is this about the frozen pipes at 1469 Navigation Blvd reported earlier today?",
+      "explanation": "Same address and Yolanda explicitly says her mom Maria messaged earlier about the frozen pipes.",
+      "question": "Are you calling about Maria Guerra's frozen pipes at 1469 Navigation Blvd?",
       "ask_index": 932,
       "source": "ember",
       "downgraded": null
@@ -3383,11 +2774,11 @@
         },
         {
           "index": 866,
-          "quote": "Me again at 2233 Kostoryz Rd, the split pipe is still not fixed, please hurry. 409-555-0118"
+          "quote": "Me again at 2233 Kostoryz Rd, the split pipe is still not fixed, please hurry."
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 2233 Kostoryz Rd from Tina's earlier call?",
+      "question": "Is this a follow-up to Tina's split pipe at 2233 Kostoryz?",
       "ask_index": 866,
       "source": "code",
       "downgraded": null
@@ -3466,8 +2857,8 @@
           "quote": "Calling for my brother Sandra at 1632 Whiteley Dr, they messaged you earlier about the water heater."
         }
       ],
-      "explanation": "Both reference Sandra's water heater at the same address 1632 Whiteley Dr.",
-      "question": "Is Michael calling about the burst water heater at 1632 Whiteley Dr?",
+      "explanation": "Both reference Sandra's water heater at the same address 1632 Whiteley Dr, with an explicit earlier-message reference.",
+      "question": "Is this about the burst water heater at 1632 Whiteley Dr?",
       "ask_index": 819,
       "source": "ember",
       "downgraded": null
@@ -3507,15 +2898,15 @@
       "evidence": [
         {
           "index": 694,
-          "quote": "2732 McArdle Rd"
+          "quote": "No tenemos calefacción desde anoche y mi abuela tiene 88 años. Hace mucho frío en la casa. 2732 McArdle Rd. 432-555-0113"
         },
         {
           "index": 820,
-          "quote": "at 2732 McArdle Rd, they messaged you earlier about the no heat"
+          "quote": "Calling for my dad Jen at 2732 McArdle Rd, they messaged you earlier about the no heat. I'm Alma, 409-555-0187"
         }
       ],
-      "explanation": "Same address and explicit reference to an earlier no-heat message for the same home.",
-      "question": "Is Jen at 2732 McArdle Rd the person who messaged earlier about the no heat?",
+      "explanation": "Same address and explicit reference to an earlier no-heat message for that home.",
+      "question": "Is Jen at 2732 McArdle Rd the same no-heat case reported earlier today?",
       "ask_index": 820,
       "source": "ember",
       "downgraded": null
@@ -3539,41 +2930,17 @@
         },
         {
           "index": 696,
-          "quote": "2818 Kingston Dr, Southside. Marcus Wilson 915-555-0167"
+          "quote": "Se reventó un tubo en el cuarto de lavado y sale agua por todos lados. 2818 Kingston Dr, Southside. Marcus Wilson 915-555-0167"
         },
         {
           "index": 941,
-          "quote": "Me again at 2818 Kingston Dr"
+          "quote": "Me again at 2818 Kingston Dr, the burst pipe is still not fixed, please hurry. 915-555-0167"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same burst pipe at 2818 Kingston Dr from the earlier message?",
+      "question": "Is this the same burst pipe at 2818 Kingston Dr reported earlier today?",
       "ask_index": 941,
       "source": "code",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:699,887",
-      "indices": [
-        699,
-        887
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 699,
-          "quote": "5078 Glenoak Dr"
-        },
-        {
-          "index": 887,
-          "quote": "1869 Glenoak Dr"
-        }
-      ],
-      "explanation": "Both report a burst laundry-room pipe this morning on the same street, Glenoak Dr, suggesting a possible shared cause.",
-      "question": "Did your laundry-room pipe burst at the same time as the other home on Glenoak Dr?",
-      "ask_index": 699,
-      "source": "ember",
       "downgraded": null
     },
     {
@@ -3591,11 +2958,11 @@
         },
         {
           "index": 854,
-          "quote": "about the no heat at 5539 Baldwin"
+          "quote": "no heat at 5539 Baldwin"
         }
       ],
-      "explanation": "Both messages refer to the no-heat problem at the same address, 5539 Baldwin.",
-      "question": "Are you asking about the no-heat call for 5539 Baldwin Blvd?",
+      "explanation": "Both messages refer to the no-heat problem at the same address, 5539 Baldwin Blvd.",
+      "question": "Is this about the no-heat problem at 5539 Baldwin Blvd?",
       "ask_index": 854,
       "source": "ember",
       "downgraded": null
@@ -3612,19 +2979,19 @@
       "evidence": [
         {
           "index": 703,
-          "quote": "5754 Cayo Ct"
+          "quote": "Hola, no tenemos agua desde la mañana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco. Raul 956-555-0148"
         },
         {
           "index": 815,
-          "quote": "1821 Cayo Ct"
+          "quote": "Se congelaron las tuberías y no sale agua. 1821 Cayo Ct. Raul Jones 361-555-0128"
         },
         {
           "index": 921,
-          "quote": "2359 Cayo Ct"
+          "quote": "Se congelaron las tuberías y no sale agua. 2359 Cayo Ct. Raul Flores 979-555-0138"
         }
       ],
-      "explanation": "Three different Cayo Ct addresses report no water this morning, indicating a shared street-level cause.",
-      "question": "Have homes on Cayo Ct been without water since this morning?",
+      "explanation": "Three different homes on Cayo Ct with no water, and message 12 says neighbors also have no water.",
+      "question": "Are other homes on Cayo Ct, like 1821 and 2359, also without water this morning?",
       "ask_index": 703,
       "source": "ember",
       "downgraded": null
@@ -3640,15 +3007,15 @@
       "evidence": [
         {
           "index": 729,
-          "quote": "586 Lipes Blvd"
+          "quote": "Me again at 586 Lipes Blvd"
         },
         {
           "index": 852,
-          "quote": "586 Lipes"
+          "quote": "por lo del calentador en 586 Lipes"
         }
       ],
-      "explanation": "Same address and same water heater job, with Amy identifying as a relative of Irene.",
-      "question": "Are you calling about the water heater at 586 Lipes for Irene?",
+      "explanation": "Same address and same water heater, with Amy writing as Irene's relative.",
+      "question": "Is Irene's water heater at 586 Lipes the same one reported as still not fixed?",
       "ask_index": 852,
       "source": "ember",
       "downgraded": null
@@ -3671,89 +3038,9 @@
           "quote": "Water pressure dropped to nothing at 3009 Rodd Field Rd around 6am, and the house next door is the same."
         }
       ],
-      "explanation": "Both report pressure dropping to nothing around 6am on Rodd Field Rd with the next door affected, indicating one shared cause.",
-      "question": "Did the pressure loss around 6am affect neighboring houses on Rodd Field Rd?",
+      "explanation": "Both report water pressure dropping to nothing around 6am with the next-door house affected on Rodd Field.",
+      "question": "Is the house next door to you also experiencing the same water pressure loss?",
       "ask_index": 744,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:748,922",
-      "indices": [
-        748,
-        922
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 748,
-          "quote": "about the no water pressure at 4314 Yorktown"
-        },
-        {
-          "index": 922,
-          "quote": "Se congelaron las tuberías y no sale agua. 5033 Yorktown Blvd."
-        }
-      ],
-      "explanation": "Both are no-water reports on Yorktown, suggesting a possible street-wide cause.",
-      "question": "Is the no-water problem at 4314 Yorktown the same street outage as at 5033 Yorktown Blvd.?",
-      "ask_index": 748,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:799,958",
-      "indices": [
-        799,
-        958
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 799,
-          "quote": "No heat since last night"
-        },
-        {
-          "index": 799,
-          "quote": "121 Glenoak Dr"
-        },
-        {
-          "index": 958,
-          "quote": "No tenemos calefacción desde anoche"
-        },
-        {
-          "index": 958,
-          "quote": "958 Glenoak Dr"
-        }
-      ],
-      "explanation": "Both homes on Glenoak Dr lost heat since last night with an elderly parent at home, suggesting a shared cause.",
-      "question": "Did your heat go out last night at the same time as other homes on Glenoak Dr?",
-      "ask_index": 799,
-      "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "shared_cause:884,897",
-      "indices": [
-        884,
-        897
-      ],
-      "kind": "shared_cause",
-      "confidence": "possible",
-      "evidence": [
-        {
-          "index": 884,
-          "quote": "No heat since last night and my dad is 74, house is 49 degrees inside."
-        },
-        {
-          "index": 897,
-          "quote": "No heat since last night and my grandmother is 90, house is 49 degrees inside."
-        }
-      ],
-      "explanation": "Both report no heat since last night with the same unusual 49-degree indoor temperature, suggesting a shared cause.",
-      "question": "Did your no-heat outage affect the same area or building as the other 49-degree home?",
-      "ask_index": 884,
       "source": "ember",
       "downgraded": null
     },
@@ -3768,16 +3055,16 @@
       "evidence": [
         {
           "index": 920,
-          "quote": "no tenemos agua desde la mañana en la calle Kingston, 2723 Kingston Dr"
+          "quote": "2723 Kingston Dr. Mis vecinos tampoco"
         },
         {
           "index": 951,
-          "quote": "Toilet won't fill and there's no water pressure since the freeze. Eric at 1218 Kingston Dr"
+          "quote": "Eric at 1218 Kingston Dr"
         }
       ],
-      "explanation": "Two different Kingston Dr homes both report no water since this morning after the freeze.",
-      "question": "Did your water stop this morning at the same time as the Kingston neighbors?",
-      "ask_index": 951,
+      "explanation": "One Kingston Dr home says neighbors also have no water, and another Kingston Dr home reports no water pressure.",
+      "question": "Do you and the Kingston Dr caller have no water at the same time?",
+      "ask_index": 920,
       "source": "ember",
       "downgraded": null
     }
