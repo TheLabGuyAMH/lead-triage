@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T16:25:45.859Z",
+  "recorded_at": "2026-11-27T16:26:29.736Z",
   "summary": {
     "set": "freeze1000",
     "messages": 1000,
@@ -45,7 +45,7 @@
         4
       ],
       "quotes_dropped_by_code": 0,
-      "wall_clock_seconds": 7
+      "wall_clock_seconds": 6
     },
     "member_quotes_dropped_by_code": 0,
     "link_calls": 122,
@@ -72,9 +72,9 @@
       "cross_message_pass": 0,
       "concurrency": 6
     },
-    "spend_usd": 0.003044,
+    "spend_usd": 0.003034,
     "per_message_pass_reused_from": "replay-freeze-base.json",
-    "spend_detail": "$0.003044 over 2 billed call(s)"
+    "spend_detail": "$0.003034 over 2 billed call(s)"
   },
   "links": [
     {

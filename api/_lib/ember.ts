@@ -640,6 +640,7 @@ export async function emberInvestigate(
     const calls = msg?.tool_calls ?? [];
     if (!calls.length) {
       outcome = "text";
+      steps.push({ tool: "(text answer)", args: { turn: turns + 1, text: String(msg?.content ?? "").slice(0, 200) }, found: [] });
       break;
     }
     messages.push({ role: "assistant", content: msg?.content ?? "", tool_calls: calls });
@@ -654,12 +655,12 @@ export async function emberInvestigate(
       let result: unknown;
       if (name === "search_messages") {
         const hits = searchMessages(pile, String(args.query ?? ""), targetId);
-        steps.push({ tool: name, args: { query: String(args.query ?? "").slice(0, 120) }, found: hits.map((h) => pile[h.id - 1].index) });
+        steps.push({ tool: name, args: { query: String(args.query ?? "").slice(0, 120), turn: turns + 1 }, found: hits.map((h) => pile[h.id - 1].index) });
         result = hits;
       } else if (name === "read_message") {
         const id = Number(args.id);
         const l = Number.isInteger(id) && id >= 1 && id <= pile.length ? pile[id - 1] : null;
-        steps.push({ tool: name, args: { id }, found: l ? [l.index] : [] });
+        steps.push({ tool: name, args: { id, turn: turns + 1 }, found: l ? [l.index] : [] });
         result = l ? { id, name: l.name, phone: l.phone, area: l.area, text: l.raw_text } : { error: "no such message" };
       } else if (name === "propose_link") {
         proposal = args;
@@ -670,7 +671,10 @@ export async function emberInvestigate(
         outcome = "no_link";
         steps.push({ tool: name, args: { reason: String(args.reason ?? "").slice(0, 200) }, found: [] });
         result = { ok: true };
-      } else result = { error: "unknown tool" };
+      } else {
+        steps.push({ tool: name || "(no name)", args: { turn: turns + 1, unknown: true }, found: [] });
+        result = { error: "unknown tool" };
+      }
       messages.push({ role: "tool", tool_call_id: call.id ?? name, content: JSON.stringify(result) });
     }
   }

@@ -18,7 +18,7 @@ import type { DispatchLead, LeadLink } from "./dispatch.js";
 import type { BusinessConfig } from "./schema.js";
 
 /** Most tool turns one investigation may take (each turn is one Ember call). */
-export const MAX_TURNS = 4;
+export const MAX_TURNS = 5;
 /** Most messages one live run investigates. */
 export const MAX_INVESTIGATIONS = 12;
 
