@@ -69,7 +69,18 @@ function keyMatches(given: string | null, expected: string | undefined): boolean
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-function normalizeConfig(partial: Partial<BusinessConfig> | undefined): BusinessConfig {
+/**
+ * The three server gates for any paid Ember call (kill switch, server
+ * key, caller's demo key). Returns null when all pass, else the reason.
+ */
+export function emberGate(demoKey: string | null, env: EmberEnv): string | null {
+  if (process.env.EMBER_ENABLED !== "1") return "Ember is switched off on this deployment";
+  if (!env.apiKey) return "MODEL_API_KEY is not set on the server";
+  if (!keyMatches(demoKey, process.env.EMBER_DEMO_KEY)) return "Ember mode needs the demo key";
+  return null;
+}
+
+export function normalizeConfig(partial: Partial<BusinessConfig> | undefined): BusinessConfig {
   return {
     businessName: clean(partial?.businessName, MAX_CFG_CHARS) || DEFAULT_CONFIG.businessName,
     trade: clean(partial?.trade, MAX_CFG_CHARS) || DEFAULT_CONFIG.trade,
@@ -100,15 +111,10 @@ export async function handleExtract(
     return { status: 200, json: mockExtract(rawText, config) };
   }
 
-  const enabled = process.env.EMBER_ENABLED === "1";
-  const authorized = keyMatches(auth.demoKey, process.env.EMBER_DEMO_KEY);
-  if (!enabled || !env.apiKey || !authorized) {
+  const blocked = emberGate(auth.demoKey, env);
+  if (blocked) {
     const result = mockExtract(rawText, config);
-    result.note = !enabled
-      ? "Ember is switched off on this deployment; this result came from the mock adapter."
-      : !env.apiKey
-        ? "MODEL_API_KEY is not set on the server; this result came from the mock adapter."
-        : "Ember mode needs the demo key; this result came from the mock adapter.";
+    result.note = `${blocked}; this result came from the mock adapter.`;
     return { status: 200, json: result };
   }
 

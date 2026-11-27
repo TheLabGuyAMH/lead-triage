@@ -6,3 +6,5 @@ dist/
 *.local
 trace-exports/
 .DS_Store
+.vercel
+.env*

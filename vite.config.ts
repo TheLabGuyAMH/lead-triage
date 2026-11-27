@@ -1,13 +1,16 @@
 import { defineConfig, type Plugin } from "vite";
+import { handleDispatch } from "./api/_lib/dispatch-core.js";
 import { handleExtract } from "./api/_lib/extract-core.js";
 
 // Mounts the same /api/extract logic used by the Vercel function, so
 // `npm run dev` is a full local end-to-end run (mock until a key is set).
+type Handler = (body: Record<string, unknown>, auth: { demoKey: string | null }) => Promise<{ status: number; json: unknown }>;
+
 function localExtractApi(): Plugin {
   return {
     name: "local-extract-api",
     configureServer(server) {
-      server.middlewares.use("/api/extract", (req, res) => {
+      const mount = (path: string, handle: Handler) => server.middlewares.use(path, (req, res) => {
         if (req.method !== "POST") {
           res.statusCode = 405;
           res.setHeader("Content-Type", "application/json");
@@ -20,7 +23,7 @@ function localExtractApi(): Plugin {
           try {
             const body = JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
             const key = req.headers["x-demo-key"];
-            const { status, json } = await handleExtract(body, {
+            const { status, json } = await handle(body, {
               demoKey: typeof key === "string" ? key : null,
             });
             res.statusCode = status;
@@ -33,6 +36,8 @@ function localExtractApi(): Plugin {
           }
         });
       });
+      mount("/api/extract", handleExtract as Handler);
+      mount("/api/dispatch", handleDispatch as Handler);
     },
   };
 }

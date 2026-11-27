@@ -15,6 +15,7 @@
 
 import { createHash } from "node:crypto";
 import { applyHazardSafety } from "../../src/lib/safety.js";
+import { LINK_SCHEMA, linkSystemPrompt, linkUserMessage, type DispatchLead } from "../../src/lib/dispatch.js";
 import {
   RECORD_LEAD_SCHEMA,
   RECORD_LEAD_TOOL,
@@ -444,4 +445,98 @@ export async function emberExtract(
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error("Ember call failed.");
+}
+
+// ---------- the cross-message pass (Morning Dispatcher) ----------
+
+export interface EmberLinkResult {
+  /** Ember's links exactly as returned (validated later by validateLinks). */
+  raw: unknown;
+  usage: Usage;
+  model: string;
+  promptHash: string;
+  requestVariant: string;
+  finishReason: string | null;
+}
+
+// A block holds up to 30 messages and the answer lists links with
+// quotes, so it gets more room than one lead: 6,000 output tokens
+// (reasoning included) bounds a worst-case call at about $0.003.
+const LINK_MAX_TOKENS = 6000;
+const LINK_TIMEOUT_MS = 50_000;
+
+/**
+ * One structured-output call over a block of messages. Uses the same
+ * 400-only ladder as extraction but only structured rungs: a link list
+ * has no tool fallback, so a rejected schema is a hard failure.
+ */
+export async function emberLink(
+  block: DispatchLead[],
+  config: BusinessConfig,
+  env: EmberEnv,
+  opts: EmberOptions = emberOptionsFromProcess(),
+): Promise<EmberLinkResult> {
+  if (!env.apiKey) throw new Error("MODEL_API_KEY is not set on the server.");
+  const systemPrompt = linkSystemPrompt(config);
+  const promptHash = createHash("sha256").update(systemPrompt).digest("hex");
+  const variants = buildVariants({ ...opts, outputMode: "structured" }).filter((v) => v.outputMode === "structured");
+  let lastErr: unknown = null;
+  for (const variant of variants) {
+    const body: Record<string, unknown> = {
+      model: env.model,
+      temperature: 0,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: linkUserMessage(block) },
+      ],
+      response_format: { type: "json_schema", json_schema: { name: "link_messages", strict: true, schema: LINK_SCHEMA } },
+    };
+    body[variant.maxTokensParam] = LINK_MAX_TOKENS;
+    if (variant.reasoningEffort) body.reasoning_effort = variant.reasoningEffort;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), LINK_TIMEOUT_MS);
+    let res: Response;
+    try {
+      res = await fetch(`${env.base}/chat/completions`, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${env.apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) {
+      const err = new EmberHttpError(res.status, await res.text());
+      lastErr = err;
+      if (res.status === 400) continue;
+      throw err;
+    }
+    const data = (await res.json()) as ChatResponse;
+    const reported = usageFromBody(data);
+    const finishReason = typeof data.choices?.[0]?.finish_reason === "string" ? data.choices[0].finish_reason : null;
+    const text = data.choices?.[0]?.message?.content;
+    const json = typeof text === "string" ? text.match(/\{[\s\S]*\}/)?.[0] : undefined;
+    let raw: unknown;
+    try {
+      raw = json ? JSON.parse(json) : null;
+    } catch {
+      raw = null;
+    }
+    if (!raw) throw errorWithUsage("Ember returned no link list.", reported);
+    return {
+      raw,
+      usage: {
+        tokens_in: reported?.tokens_in ?? 0,
+        tokens_out: reported?.tokens_out ?? 0,
+        cost_usd: reported ? computeCostUsd(reported.tokens_in, reported.tokens_out, env) : null,
+        estimated: false,
+      },
+      model: typeof data.model === "string" && data.model ? data.model : env.model,
+      promptHash,
+      requestVariant: variantLabel(variant),
+      finishReason,
+    };
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Ember link call failed.");
 }

@@ -37,7 +37,8 @@ export async function loadLib() {
 export { emberExtract, emberEnvFromProcess, emberOptionsFromProcess, computeCostUsd } from ${JSON.stringify(join(REPO, "api/_lib/ember.ts"))};
 export { mockExtract } from ${JSON.stringify(join(REPO, "src/lib/mock.ts"))};
 export { extractionSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/schema.ts"))};
-export { SAMPLE_LEADS, SAMPLE_CONFIG } from ${JSON.stringify(join(REPO, "src/lib/sample.ts"))};
+export { SAMPLE_LEADS, SAMPLE_CONFIG, FREEZE_LEADS, FREEZE_GROUPS } from ${JSON.stringify(join(REPO, "src/lib/sample.ts"))};
+export { planBlocks, codeLinks, mergeLinks, buildPlan, linkIsActive, toDispatchLead, linkSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/dispatch.ts"))};
 `,
   );
   const out = join(dir, "bundle.mjs");
@@ -186,4 +187,49 @@ export function toTraceFile({ label, model, systemPrompt, promptHash, items, spe
       record: i.record ?? null,
     })),
   };
+}
+
+/**
+ * One block through the deployed, passcode-gated POST /api/dispatch
+ * (mode "ember"). One retry on 502 or timeout. A 200 whose mode is not
+ * "ember" means a gate fell back and is an error, never an Ember result.
+ */
+export async function endpointDispatch(endpoint, demoKey, leads, config, { timeoutMs = 90_000 } = {}) {
+  const t0 = Date.now();
+  let lastError = null;
+  // Usage of a failed first attempt (it may have billed); the caller adds it to spend.
+  let failedUsage = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { "Content-Type": "application/json", "x-demo-key": demoKey },
+        body: JSON.stringify({ mode: "ember", leads, config }),
+      });
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch { /* raw below */ }
+      if (res.status === 502 && attempt === 1) {
+        lastError = "HTTP 502 (attempt 1)";
+        failedUsage = json?.usage ?? { tokens_in: 0, tokens_out: 0, cost_usd: null };
+        continue;
+      }
+      if (!res.ok) return { ...emptyDispatch(json?.usage ?? null), httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `HTTP ${res.status}: ${String(json?.error ?? text).slice(0, 200)}`, failedUsage };
+      if (!json || json.mode !== "ember") return { ...emptyDispatch(json?.usage ?? null), httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: `gate fallback: mode=${String(json?.mode)} note=${String(json?.note ?? "").slice(0, 160)}`, failedUsage };
+      return { links: json.links, dropped: json.dropped ?? [], usage: json.usage ?? null, model: json.model ?? null, promptHash: json.prompt_hash ?? null, requestVariant: json.request_variant ?? null, finishReason: json.finish_reason ?? null, httpStatus: res.status, attempts: attempt, latency_ms: Date.now() - t0, error: null, failedUsage };
+    } catch (err) {
+      lastError = err?.name === "AbortError" ? `timeout after ${timeoutMs}ms` : String(err?.message ?? err).slice(0, 200);
+      if (attempt === 2) break;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return { ...emptyDispatch(null), httpStatus: null, attempts: 2, latency_ms: Date.now() - t0, error: lastError ?? "endpoint call failed", failedUsage };
+}
+
+function emptyDispatch(usage) {
+  return { links: [], dropped: [], usage, model: null, promptHash: null, requestVariant: null, finishReason: null };
 }

@@ -26,11 +26,15 @@ async function main() {
   export { SAFETY_SCRIPTS, detectHazard } from ${JSON.stringify(join(process.cwd(), "src/lib/safety.ts"))};
   export { buildTraceExport } from ${JSON.stringify(join(process.cwd(), "src/lib/trace-export.ts"))};
   export { failureResult, ExtractionError } from ${JSON.stringify(join(process.cwd(), "src/lib/api-adapter.ts"))};
+  export * as dispatch from ${JSON.stringify(join(process.cwd(), "src/lib/dispatch.ts"))};
+  export { handleDispatch } from ${JSON.stringify(join(process.cwd(), "api/_lib/dispatch-core.ts"))};
+  export { FREEZE_LEADS, FREEZE_GROUPS } from ${JSON.stringify(join(process.cwd(), "src/lib/sample.ts"))};
   `,
   );
   const out = join(dir, "bundle.mjs");
   await build({ entryPoints: [entry], bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent" });
   const lib = await import(pathToFileURL(out).href);
+  const { dispatch: D, handleDispatch, FREEZE_LEADS, FREEZE_GROUPS } = lib;
   const { mockExtract, MOCK_REVIEW_NOTE, rankLeads, rankResults, splitBatch, SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG, handleExtract, cleanConfigField, normalizeRecord, phoneIsGrounded, buildVariants, sanitizeDraft, SAFETY_SCRIPTS, detectHazard, buildTraceExport, failureResult, ExtractionError } = lib;
 
   let failures = 0;
@@ -316,6 +320,67 @@ async function main() {
   const unredacted = buildTraceExport(entries, false, ctx);
   check("unredacted export sets contains_customer_data + full record", unredacted.contains_customer_data === true && unredacted.calls[0].record.raw_text.includes("PRIVATE RAW") && unredacted.calls[0].request_variant !== null);
 
+
+  // ---- Morning Dispatcher: cross-message pass + plan ----
+  console.log("\nMorning Dispatcher");
+  const fz = FREEZE_LEADS.map((raw, i) => ({ ...mockExtract(raw, SAMPLE_CONFIG), index: i }));
+  const fzLeads = fz.filter((r) => r.record.category === "real").map(D.toDispatchLead);
+  const byIdx = (i) => fzLeads.find((l) => l.index === i);
+  check("quote check accepts a real quote (case/space/curly-quote tolerant)", D.quoteFound("about the  burst pipe at 418 MESQUITE", FREEZE_LEADS[6]));
+  check("quote check rejects an invented quote", !D.quoteFound("the pipe at 420 Mesquite", FREEZE_LEADS[6]));
+  check("quote check needs every part around ...", D.quoteFound("Ray, Linda's husband ... 418 Mesquite", FREEZE_LEADS[6]) && !D.quoteFound("Ray ... 999 Nowhere", FREEZE_LEADS[6]));
+  const block = [byIdx(0), byIdx(6), byIdx(2), byIdx(7), byIdx(5), byIdx(14)];
+  const raw = { links: [
+    { ids: [1, 2], kind: "same_job", confidence: "likely", evidence: [{ id: 1, quote: "Linda Garza, 418 Mesquite St" }, { id: 2, quote: "burst pipe at 418 Mesquite" }], explanation: "Same address", deciding_question: "", ask_id: 2 },
+    { ids: [3, 4], kind: "shared_cause", confidence: "possible", evidence: [{ id: 3, quote: "My neighbor says hers is out too" }, { id: 4, quote: "Whole street on Laguna has no water" }], explanation: "Laguna", deciding_question: "Do your neighbors have water?", ask_id: 3 },
+    { ids: [5, 6], kind: "same_job", confidence: "likely", evidence: [{ id: 5, quote: "unit B of the duplex on Ocean Dr" }, { id: 6, quote: "coming through the shared wall" }], explanation: "Duplex", deciding_question: "Is the leak in unit B?", ask_id: 6 },
+    { ids: [1, 3], kind: "same_job", confidence: "likely", evidence: [{ id: 1, quote: "418 Mesquite St" }, { id: 3, quote: "an invented sentence" }], explanation: "bogus", deciding_question: "", ask_id: 1 },
+    { ids: [1, 99], kind: "same_job", confidence: "likely", evidence: [{ id: 1, quote: "418 Mesquite" }], explanation: "out of range", deciding_question: "", ask_id: 1 },
+  ] };
+  const v = D.validateLinks(raw, block);
+  check("validation keeps the anchored same-address link as likely", v.links.some((l) => l.key === "same_job:0,6" && l.confidence === "likely"));
+  check("validation lowers an unanchored 'likely' to 'possible' with a reason", v.links.some((l) => l.key === "same_job:5,14" && l.confidence === "possible" && /no shared phone/.test(l.downgraded ?? "")));
+  check("validation drops a link whose quote is not in the message", !v.links.some((l) => l.indices.includes(0) && l.indices.includes(2)) && v.dropped.some((d) => /no quote found/.test(d)));
+  check("validation drops out-of-range ids", !v.links.some((l) => l.explanation === "out of range"));
+  check("validation keeps the shared-cause link with its question", v.links.some((l) => l.kind === "shared_cause" && l.question.includes("neighbors") && l.ask_index === 2));
+  const cl = D.codeLinks(fzLeads);
+  check("code links the two messages with the same phone", cl.some((l) => l.key === "same_job:1,10" && l.source === "code"));
+  check("code does not link different phones", cl.length === 1, JSON.stringify(cl.map((l) => l.key)));
+  check("small pile is one block", D.planBlocks(fzLeads).length === 1);
+  const many = Array.from({ length: 70 }, (_, i) => ({ index: i, raw_text: i % 2 ? `no water at ${100 + i} Laguna Dr` : `pipes froze at ${200 + i} Holly Rd`, name: null, phone: null, area: null, service_needed: null, urgency: "same-day" }));
+  const blocks = D.planBlocks(many);
+  check("big pile blocks by street, each within the cap", blocks.length >= 4 && blocks.every((b) => b.length <= D.BLOCK_MAX && b.length >= 2) && blocks.every((b) => new Set(b.map((l) => D.streetKeys(l.raw_text)[0])).size === 1), JSON.stringify(blocks.map((b) => b.length)));
+  check("street keys skip non-street words", JSON.stringify(D.streetKeys("my dad is 84 and the house is 48 degrees at 909 Yorktown Blvd")) === JSON.stringify(["yorktown"]), JSON.stringify(D.streetKeys("my dad is 84 and the house is 48 degrees at 909 Yorktown Blvd")));
+
+  const linksAll = D.mergeLinks([cl, v.links]);
+  const cap = { trucks: 2, stopsPerTruck: 2 };
+  const plan0 = D.buildPlan(fz, linksAll, {}, cap);
+  const laneOf = (plan, i) => Object.entries(plan.lanes).find(([, jobs]) => jobs.some((j) => j.members.some((m) => m.index === i)))?.[0];
+  const jobOf = (plan, i) => Object.values(plan.lanes).flat().find((j) => j.members.some((m) => m.index === i));
+  check("anchored links merge (same address, same phone)", jobOf(plan0, 0) === jobOf(plan0, 6) && jobOf(plan0, 1) === jobOf(plan0, 10));
+  check("a 'possible' link does not merge until the owner says yes", jobOf(plan0, 5) !== jobOf(plan0, 14));
+  check("hazard (CO alarm) is on a truck with the safety script", laneOf(plan0, 8) === "trucks" && jobOf(plan0, 8).replyKind === "safety");
+  check("spam / not-a-lead stay out of the plan", plan0.filtered.length >= 1 && plan0.filtered.every((r) => !laneOf(plan0, r.index)) && !laneOf(plan0, 19));
+  const allJobs = Object.values(plan0.lanes).flat();
+  check("every real message is in exactly one job", fzLeads.every((l) => allJobs.filter((j) => j.members.some((m) => m.index === l.index)).length === 1));
+  check("trucks hold at most the slots (plus hazards)", plan0.lanes.trucks.length <= cap.trucks * cap.stopsPerTruck + plan0.overflowHazards);
+  check("urgent overflow gets a code script, routine gets 'not today'", plan0.lanes.made_safe.every((j) => ["water", "cold", "urgent"].includes(j.replyKind)) && plan0.lanes.not_today.every((j) => j.replyKind === "not_today" && j.primary.record.urgency === "routine"));
+  const planYes = D.buildPlan(fz, linksAll, { "same_job:5,14": "yes" }, cap);
+  check("answering yes merges the duplex messages into one job", jobOf(planYes, 5) === jobOf(planYes, 14));
+  const planSplit = D.buildPlan(fz, linksAll, { "same_job:0,6": "no" }, cap);
+  check("answering no splits an auto-merged pair (undo)", jobOf(planSplit, 0) !== jobOf(planSplit, 6));
+  check("the answer changes the plan in both directions", plan0.lanes.trucks.length + plan0.lanes.made_safe.length + plan0.lanes.not_today.length !== planSplit.lanes.trucks.length + planSplit.lanes.made_safe.length + planSplit.lanes.not_today.length);
+  check("water overflow gets the shut-off script, in Spanish for a Spanish lead", D.holdingKind({ raw_text: "Se reventó un tubo en el baño", service_needed: null }) === "water" && D.HOLDING_SCRIPTS.water.es.includes("llave de paso"));
+  check("'water heater won't light' is not read as no-heat or a leak", D.holdingKind({ raw_text: "Water heater won't light since the power came back", service_needed: "water heater" }) === "urgent");
+  check("no heat gets the stay-warm script with the CO warning", D.holdingKind({ raw_text: "our heater stopped working overnight", service_needed: "no heat" }) === "cold" && /carbon monoxide/.test(D.HOLDING_SCRIPTS.cold.en));
+
+  const dz = await handleDispatch({ leads: block, mode: "ember" }, { demoKey: null });
+  check("dispatch endpoint falls back to practice links with a note when Ember is off", dz.status === 200 && dz.json.mode === "mock" && /switched off/.test(dz.json.note ?? ""));
+  const dBad = await handleDispatch({ leads: [block[0]], mode: "mock" });
+  check("dispatch endpoint rejects a one-message block", dBad.status === 400);
+  const dBig = await handleDispatch({ leads: many.slice(0, 31), mode: "mock" });
+  check("dispatch endpoint rejects a block over the cap", dBig.status === 400);
+  check("answer key covers 4 groups", FREEZE_GROUPS.length === 4);
   console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
   return failures === 0 ? 0 : 1;
 

@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lead Triage — Lead Intake Assistant</title>
+    <title>Lead Triage — Morning Dispatcher</title>
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <header class="app-header">
       <div>
         <h1>Lead Triage</h1>
-        <p class="tagline">Paste the day's leads. Get the call-back order.</p>
-        <p class="tagline">For the owner of a 1–10 truck plumbing or HVAC shop working the morning pile.</p>
+        <p class="tagline">Paste the morning's messages. Get the truck plan.</p>
+        <p class="tagline">For the owner of a 1–10 truck plumbing or HVAC shop facing the morning pile, even a freeze-day flood of it.</p>
       </div>
       <div class="header-side">
         <div id="mode-badge" class="mode-badge mock">MOCK MODE — no Ember spend</div>
@@ -27,9 +27,16 @@
           <textarea id="paste" rows="12" placeholder="Paste voicemail transcripts, web form submissions, messages — messy is fine."></textarea>
         </label>
         <div class="row">
+          <button id="view-freeze" type="button" class="btn secondary">View Freeze Day run (1,000 messages)</button>
+          <button id="load-freeze" type="button" class="btn secondary">Load freeze morning (20 messages)</button>
           <button id="load-sample" type="button" class="btn secondary">Load sample set (12 demo leads)</button>
-          <button id="view-replay" type="button" class="btn secondary">View recorded Ember run</button>
+          <button id="view-replay" type="button" class="btn secondary">View recorded 12-lead run</button>
           <button id="clear-input" type="button" class="btn ghost">Clear</button>
+        </div>
+
+        <div class="config-grid capacity">
+          <label class="field"><span>Trucks today</span><input id="cfg-trucks" type="number" min="1" max="50" step="1" /></label>
+          <label class="field"><span>Stops per truck</span><input id="cfg-stops" type="number" min="1" max="20" step="1" /></label>
         </div>
 
         <details class="config">
@@ -64,8 +71,10 @@
       </section>
 
       <section class="panel board-zone">
-        <h2>2 · Call-back order</h2>
+        <h2>2 · Morning dispatch plan</h2>
         <p id="board-note" class="hint" hidden></p>
+        <div id="plan-summary" class="plan-summary" hidden></div>
+        <div id="questions" class="questions" hidden></div>
         <div id="board-empty" class="empty">No leads yet. Paste a batch or load the sample set, then Run Triage.</div>
         <div id="board"></div>
         <details id="spam-box" class="spam-box" hidden>

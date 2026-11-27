@@ -205,3 +205,34 @@ footer { max-width: 1240px; margin: 0 auto; padding: 0 20px 28px; color: var(--m
   .app-header { flex-direction: column; }
   .meter-cell { min-width: 44%; }
 }
+
+/* Morning Dispatcher */
+.capacity { margin-top: 12px; }
+.plan-summary { margin-bottom: 12px; }
+.plan-stats { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; background: #eef1f6; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; }
+.change { background: var(--routine-soft); border: 1px solid #bcd8ae; color: var(--routine); border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 600; }
+.questions { border: 1px solid #e7d28a; background: #fffdf4; border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; }
+.questions h3 { margin: 4px 0 8px; font-size: 16px; }
+.q-item { border-top: 1px solid var(--line); padding: 10px 0; }
+.q-item:first-of-type { border-top: none; }
+.q-item.done { opacity: 0.8; }
+.q-item p { margin: 6px 0; font-size: 14px; }
+.q-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.q-group > summary { cursor: pointer; font-weight: 600; color: var(--muted); margin-top: 8px; }
+.ask { font-weight: 600; }
+.answered { font-weight: 700; color: var(--routine); }
+.badge.q { background: var(--sameday); color: #fff; }
+.badge.merged { background: #e8eefc; color: #1f3f8a; border: 1px solid #b9c8ef; }
+.badge.script { background: #3f4b5c; color: #fff; }
+.evidence { margin: 4px 0; padding-left: 18px; font-size: 13px; }
+.evidence li { margin: 2px 0; }
+.evidence .k { color: var(--muted); font-weight: 700; margin-right: 4px; }
+.linked { margin-top: 10px; font-size: 14px; background: #f4f7fd; border: 1px solid #d5def3; border-radius: 8px; padding: 8px 10px; }
+.linked ul { margin: 4px 0; padding-left: 18px; }
+.link-proof { margin-top: 6px; }
+.lane-head { font-size: 15px; margin: 16px 0 8px; }
+.lane { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; margin: 12px 0; background: #fff; }
+.lane > summary { cursor: pointer; font-weight: 700; }
+.row-item { border-top: 1px solid var(--line); padding: 6px 0; }
+.row-item > summary { cursor: pointer; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.row-body { padding: 8px 0 4px 8px; }

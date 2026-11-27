@@ -1,17 +1,31 @@
-// Lead Triage UI controller: paste/config → ranked call-back board →
-// folded cost & trace. All AI goes through the adapter boundary
+// Lead Triage UI controller: paste/config → per-lead pass → cross-message
+// pass → morning dispatch plan (lanes) → folded cost & trace. All AI goes through the adapter boundary
 // (schema.ts): MockAdapter runs locally at $0; ApiAdapter goes through
 // /api/extract to Muse Ember (passcode-gated on the server). The board
 // is a work queue: call/text links with the draft prefilled, and a
 // "Called" toggle remembered in localStorage. On first load the board
 // shows a clearly labeled replay of a recorded Ember run ($0 to view).
 
-import { ApiAdapter, DEMO_KEY_STORAGE, failureResult } from "./lib/api-adapter";
+import { ApiAdapter, DEMO_KEY_STORAGE, dispatchBlock, failureResult } from "./lib/api-adapter";
+import {
+  buildPlan,
+  codeLinks,
+  linkIsActive,
+  mergeLinks,
+  mockLinks,
+  planBlocks,
+  toDispatchLead,
+  type Answers,
+  type DispatchPlan,
+  type Job,
+  type Lane,
+  type LeadLink,
+} from "./lib/dispatch";
 import { MockAdapter } from "./lib/mock";
 import { isFiltered, rankResults, splitBatch } from "./lib/ranking";
 import { REPLAY } from "./lib/replay-data";
-import { SAMPLE_CONFIG, SAMPLE_LEADS, SAMPLE_PASTE } from "./lib/sample";
-import { buildTraceExport, type TraceEntry } from "./lib/trace-export";
+import { FREEZE_LEADS, SAMPLE_CONFIG, SAMPLE_LEADS, SAMPLE_PASTE } from "./lib/sample";
+import { buildTraceExport, type LinkTraceEntry, type TraceEntry } from "./lib/trace-export";
 import type {
   AdapterMode,
   BusinessConfig,
@@ -28,6 +42,20 @@ const CALLED_KEY = "lead-triage-called-v1";
 interface UiConfig extends BusinessConfig {
   mode: AdapterMode;
   capUsd: number;
+  trucks: number;
+  stopsPerTruck: number;
+}
+
+/** A recorded run with its cross-message pass (scripts/record-dispatch.mjs). */
+interface DispatchReplay {
+  label: string;
+  recorded_at: string;
+  model: string | null;
+  capacity: { trucks: number; stopsPerTruck: number };
+  results: ExtractionResult[];
+  links: LeadLink[];
+  link_calls: LinkTraceEntry[];
+  summary: Record<string, unknown> | null;
 }
 
 // Measured on the same 40 held-out leads (mock: local $0 runs of the
@@ -49,6 +77,8 @@ const boardNote = $<HTMLParagraphElement>("board-note");
 const spamBox = $<HTMLDetailsElement>("spam-box");
 const spamList = $<HTMLDivElement>("spam-list");
 const spamSummary = $<HTMLElement>("spam-summary");
+const planSummary = $<HTMLDivElement>("plan-summary");
+const questionsEl = $<HTMLDivElement>("questions");
 const traceView = $<HTMLPreElement>("trace-view");
 const modeBadge = $<HTMLDivElement>("mode-badge");
 const costPill = $<HTMLDivElement>("cost-pill");
@@ -80,6 +110,16 @@ let sessionTotals = emptyTotals();
 let replayTotals = emptyTotals();
 let running = false;
 let showingReplay = false;
+// Cross-message pass: links found across the pile, the owner's answers to
+// deciding questions, and the link calls for the trace.
+let links: LeadLink[] = [];
+let answers: Answers = {};
+let linkTrace: LinkTraceEntry[] = [];
+let replayLabel = "";
+let replayLinkTotals = emptyTotals();
+let lastChange = "";
+// Reply text per paste index as last rendered (AI draft or code script).
+const replyByIndex = new Map<number, string>();
 // Prompt actually used by the current board, recorded at run/replay time
 // (server-reported hash + model ride along on each result). Never rebuilt
 // at export time; the prompt text itself is kept only for the replay,
@@ -91,7 +131,7 @@ let boardPrompt: { system_prompt: string | null; prompt_hash: string | null; mod
 };
 
 function loadConfig(): UiConfig {
-  const fallback: UiConfig = { ...SAMPLE_CONFIG, mode: "mock", capUsd: 10 };
+  const fallback: UiConfig = { ...SAMPLE_CONFIG, mode: "mock", capUsd: 10, trucks: 4, stopsPerTruck: 5 };
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
     if (!raw) return fallback;
@@ -115,6 +155,8 @@ function syncConfigInputs() {
   $<HTMLSelectElement>("cfg-tone").value = config.tone;
   $<HTMLSelectElement>("cfg-mode").value = config.mode;
   $<HTMLInputElement>("cfg-cap").value = String(config.capUsd);
+  $<HTMLInputElement>("cfg-trucks").value = String(config.trucks);
+  $<HTMLInputElement>("cfg-stops").value = String(config.stopsPerTruck);
   try {
     $<HTMLInputElement>("cfg-demo-key").value = sessionStorage.getItem(DEMO_KEY_STORAGE) ?? "";
   } catch {
@@ -130,6 +172,8 @@ function readConfigInputs() {
     tone: $<HTMLSelectElement>("cfg-tone").value as BusinessConfig["tone"],
     mode: $<HTMLSelectElement>("cfg-mode").value as AdapterMode,
     capUsd: Math.max(1, Number($<HTMLInputElement>("cfg-cap").value) || 10),
+    trucks: Math.min(50, Math.max(1, Math.floor(Number($<HTMLInputElement>("cfg-trucks").value) || 4))),
+    stopsPerTruck: Math.min(20, Math.max(1, Math.floor(Number($<HTMLInputElement>("cfg-stops").value) || 5))),
   };
   saveConfig();
   try {
@@ -161,6 +205,7 @@ function updateBadge(fallbackNote = false) {
 function setControlsDisabled(disabled: boolean) {
   runBtn.disabled = disabled;
   $<HTMLButtonElement>("view-replay").disabled = disabled;
+  $<HTMLButtonElement>("view-freeze").disabled = disabled;
   $<HTMLButtonElement>("clear-session").disabled = disabled;
   $<HTMLButtonElement>("clear-input").disabled = disabled;
 }
@@ -213,11 +258,32 @@ function fieldHtml(label: string, value: string | null): string {
     : `<div><span class="k">${label}</span><span class="missing">missing</span></div>`;
 }
 
-function cardHtml(record: LeadRecord, rank: number, result: ExtractionResult): string {
-  const langBadge = record.language === "es" ? `<span class="badge lang">ES → EN card</span>` : "";
-  const safetyBadge = record.safety_script
-    ? `<span class="badge safety">Safety script, not AI text</span>`
+const REPLY_BADGE: Record<Job["replyKind"], string> = {
+  ai: "",
+  safety: `<span class="badge safety">Safety script, not AI text</span>`,
+  water: `<span class="badge script">Water shut-off script, not AI text</span>`,
+  cold: `<span class="badge script">Stay-warm script, not AI text</span>`,
+  urgent: `<span class="badge script">Urgent-list script, not AI text</span>`,
+  not_today: `<span class="badge script">Honest "not today" script, not AI text</span>`,
+};
+
+function contactButtons(record: LeadRecord, reply: string, index: number): string {
+  const digits = record.phone?.replace(/\D/g, "") ?? "";
+  const call = digits
+    ? `<a class="btn small" href="tel:${digits}">Call</a>
+       <a class="btn small" href="sms:${digits}?&body=${encodeURIComponent(reply)}">Text reply</a>`
     : "";
+  const called = isCalled(record.raw_text);
+  return `${call}<button type="button" class="btn small" data-copy="${index}">Copy reply</button>
+    <button type="button" class="btn small" data-called="${index}">${called ? "Called ✓" : "Mark called"}</button>`;
+}
+
+function cardHtml(job: Job, label: string): string {
+  const result = job.primary;
+  const record = result.record;
+  const index = result.index ?? 0;
+  replyByIndex.set(index, job.reply);
+  const langBadge = record.language === "es" ? `<span class="badge lang">ES → EN card</span>` : "";
   const cost =
     result.usage.cost_usd === null
       ? "cost: unknown (usage not reported)"
@@ -225,21 +291,17 @@ function cardHtml(record: LeadRecord, rank: number, result: ExtractionResult): s
   const reviewBanner = record.needs_review
     ? `<div class="review-banner">Needs review: ${esc(record.needs_review)}</div>`
     : "";
-  const digits = record.phone?.replace(/\D/g, "") ?? "";
-  const actions = digits
-    ? `<a class="btn small" href="tel:${digits}">Call</a>
-       <a class="btn small" href="sms:${digits}?&body=${encodeURIComponent(record.followup_draft)}">Text draft</a>`
-    : "";
   const called = isCalled(record.raw_text);
   return `
   <article class="card ${esc(record.urgency)}${called ? " called" : ""}">
     ${reviewBanner}
     <div class="card-head">
-      <span class="rank">#${rank}</span>
+      <span class="rank">${esc(label)}</span>
       <span class="card-name">${esc(record.name ?? "Unknown caller")}</span>
       <span class="badge ${esc(record.urgency)}">${esc(record.urgency.toUpperCase())}</span>
-      ${safetyBadge}
+      ${REPLY_BADGE[job.replyKind]}
       ${langBadge}
+      ${job.members.length > 1 ? `<span class="badge merged">${job.members.length} messages, one stop</span>` : ""}
       ${called ? `<span class="badge lang">CALLED</span>` : ""}
     </div>
     <p class="reason">${esc(record.urgency_reason)}</p>
@@ -250,21 +312,133 @@ function cardHtml(record: LeadRecord, rank: number, result: ExtractionResult): s
       ${fieldHtml("Language", record.language === "es" ? "Spanish" : "English")}
     </div>
     <div class="summary"><strong>For the owner:</strong> ${esc(record.owner_summary)}</div>
-    <div class="followup">
-      <blockquote>${esc(record.followup_draft)}</blockquote>
-      <button type="button" class="btn small" data-copy="${rank}">Copy follow-up</button>
-    </div>
-    <div class="row card-actions">
-      ${actions}
-      <button type="button" class="btn small" data-called="${rank}">${called ? "Called ✓" : "Mark called"}</button>
-    </div>
+    <div class="followup"><blockquote>${esc(job.reply)}</blockquote></div>
+    <div class="row card-actions">${contactButtons(record, job.reply, index)}</div>
+    ${membersHtml(job)}
     <div class="card-foot">
+      <span>message #${index + 1}</span>
       <span>engine: ${result.mode}${result.usage.estimated ? " (estimated tokens)" : ""}</span>
       <span>tokens: ${result.usage.tokens_in} in / ${result.usage.tokens_out} out</span>
       <span>${cost}</span>
     </div>
     <details class="raw"><summary>Original message</summary><pre>${esc(record.raw_text)}</pre></details>
   </article>`;
+}
+
+function who(i: number): string {
+  const r = results[i]?.record;
+  return `#${i + 1} ${r?.name ?? "unknown"}`;
+}
+
+function evidenceHtml(link: LeadLink): string {
+  return `<ul class="evidence">${link.evidence
+    .map((e) => `<li><span class="k">#${e.index + 1}</span> “${esc(e.quote)}”</li>`)
+    .join("")}</ul>`;
+}
+
+/** The other messages merged into this job, with the proof and an undo. */
+function membersHtml(job: Job): string {
+  if (job.members.length < 2) return "";
+  const active = job.links.filter((l) => linkIsActive(l, answers));
+  const others = job.members.slice(1);
+  return `<div class="linked">
+    <strong>Merged into this stop:</strong>
+    <ul>${others
+      .map((m) => `<li>${esc(who(m.index ?? 0))}${m.record.phone ? ` · ${esc(m.record.phone)}` : ""} — ${esc(m.record.owner_summary)}</li>`)
+      .join("")}</ul>
+    ${active
+      .map(
+        (l) => `<div class="link-proof"><span class="hint">${l.source === "code" ? "Code" : "Ember"}: ${esc(l.explanation)}</span>${evidenceHtml(l)}
+        <button type="button" class="btn small" data-answer="${esc(l.key)}|no">Split: different jobs</button></div>`,
+      )
+      .join("")}
+  </div>`;
+}
+
+function rowHtml(job: Job): string {
+  const r = job.primary;
+  const rec = r.record;
+  const index = r.index ?? 0;
+  replyByIndex.set(index, job.reply);
+  return `<details class="row-item ${esc(rec.urgency)}">
+    <summary><span class="badge ${esc(rec.urgency)}">${esc(rec.urgency.toUpperCase())}</span>
+      <strong>${esc(rec.name ?? "Unknown caller")}</strong> · ${esc(rec.service_needed ?? "service not stated")}${rec.area ? ` · ${esc(rec.area)}` : ""}
+      ${job.members.length > 1 ? `<span class="badge merged">${job.members.length} messages</span>` : ""}</summary>
+    <div class="row-body">
+      <div class="summary"><strong>For the owner:</strong> ${esc(rec.owner_summary)}</div>
+      <div class="followup"><blockquote>${esc(job.reply)}</blockquote></div>
+      <div>${REPLY_BADGE[job.replyKind]}</div>
+      <div class="row card-actions">${contactButtons(rec, job.reply, index)}</div>
+      ${membersHtml(job)}
+      <details class="raw"><summary>Original message #${index + 1}</summary><pre>${esc(rec.raw_text)}</pre></details>
+    </div>
+  </details>`;
+}
+
+const ANSWER_LABELS = {
+  same_job: { badge: "SAME JOB?", yes: "Yes, same job", no: "No, different jobs" },
+  shared_cause: { badge: "SAME CAUSE?", yes: "Yes, same cause", no: "No, separate problems" },
+} as const;
+
+function questionHtml(link: LeadLink): string {
+  const labels = ANSWER_LABELS[link.kind];
+  const answer = answers[link.key];
+  const auto = !answer && linkIsActive(link, answers);
+  const ask = link.ask_index !== null && link.question
+    ? `<p class="ask">Ask ${esc(who(link.ask_index))}${results[link.ask_index]?.record.phone ? ` (${esc(results[link.ask_index]!.record.phone!)})` : ""}: “${esc(link.question)}”</p>`
+    : "";
+  const buttons = answer
+    ? `<span class="answered">Answered: ${answer === "yes" ? labels.yes : labels.no}</span>
+       <button type="button" class="btn small ghost" data-answer="${esc(link.key)}|clear">Undo</button>`
+    : `<button type="button" class="btn small" data-answer="${esc(link.key)}|yes">${labels.yes}</button>
+       <button type="button" class="btn small" data-answer="${esc(link.key)}|no">${labels.no}</button>`;
+  return `<div class="q-item${answer ? " done" : ""}">
+    <div class="q-head"><span class="badge q">${labels.badge}</span>
+      <strong>${link.indices.map((i) => esc(who(i))).join(" · ")}</strong>
+      <span class="hint">${link.confidence}${auto ? ", merged until you say no" : ""} · ${link.source === "code" ? "found by code" : link.source === "mock" ? "practice-mode rule" : "found by Ember, quotes checked by code"}</span></div>
+    <p>${esc(link.explanation)}</p>
+    ${evidenceHtml(link)}
+    ${link.downgraded ? `<p class="hint">Code kept this at "possible": ${esc(link.downgraded)}.</p>` : ""}
+    ${ask}
+    <div class="row">${buttons}</div>
+  </div>`;
+}
+
+function laneMap(plan: DispatchPlan): Map<number, Lane> {
+  const m = new Map<number, Lane>();
+  for (const lane of Object.keys(plan.lanes) as Lane[])
+    for (const job of plan.lanes[lane]) for (const r of job.members) m.set(r.index ?? 0, lane);
+  return m;
+}
+
+const LANE_NAMES: Record<Lane, string> = {
+  read_first: "read first",
+  trucks: "the trucks",
+  made_safe: "made safe by text",
+  not_today: "not today",
+};
+
+function currentPlan(): DispatchPlan {
+  return buildPlan(results.filter(Boolean), links, answers, { trucks: config.trucks, stopsPerTruck: config.stopsPerTruck });
+}
+
+/** Apply an answer and describe how the plan moved. */
+function answerLink(key: string, value: "yes" | "no" | "clear") {
+  const before = laneMap(currentPlan());
+  if (value === "clear") delete answers[key];
+  else answers[key] = value;
+  const after = laneMap(currentPlan());
+  const moves: string[] = [];
+  for (const [i, lane] of after) {
+    const was = before.get(i);
+    if (was && was !== lane) moves.push(`${who(i)}: ${LANE_NAMES[was]} → ${LANE_NAMES[lane]}`);
+  }
+  lastChange = moves.length
+    ? `Plan changed: ${moves.slice(0, 6).join("; ")}${moves.length > 6 ? `; and ${moves.length - 6} more` : ""}.`
+    : value === "clear"
+      ? "Answer cleared; no message changed lanes."
+      : "Recorded. No message changed lanes (the jobs were already in the same lane).";
+  render();
 }
 
 function toTraceEntry(result: ExtractionResult, ts?: string): TraceEntry {
@@ -291,24 +465,69 @@ function toTraceEntry(result: ExtractionResult, ts?: string): TraceEntry {
   };
 }
 
-function addToTotals(t: Totals, result: ExtractionResult) {
-  t.tokensIn += result.usage.tokens_in;
-  t.tokensOut += result.usage.tokens_out;
-  if (result.usage.cost_usd === null) {
+function addUsage(t: Totals, usage: ExtractionResult["usage"]) {
+  t.tokensIn += usage.tokens_in;
+  t.tokensOut += usage.tokens_out;
+  if (usage.cost_usd === null) {
     t.costKnown = false;
     t.unknownCostCalls++;
-  }
-  else t.cost += result.usage.cost_usd;
+  } else t.cost += usage.cost_usd;
+}
+
+function addToTotals(t: Totals, result: ExtractionResult) {
+  addUsage(t, result.usage);
 }
 
 function render() {
   const present = results.filter(Boolean);
+  const plan = currentPlan();
   const ranked = rankResults(present);
   const real = ranked.filter((r) => !isFiltered(r.record));
   const filtered = ranked.filter((r) => isFiltered(r.record));
+  replyByIndex.clear();
 
   boardEmpty.hidden = present.length > 0;
-  boardEl.innerHTML = real.map((r, i) => cardHtml(r.record, i + 1, r)).join("");
+  const L = plan.lanes;
+  const trucksUsed = L.trucks.length;
+  planSummary.hidden = present.length === 0;
+  planSummary.innerHTML = present.length
+    ? `<div class="plan-stats">
+        <span><strong>${config.trucks}</strong> trucks × <strong>${config.stopsPerTruck}</strong> stops = <strong>${plan.slots}</strong> slots</span>
+        <span><strong>${trucksUsed}</strong> on trucks${plan.overflowHazards ? ` (${plan.overflowHazards} hazard${plan.overflowHazards === 1 ? "" : "s"} over capacity)` : ""}</span>
+        <span><strong>${L.made_safe.length}</strong> made safe by text</span>
+        <span><strong>${L.not_today.length}</strong> told “not today”</span>
+        <span><strong>${plan.merged}</strong> merged</span>
+        <span><strong>${plan.pending}</strong> question${plan.pending === 1 ? "" : "s"} open</span>
+      </div>
+      <p class="hint">Ember read every message, then read the pile for messages that belong together. Code checked every quote, merged only what is proven or what you confirm, and filled the truck slots in order. Change the trucks or answer a question and the plan re-flows.</p>
+      ${lastChange ? `<p class="change">${esc(lastChange)}</p>` : ""}`
+    : "";
+
+  const shownLinks = links.filter((l) => l.indices.filter((i) => results[i] && results[i].record.category === "real").length >= 2);
+  const open = shownLinks.filter((l) => !answers[l.key] && !linkIsActive(l, answers));
+  const answered = shownLinks.filter((l) => answers[l.key]);
+  const auto = shownLinks.filter((l) => !answers[l.key] && linkIsActive(l, answers));
+  questionsEl.hidden = shownLinks.length === 0;
+  questionsEl.innerHTML = shownLinks.length
+    ? `<h3>Questions that change the plan <span class="hint">(${open.length} open)</span></h3>
+      ${open.map(questionHtml).join("")}
+      ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map(questionHtml).join("")}</details>` : ""}
+      ${auto.length ? `<details class="q-group"><summary>Merged automatically: proven by a shared phone, address or name (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
+    : "";
+
+  const laneSection = (lane: Lane, title: string, hint: string, open: boolean) =>
+    L[lane].length
+      ? `<details class="lane lane-${lane}"${open ? " open" : ""}><summary>${title} (${L[lane].length})</summary><p class="hint">${hint}</p>${L[lane].map(rowHtml).join("")}</details>`
+      : "";
+  boardEl.innerHTML =
+    (L.read_first.length
+      ? `<h3 class="lane-head">Read first: couldn't be read automatically (${L.read_first.length})</h3>${L.read_first.map((j) => cardHtml(j, "Read")).join("")}`
+      : "") +
+    (L.trucks.length
+      ? `<h3 class="lane-head">Trucks today (${L.trucks.length} of ${plan.slots} slots)</h3>${L.trucks.map((j) => cardHtml(j, `Truck ${j.truck} · stop ${j.stop}`)).join("")}`
+      : "") +
+    laneSection("made_safe", "Made safe by text: urgent, no truck today", "Each gets a fixed code-written script to limit damage now (shut off the water, stay warm safely), not AI text.", true) +
+    laneSection("not_today", "Told the truth: not today", "Routine jobs past today's capacity get an honest “we can't come today” message instead of silence.", false);
 
   // The filtered fold opens whenever it holds anything, so a real lead
   // misread as spam stays visible instead of disappearing.
@@ -335,20 +554,25 @@ function render() {
   $<HTMLSpanElement>("m-budget").textContent =
     `Budget: $${sessionTotals.cost.toFixed(2)} of $${config.capUsd.toFixed(2)} cap (browser-side stop)`;
 
-  const calls = trace.filter(Boolean).length;
+  const calls = trace.filter(Boolean).length + linkTrace.length;
   costPill.textContent = `${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} · ${calls} call${calls === 1 ? "" : "s"} (session)`;
   costTraceSummary.textContent = `Cost & trace · ${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} session · ${calls} call${calls === 1 ? "" : "s"} shown`;
 
   const shown = trace.filter(Boolean).sort((a, b) => a.index - b.index);
+  const linkLines = linkTrace.map(
+    (t) =>
+      `link pass block ${t.block + 1} · ${t.messages} messages · ${t.mode}${t.model ? ` (${t.model})` : ""} · ${t.tokens_in}in/${t.tokens_out}out · ${fmtCost(t.cost_usd)} · ${t.links.length} link(s) kept${t.dropped.length ? ` · ${t.dropped.length} dropped by code: ${t.dropped.slice(0, 3).join("; ")}` : ""}${t.note ? " · NOTE: " + t.note : ""}`,
+  );
   traceView.textContent =
-    shown.length === 0
+    shown.length === 0 && linkLines.length === 0
       ? "No calls yet."
-      : shown
-          .map(
+      : [
+          ...shown.map(
             (t) =>
               `#${t.index + 1} ${t.mode}${t.model ? ` (${t.model})` : ""} · ${t.tokens_in}in/${t.tokens_out}out · ${fmtCost(t.cost_usd)} · ${t.category}/${t.urgency}${t.needs_review ? " · REVIEW: " + t.needs_review : ""}${t.note ? " · NOTE: " + t.note : ""}`,
-          )
-          .join("\n");
+          ),
+          ...linkLines,
+        ].join("\n");
 }
 
 async function runTriage() {
@@ -364,7 +588,7 @@ async function runTriage() {
   }
   if (config.mode === "ember") {
     const ok = window.confirm(
-      `Ember mode makes one paid API call per lead: ${leads.length} call(s). Session spend so far: $${sessionTotals.cost.toFixed(4)} of your $${config.capUsd.toFixed(2)} cap. Continue?`,
+      `Ember mode makes one paid API call per lead (${leads.length}), then ${leads.length <= 30 ? "one more call" : "about one call per group of up to 30 related messages"} to find messages that belong together. Session spend so far: $${sessionTotals.cost.toFixed(4)} of your $${config.capUsd.toFixed(2)} cap. Continue?`,
     );
     if (!ok) return;
   }
@@ -373,6 +597,10 @@ async function runTriage() {
   // A run replaces the board; session totals keep accumulating.
   results = [];
   trace = [];
+  links = [];
+  answers = {};
+  linkTrace = [];
+  lastChange = "";
   showingReplay = false;
   boardNote.hidden = true;
   boardPrompt = { system_prompt: null, prompt_hash: null, model: null };
@@ -421,8 +649,13 @@ async function runTriage() {
     }
   };
 
+  let linkSummary = "";
   try {
     await Promise.all(Array.from({ length: Math.min(CONCURRENCY, leads.length) }, worker));
+    if (!stoppedForCap) {
+      runStatus.textContent = `Triaged ${done} of ${leads.length}. Reading the pile for messages that belong together…`;
+      linkSummary = await runLinkPass();
+    }
   } finally {
     running = false;
     setControlsDisabled(false);
@@ -430,8 +663,69 @@ async function runTriage() {
   }
   const notRun = leads.length - done;
   runStatus.textContent = stoppedForCap
-    ? `Stopped at the $${config.capUsd.toFixed(2)} cap: ${done} triaged (${failed} failed, ${flagged} flagged for review), ${notRun} not processed.`
-    : `Done: ${done - failed} triaged, ${failed} failed, ${flagged} flagged for review.`;
+    ? `Stopped at the $${config.capUsd.toFixed(2)} cap: ${done} triaged (${failed} failed, ${flagged} flagged for review), ${notRun} not processed. The cross-message pass did not run.`
+    : `Done: ${done - failed} triaged, ${failed} failed, ${flagged} flagged for review. ${linkSummary}`;
+  render();
+}
+
+/**
+ * The cross-message pass. Code links (same phone) always run. Mock mode
+ * adds the practice-mode keyword links locally at $0; Ember mode sends
+ * each block of related messages to /api/dispatch, where the quotes are
+ * checked before the links come back.
+ */
+async function runLinkPass(): Promise<string> {
+  const real = results.filter((r) => r && r.record.category === "real").map(toDispatchLead);
+  const found: LeadLink[][] = [codeLinks(real)];
+  if (config.mode === "mock") {
+    found.push(mockLinks(real));
+    links = mergeLinks(found);
+    return `Practice-mode linking (keyword rules): ${links.length} link(s).`;
+  }
+  const blocks = planBlocks(real);
+  let next = 0;
+  let failedBlocks = 0;
+  let stopped = false;
+  const worker = async () => {
+    while (next < blocks.length) {
+      if (capSpend(sessionTotals) >= config.capUsd) {
+        stopped = true;
+        return;
+      }
+      const b = next++;
+      const t0 = Date.now();
+      try {
+        const r = await dispatchBlock(blocks[b], config);
+        found.push(r.links);
+        const entry: LinkTraceEntry = {
+          block: b, ts: new Date().toISOString(), mode: r.mode, model: r.model ?? null, prompt_hash: r.prompt_hash ?? null,
+          request_variant: r.request_variant ?? null, finish_reason: r.finish_reason ?? null, latency_ms: r.latency_ms ?? Date.now() - t0,
+          tokens_in: r.usage.tokens_in, tokens_out: r.usage.tokens_out, cost_usd: r.usage.cost_usd, estimated: r.usage.estimated,
+          messages: blocks[b].length, links: r.links, dropped: r.dropped, note: r.note,
+        };
+        linkTrace.push(entry);
+        addUsage(sessionTotals, r.usage);
+        if (r.note) {
+          runNote.textContent = r.note;
+          runNote.hidden = false;
+        }
+      } catch (err) {
+        failedBlocks++;
+        const usage = (err as { usage?: ExtractionResult["usage"] | null }).usage ?? { tokens_in: 0, tokens_out: 0, cost_usd: null, estimated: false };
+        linkTrace.push({
+          block: b, ts: new Date().toISOString(), mode: "ember", model: null, prompt_hash: null, request_variant: null, finish_reason: null,
+          latency_ms: Date.now() - t0, tokens_in: usage.tokens_in, tokens_out: usage.tokens_out, cost_usd: usage.cost_usd, estimated: false,
+          messages: blocks[b].length, links: [], dropped: [], note: err instanceof Error ? err.message : "link pass failed",
+        });
+        addUsage(sessionTotals, usage);
+      }
+      links = mergeLinks(found);
+      render();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, blocks.length) }, worker));
+  links = mergeLinks(found);
+  return `Cross-message pass: ${blocks.length} call(s), ${links.length} link(s)${failedBlocks ? `, ${failedBlocks} call(s) failed` : ""}${stopped ? ", stopped at the cap" : ""}.`;
 }
 
 function loadReplay() {
@@ -441,6 +735,11 @@ function loadReplay() {
   }
   results = REPLAY.results.map((r, i) => ({ ...r, index: r.index ?? i }));
   trace = [];
+  links = codeLinks(results.filter((r) => r.record.category === "real").map(toDispatchLead));
+  answers = {};
+  linkTrace = [];
+  lastChange = "";
+  replayLabel = "sample12";
   // Replay cost is tracked apart from session spend, and replay trace
   // entries keep the original recorded timestamp.
   replayTotals = emptyTotals();
@@ -454,12 +753,49 @@ function loadReplay() {
     model: REPLAY.model,
   };
   showingReplay = true;
-  boardNote.textContent = `Replay: recorded Muse Ember run of the 12-lead sample (${REPLAY.recorded_at.slice(0, 10)} · model ${REPLAY.model ?? "muse-ember-1.0"} · recorded cost ${replayTotals.costKnown ? `$${replayTotals.cost.toFixed(4)}` : "unknown"}). Viewing it spends $0. Run Triage to process the pasted leads (mock is $0; live Ember needs the demo key). ${MOCK_VS_EMBER_LINE}`;
+  boardNote.textContent = `Replay: recorded Muse Ember run of the 12-lead sample, no messages to link (${REPLAY.recorded_at.slice(0, 10)} · model ${REPLAY.model ?? "muse-ember-1.0"} · recorded cost ${replayTotals.costKnown ? `$${replayTotals.cost.toFixed(4)}` : "unknown"}). Viewing it spends $0. Run Triage to process the pasted leads (mock is $0; live Ember needs the demo key). ${MOCK_VS_EMBER_LINE}`;
   boardNote.hidden = false;
   runNote.hidden = true;
   if (!pasteEl.value) pasteEl.value = SAMPLE_PASTE;
   updateBadge();
   render();
+}
+
+/** The recorded Freeze Day run (1,000 messages + its cross-message pass), loaded on demand. */
+async function loadFreezeReplay(): Promise<boolean> {
+  runStatus.textContent = "Loading the recorded Freeze Day run…";
+  const data = (await import("./lib/replay-freeze.json")).default as unknown as DispatchReplay;
+  if (!data.results.length) {
+    runStatus.textContent = "No recorded Freeze Day run is bundled in this build.";
+    return false;
+  }
+  results = data.results.map((r, i) => ({ ...r, index: r.index ?? i }));
+  trace = [];
+  replayTotals = emptyTotals();
+  replayLinkTotals = emptyTotals();
+  for (const r of results) {
+    trace[r.index ?? 0] = toTraceEntry(r, data.recorded_at);
+    addToTotals(replayTotals, r);
+  }
+  linkTrace = data.link_calls;
+  for (const t of linkTrace) addUsage(replayLinkTotals, { tokens_in: t.tokens_in, tokens_out: t.tokens_out, cost_usd: t.cost_usd, estimated: t.estimated });
+  links = data.links;
+  answers = {};
+  lastChange = "";
+  replayLabel = "freeze";
+  config.trucks = data.capacity.trucks;
+  config.stopsPerTruck = data.capacity.stopsPerTruck;
+  syncConfigInputs();
+  boardPrompt = { system_prompt: null, prompt_hash: results[0]?.prompt_hash ?? null, model: data.model };
+  showingReplay = true;
+  const cost = (t: Totals) => (t.costKnown ? `$${t.cost.toFixed(4)}` : "unknown");
+  boardNote.textContent = `Replay: Freeze Day, ${results.length} fictional messages from the morning after a hard freeze, run through Muse Ember on ${data.recorded_at.slice(0, 10)}: ${results.length} per-message calls (${cost(replayTotals)}) plus ${linkTrace.length} cross-message calls (${cost(replayLinkTotals)}). Viewing it spends $0. Trucks, stops and your answers re-plan it live in this browser.`;
+  boardNote.hidden = false;
+  runNote.hidden = true;
+  runStatus.textContent = "";
+  updateBadge();
+  render();
+  return true;
 }
 
 function exportTrace() {
@@ -476,8 +812,8 @@ function exportTrace() {
     system_prompt: boardPrompt.system_prompt,
     capUsd: config.capUsd,
     replay: showingReplay,
-    recorded_at: showingReplay ? REPLAY.recorded_at : null,
-  });
+    recorded_at: showingReplay ? (replayLabel === "freeze" ? trace.find(Boolean)?.ts ?? null : REPLAY.recorded_at) : null,
+  }, linkTrace);
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -489,6 +825,10 @@ function exportTrace() {
 function clearSession() {
   results = [];
   trace = [];
+  links = [];
+  answers = {};
+  linkTrace = [];
+  lastChange = "";
   sessionTotals = emptyTotals();
   replayTotals = emptyTotals();
   showingReplay = false;
@@ -506,6 +846,11 @@ $<HTMLButtonElement>("load-sample").addEventListener("click", () => {
   runStatus.textContent = `Sample set loaded: ${SAMPLE_LEADS.length} fictional demo leads, shuffled.`;
 });
 $<HTMLButtonElement>("view-replay").addEventListener("click", loadReplay);
+$<HTMLButtonElement>("view-freeze").addEventListener("click", () => void loadFreezeReplay());
+$<HTMLButtonElement>("load-freeze").addEventListener("click", () => {
+  pasteEl.value = FREEZE_LEADS.join("\n\n");
+  runStatus.textContent = `Freeze morning loaded: ${FREEZE_LEADS.length} fictional messages, some about the same job.`;
+});
 $<HTMLButtonElement>("clear-input").addEventListener("click", () => {
   pasteEl.value = "";
   runStatus.textContent = "";
@@ -517,35 +862,64 @@ $<HTMLButtonElement>("clear-session").addEventListener("click", clearSession);
 for (const id of ["cfg-name", "cfg-trade", "cfg-tone", "cfg-mode", "cfg-cap", "cfg-demo-key"]) {
   document.getElementById(id)?.addEventListener("change", readConfigInputs);
 }
+for (const id of ["cfg-trucks", "cfg-stops"]) {
+  document.getElementById(id)?.addEventListener("change", () => {
+    const before = laneMap(currentPlan());
+    readConfigInputs();
+    const after = laneMap(currentPlan());
+    let on = 0;
+    let off = 0;
+    for (const [i, lane] of after) {
+      const was = before.get(i);
+      if (was !== lane && lane === "trucks") on++;
+      if (was === "trucks" && lane !== "trucks") off++;
+    }
+    lastChange = `Capacity now ${config.trucks} × ${config.stopsPerTruck}: ${on} message(s) moved onto the trucks, ${off} moved off.`;
+    render();
+  });
+}
 pasteEl.addEventListener("input", () => {
   if (running) return;
   const n = splitBatch(pasteEl.value).length;
   runStatus.textContent = n ? `${n} lead${n === 1 ? "" : "s"} detected` : "";
 });
-boardEl.addEventListener("click", (e) => {
+function onPlanClick(e: Event) {
   const target = e.target as HTMLElement;
-  const rankedReal = rankResults(results.filter(Boolean)).filter((r) => !isFiltered(r.record));
+  const answerBtn = target.closest<HTMLButtonElement>("[data-answer]");
+  if (answerBtn) {
+    const raw = answerBtn.dataset.answer ?? "";
+    const cut = raw.lastIndexOf("|");
+    answerLink(raw.slice(0, cut), raw.slice(cut + 1) as "yes" | "no" | "clear");
+    return;
+  }
   const copyBtn = target.closest<HTMLButtonElement>("[data-copy]");
   if (copyBtn) {
-    const result = rankedReal[Number(copyBtn.dataset.copy) - 1];
-    if (!result) return;
-    void navigator.clipboard.writeText(result.record.followup_draft).then(() => {
+    const text = replyByIndex.get(Number(copyBtn.dataset.copy));
+    if (text === undefined) return;
+    void navigator.clipboard.writeText(text).then(() => {
       copyBtn.textContent = "Copied";
-      setTimeout(() => (copyBtn.textContent = "Copy follow-up"), 1200);
+      setTimeout(() => (copyBtn.textContent = "Copy reply"), 1200);
     });
     return;
   }
   const calledBtn = target.closest<HTMLButtonElement>("[data-called]");
   if (calledBtn) {
-    const result = rankedReal[Number(calledBtn.dataset.called) - 1];
+    const result = results[Number(calledBtn.dataset.called)];
     if (!result) return;
     setCalled(result.record.raw_text, !isCalled(result.record.raw_text));
     render();
   }
-});
+}
+boardEl.addEventListener("click", onPlanClick);
+questionsEl.addEventListener("click", onPlanClick);
 
 syncConfigInputs();
 // Public default: the labeled replay of a recorded Ember run. Mock stays
 // the labeled $0 fallback; live Ember stays behind the demo key.
-if (REPLAY.results.length) loadReplay();
-else render();
+// The public default is the recorded Freeze Day run when this build has
+// one, else the 12-lead replay; both are labeled and spend $0 to view.
+void loadFreezeReplay().then((ok) => {
+  if (ok) return;
+  if (REPLAY.results.length) loadReplay();
+  else render();
+});

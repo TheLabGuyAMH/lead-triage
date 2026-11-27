@@ -13,7 +13,28 @@
 // - A replay export is marked `replay: true` and keeps the original
 //   recorded timestamps carried on its entries.
 
+import type { LeadLink } from "./dispatch.js";
 import type { AdapterMode, LeadRecord } from "./schema.js";
+
+/** One cross-message (link) call. Redacted exports keep counts only. */
+export interface LinkTraceEntry {
+  block: number;
+  ts: string;
+  mode: AdapterMode;
+  model: string | null;
+  prompt_hash: string | null;
+  request_variant: string | null;
+  finish_reason: string | null;
+  latency_ms: number | null;
+  tokens_in: number;
+  tokens_out: number;
+  cost_usd: number | null;
+  estimated: boolean;
+  messages: number;
+  links: LeadLink[];
+  dropped: string[];
+  note?: string;
+}
 
 export interface TraceEntry {
   index: number;
@@ -68,14 +89,37 @@ export function operationalCall(t: TraceEntry) {
   };
 }
 
-export function buildTraceExport(entries: TraceEntry[], redact: boolean, ctx: TraceExportContext) {
+function operationalLinkCall(t: LinkTraceEntry) {
+  return {
+    block: t.block + 1,
+    ts: t.ts,
+    mode: t.mode,
+    model: t.model,
+    prompt_hash: t.prompt_hash,
+    request_variant: t.request_variant,
+    finish_reason: t.finish_reason,
+    latency_ms: t.latency_ms,
+    tokens_in: t.tokens_in,
+    tokens_out: t.tokens_out,
+    cost_usd: t.cost_usd,
+    estimated: t.estimated,
+    messages: t.messages,
+    links: t.links.length,
+    dropped: t.dropped.length,
+  };
+}
+
+export function buildTraceExport(entries: TraceEntry[], redact: boolean, ctx: TraceExportContext, linkCalls: LinkTraceEntry[] = []) {
   const shown = [...entries].sort((a, b) => a.index - b.index);
-  const costKnown = shown.every((t) => t.cost_usd !== null);
+  const links = [...linkCalls].sort((a, b) => a.block - b.block);
+  const all = [...shown, ...links];
+  const costKnown = all.every((t) => t.cost_usd !== null);
   const totals = {
     calls: shown.length,
-    tokens_in: shown.reduce((a, t) => a + t.tokens_in, 0),
-    tokens_out: shown.reduce((a, t) => a + t.tokens_out, 0),
-    cost_usd: costKnown ? Number(shown.reduce((a, t) => a + (t.cost_usd ?? 0), 0).toFixed(4)) : null,
+    link_calls: links.length,
+    tokens_in: all.reduce((a, t) => a + t.tokens_in, 0),
+    tokens_out: all.reduce((a, t) => a + t.tokens_out, 0),
+    cost_usd: costKnown ? Number(all.reduce((a, t) => a + (t.cost_usd ?? 0), 0).toFixed(4)) : null,
     cost_note: costKnown
       ? "Computed from the exported rows (API usage + configured rates; mock calls are $0, estimated)."
       : "Usage missing for one or more exported calls; dollar total unavailable (never shown as $0).",
@@ -93,7 +137,7 @@ export function buildTraceExport(entries: TraceEntry[], redact: boolean, ctx: Tr
     totals,
   };
   if (redact) {
-    return { ...base, calls: shown.map(operationalCall) };
+    return { ...base, calls: shown.map(operationalCall), link_calls: links.map(operationalLinkCall) };
   }
   return {
     ...base,
@@ -107,5 +151,6 @@ export function buildTraceExport(entries: TraceEntry[], redact: boolean, ctx: Tr
       note: t.note ?? null,
       record: t.record,
     })),
+    link_calls: links.map((t) => ({ ...operationalLinkCall(t), note: t.note ?? null, links: t.links, dropped: t.dropped })),
   };
 }
