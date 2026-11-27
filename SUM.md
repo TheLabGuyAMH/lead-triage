@@ -1,5 +1,15 @@
 # SUM.md — discussion record (newest first)
 
+## 2026-11-27 — README top for judges, submission text, Ember switched off
+
+Anthony's words: "It's the holidays, yesterday was just Thanksgiving, and I don't know anyone who's a plumber or HVAC owner. And can't you or a different agent of the providers check eligibility for me? And can't you rewrite the README as well as turn off Ember? And besides all of this those scores even with the improvements is still low, I would like to know besides all those variables I just mentioned, would help them score it as an 8/10 across the board?"
+
+- The shop-owner quote is dropped; the README cites Invoca's public data on unanswered calls instead, and says plainly that no contractor has used the app.
+- README top rewritten for a 30-second judge read; `docs/SUBMISSION.md` holds the portal pitch and bullets (aimed at Scale the Real World).
+- Rules re-checked 2026-11-27 on the public waiver page: $10 cap covers all Meta Model API spend; submission needs public repo, 3-minute video, prompt/token trace. The portal form and the account usage page need Anthony's login.
+- `EMBER_ENABLED` set to `0` on Vercel production. Flip it to `1` only while recording, then back to `0`.
+- Open: Anthony's answer on the 8/10 plan (agentic follow-up feature would reopen the code freeze).
+
 ## 2026-11-26 — Fix round 3 (bug-fix pass), then code freeze
 
 Anthony (verbatim), answering "Should I run that one bug-fix pass now and then freeze the code?": "Yes and then have the council of models determine what can increase the scores as well as the odds of winning the competition". Fixed the round-2 bugs the final four-model review found, with no Ember spend: a sparking panel no longer gets the carbon-monoxide script in practice mode; "fire", "smoke" and "sparks" only count next to something that can burn ("furnace won't fire up", "FIRE SALE", "sewer smoke test" are no longer 911 emergencies); "install a CO detector" is routine while dizziness since the furnace came on is now a CO emergency; a pasted multi-paragraph email stays one lead; the browser budget cap no longer switches off after a failed call; no more "your your" in practice replies; the board quotes practice mode's honest pre-tuning score (4/9 emergencies, 27/40 urgency, re-measured from commit 77d77f2); a backslash in the business name can no longer break the prompt quote; README spend now matches the committed traces ($0.0798 / 167 calls, with the running tally noted); UI no longer claims the server enforces the budget. All 52 eval leads, including the committed Ember outputs, give identical hazard results before and after, so the Ember scores stand. Code is frozen after this commit except for fixes the council finds blocking.

@@ -1,8 +1,27 @@
-# Lead Triage — Lead Intake Assistant for Local Service Businesses
+# Lead Triage: a morning call-back list for plumbing and HVAC shops, built on Muse Ember
 
-Built for the **Meta Muse Ember Hackathon** (Cerebral Valley) by Anthony Hinojosa / **Alchemist Labs**. Live: https://lead-triage-nine.vercel.app
+**Live:** https://lead-triage-nine.vercel.app (opens on a recorded Ember run, $0 to view) · Built solo for the Meta Muse Ember Hackathon by Anthony Hinojosa / Alchemist Labs.
 
-The owner of a 1–10 truck plumbing or HVAC shop pastes the day's pile of raw leads (voicemail transcripts, web form submissions, messages) and gets back a **ranked call-back queue**: every lead structured, emergencies first, spam folded away in plain sight, a follow-up draft ready in the customer's own language (English or Spanish), and Call / Text actions on every card. The owner reviews and sends everything; nothing is auto-sent.
+A 1–10 truck plumbing or HVAC shop starts the day with a pile of voicemails, texts and web forms, in English and Spanish, with the burst pipe buried under the spam. The owner pastes the whole pile in. Muse Ember reads each lead, and the app returns a ranked call-back list: emergencies first, spam folded away, a missing phone number flagged instead of invented, and a reply drafted in the customer's own language. Gas, carbon-monoxide and electrical hazards never get AI-written text: code swaps in a fixed "leave now, call 911" script. The owner reviews and sends everything; nothing is sent automatically.
+
+**Why it matters.** Invoca's platform data found that [27% of calls to home services businesses go unanswered, and fewer than 3% of callers sent to voicemail leave a message](https://www.invoca.com/blog/how-much-missed-sales-calls-cost-home-services-businesses) (May 2024). The leads that do arrive in writing are the ones a busy owner can still win, if they get called back in the right order.
+
+**Why Ember.** One lead costs **$0.000347** on Ember (measured over 40 held-out leads), which is **about 35 cents per 1,000 leads**. The whole $10 hackathon budget would cover roughly 28,000 leads. Each lead takes about 1.6 seconds (median), with four leads processed at a time. At that price a shop can run every message it gets, every day, without thinking about cost.
+
+**Ember reads; code decides what's safe.** Ember fills a strict JSON schema for each lead (structured output). Plain code then ranks the leads, checks that every phone number actually appears in the lead, strips links and prices from drafts, and owns the hazard scripts.
+
+| Measured on 40 held-out synthetic leads | Result |
+|---|---|
+| Emergencies caught | 9 of 9 |
+| Urgency and category correct | 40 of 40 each |
+| Language detected (English / Spanish) | 40 of 40 |
+| Phone numbers exact | 39 of 40 (the miss was spelled out in words; it was flagged, not invented) |
+| Prompt-injection attempts that worked | 0 of 3 |
+| Cost per lead / median time per lead | $0.000347 / 1.64 s |
+
+**Honest limits.** The test leads are synthetic and were written by the same AI that helped build the app. No contractor has used it yet. The safety scripts are demo wording; a licensed professional should review them before real use. Total Ember spend for the whole build is in the committed traces ($0.0798 over 167 calls) and on the account's usage page, far under the $10 cap.
+
+**Try it:** open the live link to see the recorded Ember run, or press "Load sample set" and run it in free practice mode (simple keyword rules, clearly labeled as not Ember). Live Ember runs need the private demo key, which keeps strangers from spending the budget.
 
 ## How it works
 
