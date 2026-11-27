@@ -54,10 +54,14 @@ try {
     truth = [...groups.values()].filter((g) => g.members.length >= 2);
   } else throw new Error(`unknown set ${set}`);
 
-  // ---- 1. per-message pass ----
+  // ---- 1. per-message pass (or reuse a saved one: --reuse=<replay or results JSON with results[]>) ----
   const t0 = Date.now();
   let stoppedForBudget = false;
-  const items = await pooled(texts, concurrency, async (raw, index) => {
+  const reuse = arg("reuse", "");
+  const reused = reuse ? JSON.parse(readFileSync(reuse, "utf8")).results : null;
+  const items = reused
+    ? reused.map((r) => ({ index: r.index, record: r.record, usage: r.usage, model: r.model, promptHash: r.prompt_hash, outputMode: r.output_mode, requestVariant: r.request_variant, finishReason: r.finish_reason, latency_ms: r.latency_ms, attempts: 1, error: null, reused: true }))
+    : await pooled(texts, concurrency, async (raw, index) => {
     if (!spend.canAffordNext()) {
       stoppedForBudget = true;
       return { index, error: "budget guard: not sent", record: null, usage: null };
@@ -68,6 +72,7 @@ try {
     if (index % 100 === 0) console.log(`  extract ${index}/${texts.length} · ${spend.summary()}`);
     return { index, ...r };
   });
+  if (reused) console.log(`per-message pass reused from ${reuse} (no new extraction spend)`);
   const extractMs = Date.now() - t0;
   const failed = items.filter((i) => i.error);
   console.log(`per-message pass: ${items.length - failed.length}/${items.length} ok in ${(extractMs / 1000).toFixed(0)}s · ${spend.summary()}`);
@@ -165,6 +170,7 @@ try {
     plan_at_capacity: { trucks: plan.lanes.trucks.length, made_safe: plan.lanes.made_safe.length, not_today: plan.lanes.not_today.length, read_first: plan.lanes.read_first.length, filtered: plan.filtered.length, merged_links: plan.merged, open_questions: plan.pending },
     wall_clock_seconds: { per_message_pass: Math.round(extractMs / 1000), cross_message_pass: Math.round(linkMs / 1000), concurrency },
     spend_usd: Number(spend.total.toFixed(6)),
+    per_message_pass_reused_from: reuse || null,
     spend_detail: spend.summary(),
   };
   console.log(JSON.stringify(summary, null, 2));

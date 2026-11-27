@@ -1,0 +1,145 @@
+{
+  "recorded_at": "2026-11-27T15:38:14.868Z",
+  "summary": {
+    "set": "freeze20",
+    "messages": 20,
+    "true_link_pairs": 6,
+    "true_groups": 4,
+    "links_found": 4,
+    "pairs_suggested": 6,
+    "pairs_suggested_correct": 6,
+    "recall_any_link": "6/6",
+    "recall_same_job": "3/3",
+    "recall_shared_cause": "3/3",
+    "precision_any_link": "6/6",
+    "auto_merged_pairs": 2,
+    "auto_merged_correct": 2,
+    "wrong_auto_merges": 0,
+    "wrong_auto_merge_examples": [],
+    "likely_downgraded_by_code": 0,
+    "member_quotes_dropped_by_code": 0,
+    "link_calls": 1,
+    "link_calls_failed": 0,
+    "extraction_failures": 0,
+    "extraction": null,
+    "plan_at_capacity": {
+      "trucks": 6,
+      "made_safe": 6,
+      "not_today": 3,
+      "read_first": 0,
+      "filtered": 3,
+      "merged_links": 2,
+      "open_questions": 2
+    },
+    "wall_clock_seconds": {
+      "per_message_pass": 13,
+      "cross_message_pass": 3,
+      "concurrency": 4
+    },
+    "spend_usd": 0.009109,
+    "spend_detail": "$0.009109 over 21 billed call(s)"
+  },
+  "links": [
+    {
+      "key": "same_job:0,6",
+      "indices": [
+        0,
+        6
+      ],
+      "kind": "same_job",
+      "confidence": "likely",
+      "evidence": [
+        {
+          "index": 0,
+          "quote": "418 Mesquite St"
+        },
+        {
+          "index": 6,
+          "quote": "Linda's husband, about the burst pipe at 418 Mesquite"
+        }
+      ],
+      "explanation": "Ray identifies as Linda's husband about the same burst pipe at 418 Mesquite.",
+      "question": "Are you calling about Linda Garza's burst pipe at 418 Mesquite St?",
+      "ask_index": 6,
+      "source": "ember",
+      "downgraded": null
+    },
+    {
+      "key": "same_job:1,10",
+      "indices": [
+        1,
+        10
+      ],
+      "kind": "same_job",
+      "confidence": "likely",
+      "evidence": [
+        {
+          "index": 1,
+          "quote": "361-555-0142"
+        },
+        {
+          "index": 10,
+          "quote": "361-555-0142"
+        }
+      ],
+      "explanation": "Same phone number in each message.",
+      "question": "Is this the same household with the 81-year-old mother and no heat?",
+      "ask_index": 10,
+      "source": "code",
+      "downgraded": null
+    },
+    {
+      "key": "shared_cause:2,7,12",
+      "indices": [
+        2,
+        7,
+        12
+      ],
+      "kind": "shared_cause",
+      "confidence": "likely",
+      "evidence": [
+        {
+          "index": 2,
+          "quote": "1207 Laguna Dr"
+        },
+        {
+          "index": 7,
+          "quote": "1215 Laguna Dr"
+        },
+        {
+          "index": 12,
+          "quote": "1230 Laguna Dr"
+        }
+      ],
+      "explanation": "Three different Laguna Dr addresses report no water this morning, suggesting a street-wide outage.",
+      "question": "Has the whole Laguna Dr street been without water since about 6am?",
+      "ask_index": 2,
+      "source": "ember",
+      "downgraded": null
+    },
+    {
+      "key": "same_job:5,14",
+      "indices": [
+        5,
+        14
+      ],
+      "kind": "same_job",
+      "confidence": "possible",
+      "evidence": [
+        {
+          "index": 5,
+          "quote": "unit B of the duplex on Ocean Dr"
+        },
+        {
+          "index": 14,
+          "quote": "Tenant in unit A says water is coming through the shared wall from next door"
+        }
+      ],
+      "explanation": "Unit B kitchen leak on Ocean Dr and unit A water through shared wall may be the same duplex leak.",
+      "question": "Is the leak in unit B causing water through the shared wall to unit A at 2240 Ocean Dr?",
+      "ask_index": 14,
+      "source": "ember",
+      "downgraded": null
+    }
+  ]
+}
