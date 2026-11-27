@@ -78,7 +78,17 @@ code { font-size: 0.9em; background: var(--frost-deep); padding: 0 4px; border-r
 .pv-more { margin: 8px 0 0; font-weight: 700; font-size: 14px; text-decoration: underline; }
 .agent-card { background: #ece8f7; border-left: 5px solid #3f2a78; border-radius: var(--radius-ticket); padding: 14px 16px; margin-bottom: 12px; }
 .agent-title { margin: 0 0 4px; font-weight: 800; font-variation-settings: "wdth" 110; }
-.hero .stubs { margin-top: 22px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.change p { margin: 0; }
+.changed-ticket { display: grid; gap: 2px; margin-top: 10px; padding: 10px 12px; background: var(--white-copy); color: var(--ink); border-left: 6px solid var(--emergency); border-radius: var(--radius-ticket); text-decoration: none; }
+.ct-stop { font-weight: 900; font-size: 18px; font-variation-settings: "wdth" 125; }
+.ct-link { font-size: 13px; font-weight: 700; text-decoration: underline; }
+#first-question { scroll-margin-top: 16px; }
+.pv-no { font-weight: 900; font-size: 13px; color: var(--ink-soft); font-variation-settings: "wdth" 125; }
+@media (max-width: 600px) {
+  .pv-stops .ticket:not(.pv-phone) { display: none; }
+  .pv-row:not(:first-of-type) { display: none; }
+}
+.hero .stubs { margin-top: 22px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .hero .stub { grid-template-columns: 1fr; gap: 4px; padding: 12px 12px 12px 14px; align-content: start; }
 .hero .stub-num { font-size: clamp(22px, 3vw, 30px); }
 .hero .stub-label { font-size: 13px; }

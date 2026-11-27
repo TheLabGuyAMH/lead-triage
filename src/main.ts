@@ -596,16 +596,25 @@ function addToTotals(t: Totals, result: ExtractionResult) {
 const VERSUS_BARS = `<div class="versus" aria-label="Linked pairs found"><div><span>Muse Ember</span><span class="bar"><span style="width:100%"></span></span><span>8 of 8</span></div><div><span>Keyword rules</span><span class="bar"><span style="width:12.5%"></span></span><span>1 of 8</span></div></div>`;
 const VERSUS_CARD = `<div class="versus-card"><p class="pv-label">Hidden links test: 23 messages that share no phone or address</p>${VERSUS_BARS}<button type="button" class="link-btn" data-view="hard">Open the test</button></div>`;
 
+/** The truck stop an answer just created or changed, shown where the owner answered, with a link to it on the board. */
+function changedTicket(trucks: Job[]): string {
+  const job = trucks.find((j) => j.members.some((m) => recentlyMoved.has(m.index ?? 0)));
+  if (!job) return "";
+  const names = job.members.map((m) => m.record.name ?? `#${(m.index ?? 0) + 1}`).join(" + ");
+  return `<a class="changed-ticket" href="#stop-${job.truck}-${job.stop}"><span class="ct-stop">Truck ${job.truck}, stop ${job.stop}</span><span>${esc(names)}: ${esc(job.primary.record.service_needed ?? "")}</span><span class="ct-link">See it on the board</span></a>`;
+}
+
 /** One link found by Ember's search agent, shown with its steps, so the tool use is visible without digging. */
 function agentCard(open: LeadLink[]): string {
   const l = open.find((x) => x.investigation) ?? links.find((x) => x.investigation && !answers[x.key]);
   if (!l || !l.investigation) return "";
   const t = linkTrace.find((x) => x.kind === "investigate" && x.links.some((y) => y.key === l.key));
   const cost = t && t.cost_usd !== null ? `, $${t.cost_usd.toFixed(4)}` : "";
-  return `<div class="agent-card"><p class="agent-title">Ember's search agent at work</p>
-    <p class="sub">${esc(who(l.indices[l.indices.length - 1]))} pointed at someone the first pass couldn't place. Ember searched the whole morning with tools, read the candidates, and proposed a link (${l.investigation.turns} turns${cost}).</p>
-    ${investigationHtml(l)}
+  const follower = who(l.indices[l.indices.length - 1]);
+  return `<div class="agent-card"><p class="agent-title">How Ember investigated ${esc(follower)}'s follow-up</p>
+    <p class="sub">The message pointed at someone the first pass couldn't place. Ember's search agent searched the whole morning with tools, read the candidates and proposed a link (${l.investigation.turns} turns${cost}).</p>
     ${evidenceHtml(l)}
+    <details class="proof"><summary>The agent's steps</summary>${investigationHtml(l)}</details>
     <p class="q-source">It is still only a question: the customer gets asked before anything merges.</p></div>`;
 }
 
@@ -619,14 +628,16 @@ function renderHeroPreview(_open: LeadLink[], byTruck: Map<number, Job[]>) {
     .sort(([a], [b]) => a - b)
     .slice(0, 2)
     .map(([t, jobs]) => `<div class="pv-row"><span class="pv-truck">Truck ${t}</span><ol class="pv-stops">${jobs
-      .slice(0, 5)
-      .map((j) => {
+      .slice(0, 3)
+      .map((j, n) => {
         const r = j.primary.record;
-        return `<li class="ticket ${esc(r.urgency)}${r.safety_script ? " hazard" : ""}"><span class="t-name">${esc(r.name ?? "No name given")}</span><span class="t-what">${esc(r.service_needed ?? "")}</span>${j.members.length > 1 ? `<span class="tag merged">${j.members.length} messages</span>` : ""}</li>`;
+        // On a phone only the first safety-script stop and the first merged stop of truck 1 show.
+        const phone = t === 1 && (j === jobs.find((x) => x.primary.record.safety_script) || j === jobs.find((x) => x.members.length > 1));
+        return `<li class="ticket ${esc(r.urgency)}${r.safety_script ? " hazard" : ""}${phone ? " pv-phone" : ""}"><span class="pv-no">${n + 1}</span><span class="t-name">${esc(r.name ?? "No name given")}</span><span class="t-what">${esc(r.service_needed ?? "")}</span>${j.members.length > 1 ? `<span class="tag merged">${j.members.length} messages</span>` : ""}</li>`;
       })
       .join("")}</ol></div>`)
     .join("");
-  heroPreview.innerHTML = `<p class="pv-label">This morning's first stops</p>${rows}<p class="pv-more">See all ${config.trucks} trucks</p>`;
+  heroPreview.innerHTML = `<p class="pv-label">This morning's first stops</p>${rows}<p class="pv-more">See all ${config.trucks} trucks and ${byTruck.size ? [...byTruck.values()].reduce((a, j) => a + j.length, 0) : 0} stops</p>`;
   heroPreview.hidden = false;
 }
 
@@ -667,7 +678,7 @@ function render() {
       </div>
       ${replayLabel === "hard" && showingReplay ? `${VERSUS_BARS}<p class="how">The 6 questions below cover all 8 linked pairs (one building has three tenants, one street two homes).</p>` : ""}
       <p class="how">${planHowLine()}</p>
-      ${lastChange ? `<p class="change" role="status">${esc(lastChange)}</p>` : ""}`
+      ${lastChange ? `<div class="change" role="status"><p>${esc(lastChange)}</p>${changedTicket(L.trucks)}</div>` : ""}`
     : "";
 
   const shownLinks = links.filter((l) => l.indices.filter((i) => results[i] && results[i].record.category === "real").length >= 2);
@@ -678,8 +689,9 @@ function render() {
   questionsEl.innerHTML = shownLinks.length
     ? `<h3>${open.length ? `${open.length} question${open.length === 1 ? "" : "s"} that change the plan` : "No open questions"}</h3>
       <p class="sub">Ember thinks these messages belong together, but code can't prove it. Text the customer the question, tap what they said, and the trucks re-plan.</p>
+      ${open.length ? `<div id="first-question">${questionHtml(open[0], true)}</div>` : ""}
       ${agentCard(open)}
-      ${open.slice(0, 3).map((l, n) => questionHtml(l, n === 0)).join("")}
+      ${open.slice(1, 3).map((l) => questionHtml(l)).join("")}
       ${open.length > 3 ? `<details class="q-group"><summary>${open.length - 3} more question${open.length - 3 === 1 ? "" : "s"}</summary>${open.slice(3).map((l) => questionHtml(l)).join("")}</details>` : ""}
       ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map((l) => questionHtml(l)).join("")}</details>` : ""}
       ${auto.length ? `<details class="q-group"><summary>Merged automatically because code found the same phone or address (${auto.length})</summary>${auto.map((l) => questionHtml(l)).join("")}</details>` : ""}`
@@ -694,7 +706,7 @@ function render() {
       const msgs = jobs.reduce((a, j) => a + j.members.length, 0);
       return `<section class="truck" aria-label="Truck ${t}">
         <div class="truck-id"><span class="truck-name">Truck ${t}</span><span class="truck-load">${jobs.length} stop${jobs.length === 1 ? "" : "s"}, ${msgs} message${msgs === 1 ? "" : "s"}</span></div>
-        <ol class="stops">${jobs.map((j) => `<li>${ticketHtml(j, j.stop! > config.stopsPerTruck ? "+" : String(j.stop))}</li>`).join("")}</ol>
+        <ol class="stops">${jobs.map((j) => `<li id="stop-${j.truck}-${j.stop}">${ticketHtml(j, j.stop! > config.stopsPerTruck ? "+" : String(j.stop))}</li>`).join("")}</ol>
       </section>`;
     })
     .join("");

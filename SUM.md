@@ -1,5 +1,14 @@
 # SUM.md — discussion record (newest first)
 
+## 2026-11-27 — Benchmarked, redesigned, four visual reviews
+
+Anthony's words: "I'm gonna be honest, it doesn't look that much better. What are you and the council benchmarking against to know what good actually is for this build/project?" then "Ok well I don't know what you're waiting for then".
+
+- Benchmark: Meta Global AI Developer Hackathon finalists on Cerebral Valley (Punchwalk: plain headline, three proof numbers, two buttons, the real app on screen; Gatekeeper: one huge result over the live product) and ServiceTitan's dispatch board (one row per technician). Earlier reviews had read only code; none had looked at the page.
+- Redesign (design guide + frontend-design): three-part carbon job ticket (white on a truck, canary urgent reply, pink not today), trucks as lettered rows, opening that states the capacity and shows the real board, questions that put "ask" before "they said yes / no", an answer that shows the truck stop it changed, Ember's search agent in its own card.
+- Visual reviews on screenshots against the benchmark, each on the version after the previous one's fixes (Demo / phone first impression / laptop first impression): Fable 6/5/6, Gemini 6/5/6, Muse 6/7/6, Astra 8/7/8. Astra's fixes are in; not re-scored. Gemini's and Muse's laptop screenshots were cut mid-headline by smooth scrolling in my capture; fixed for Astra's.
+- Open: the 3-minute video (all four gave first-15-second shot lists); a test set written by someone other than us.
+
 ## 2026-11-27 — Morning Dispatcher built, Ember off again
 
 Anthony's words: "No, because you owe me a better understanding of what the models will give an 8/10 for creativity…" then, to "Should I build the combined Morning Dispatcher?": "Yes and then have the council review it".
