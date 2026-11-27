@@ -27,6 +27,8 @@ async function main() {
   export { buildTraceExport } from ${JSON.stringify(join(process.cwd(), "src/lib/trace-export.ts"))};
   export { failureResult, ExtractionError } from ${JSON.stringify(join(process.cwd(), "src/lib/api-adapter.ts"))};
   export * as dispatch from ${JSON.stringify(join(process.cwd(), "src/lib/dispatch.ts"))};
+  export * as inv from ${JSON.stringify(join(process.cwd(), "src/lib/investigate.ts"))};
+  export { handleInvestigate } from ${JSON.stringify(join(process.cwd(), "api/_lib/investigate-core.ts"))};
   export { handleDispatch } from ${JSON.stringify(join(process.cwd(), "api/_lib/dispatch-core.ts"))};
   export { FREEZE_LEADS, FREEZE_GROUPS } from ${JSON.stringify(join(process.cwd(), "src/lib/sample.ts"))};
   `,
@@ -34,6 +36,7 @@ async function main() {
   const out = join(dir, "bundle.mjs");
   await build({ entryPoints: [entry], bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent" });
   const lib = await import(pathToFileURL(out).href);
+  const { inv: INV, handleInvestigate } = lib;
   const { dispatch: D, handleDispatch, FREEZE_LEADS, FREEZE_GROUPS, applyHazardSafety } = lib;
   const { mockExtract, MOCK_REVIEW_NOTE, rankLeads, rankResults, splitBatch, SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG, handleExtract, cleanConfigField, normalizeRecord, phoneIsGrounded, buildVariants, sanitizeDraft, SAFETY_SCRIPTS, detectHazard, buildTraceExport, failureResult, ExtractionError } = lib;
 
@@ -381,6 +384,31 @@ async function main() {
   const dBig = await handleDispatch({ leads: many.slice(0, 31), mode: "mock" });
   check("dispatch endpoint rejects a block over the cap", dBig.status === 400);
   check("answer key covers 4 groups", FREEZE_GROUPS.length === 4);
+  // Investigator (bounded Ember tool loop): pure parts and gates, $0
+  const orph = INV.pickOrphans(fzLeads, []);
+  check("orphans are messages that point back at someone", orph.some((l) => l.index === 6) && !orph.some((l) => l.index === 3), JSON.stringify(orph.map((l) => l.index)));
+  check("orphans skip messages already in a link", !INV.pickOrphans(fzLeads, linksAll).some((l) => l.index === 6));
+  const hits = INV.searchMessages(fzLeads, "Linda Mesquite", fzLeads.findIndex((l) => l.index === 6) + 1);
+  check("search_messages finds Linda's message by name and street, not the target itself", hits.length >= 1 && fzLeads[hits[0].id - 1].index === 0 && !hits.some((h) => fzLeads[h.id - 1].index === 6));
+  check("search_messages ignores filler words", INV.searchMessages(fzLeads, "the and please", 1).length === 0);
+  const ivOff = await handleInvestigate({ leads: fzLeads, target_index: 6, mode: "ember" }, { demoKey: null });
+  check("investigate endpoint does not run when Ember is off, says so, $0", ivOff.status === 200 && ivOff.json.mode === "mock" && /switched off/.test(ivOff.json.note) && ivOff.json.usage.cost_usd === 0);
+  const ivBad = await handleInvestigate({ leads: fzLeads, target_index: 999, mode: "mock" });
+  check("investigate endpoint rejects a target outside the pile", ivBad.status === 400);
+
+  // Fixes from the 2026-11-27 Gemini review
+  check("'50 inside' in two messages is not a shared address", D.sharedAddresses("still no heat and it's 50 inside", "it's 50 inside here too") .length === 0);
+  check("'418 Mesquite St' and '418 Mesquite' still match", D.sharedAddresses("Linda Garza, 418 Mesquite St", "about the burst pipe at 418 Mesquite").join() === "418 mesquite");
+  const sup = { key: "same_job:0,6,9", indices: [0, 6, 9], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 0, source: "ember" };
+  const sub = { key: "same_job:0,6", indices: [0, 6], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 0, source: "code" };
+  const splitPlan = D.buildPlan(fz, [sup, sub], { "same_job:0,6,9": "no" }, { trucks: 5, stopsPerTruck: 5 });
+  check("'Split' on a link also splits the links inside it", jobOf(splitPlan, 0) !== jobOf(splitPlan, 6) && jobOf(splitPlan, 0) !== jobOf(splitPlan, 9));
+  check("a link inside another is not counted as a separate open question", D.isSubsumed(sub, [sup, sub]) && !D.isSubsumed(sup, [sup, sub]));
+  const hz = D.buildPlan(fz, [{ key: "same_job:8,9", indices: [8, 9], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 8, source: "ember" }], {}, { trucks: 5, stopsPerTruck: 5 });
+  const hzJob = jobOf(hz, 8);
+  check("a message merged into a hazard job gets the safety script, not an AI draft", hzJob === jobOf(hz, 9) && [...hzJob.memberReplies.values()].every((r) => r.kind === "safety"));
+  check("'merged' counts multi-message stops, not links", plan0.merged === Object.values(plan0.lanes).flat().filter((j) => j.members.length > 1).length);
+
   // Fixes from the 2026-11-27 Fable review
   const negRec = applyHazardSafety({ raw_text: "Hola, no tenemos agua desde la mañana en la calle Baldwin, 1424 Baldwin Blvd. Mis vecinos tampoco.", name: null, phone: null, service_needed: "no water supply", urgency: "same-day", urgency_reason: "No water since morning; no emergency criteria such as flooding, gas, or electrical hazard are stated.", area: null, language: "es", category: "real", category_reason: "", owner_summary: "", followup_draft: "Hola", needs_review: null, safety_script: null });
   check("a model reason that says 'no electrical hazard' does not trigger a safety script", negRec.safety_script === null && negRec.urgency === "same-day");

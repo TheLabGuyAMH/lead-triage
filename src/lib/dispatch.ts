@@ -19,6 +19,7 @@
 // Everything here is pure and shared by the browser, the server and the
 // scripts, so the replay, the live run and the eval score the same code.
 
+import { SAFETY_SCRIPTS } from "./safety.js";
 import type { BusinessConfig, ExtractionResult, Language, LeadRecord } from "./schema.js";
 
 export type LinkKind = "same_job" | "shared_cause";
@@ -47,6 +48,8 @@ export interface LeadLink {
   source: LinkSource;
   /** Why code lowered "likely" to "possible", when it did. */
   downgraded?: string | null;
+  /** Set when the investigator (a bounded Ember tool loop) found this link. */
+  investigation?: { turns: number; steps: Array<{ tool: string; args: Record<string, unknown>; found: number[] }> };
 }
 
 /** What the browser sends per message to the cross-message pass. */
@@ -304,10 +307,29 @@ const digitsOf = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").
 /** House number + street word pairs, e.g. "412 elm". */
 export function addressTokens(text: string): string[] {
   const out = new Set<string>();
-  for (const m of withoutPhones(text).toLowerCase().matchAll(/\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-zà-ÿ]{3,})/g)) {
+  for (const m of withoutPhones(text).toLowerCase().matchAll(/\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-z\u00e0-\u00ff]{3,})/g)) {
     if (!NOT_STREET.has(m[2]) && !STREET_SUFFIX.has(m[2])) out.add(`${m[1]} ${m[2]}`);
   }
   return [...out];
+}
+
+/** The subset of addressTokens followed by a street suffix ("412 elm st"), i.e. clearly an address. */
+export function suffixedAddressTokens(text: string): string[] {
+  const out = new Set<string>();
+  const re = /\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-z\u00e0-\u00ff]{3,})(?:\s+[a-z\u00e0-\u00ff]+)?\s+(st|street|dr|drive|ave|avenue|rd|road|blvd|boulevard|ln|lane|ct|court|way|pl|place|pkwy|hwy|cir|circle|trl)\b/g;
+  for (const m of withoutPhones(text).toLowerCase().matchAll(re)) out.add(`${m[1]} ${m[2]}`);
+  return [...out];
+}
+
+/**
+ * Address tokens two messages share, counting a token only when at least
+ * one of them writes it with a street suffix: "418 Mesquite St" and
+ * "418 Mesquite" match; "50 inside" and "50 inside" never do.
+ */
+export function sharedAddresses(a: string, b: string): string[] {
+  const tb = new Set(addressTokens(b));
+  const sure = new Set([...suffixedAddressTokens(a), ...suffixedAddressTokens(b)]);
+  return addressTokens(a).filter((t) => tb.has(t) && sure.has(t));
 }
 
 
@@ -315,8 +337,7 @@ export function addressTokens(text: string): string[] {
 export function sharedAnchor(a: DispatchLead, b: DispatchLead): string | null {
   const pa = digitsOf(a.phone);
   if (pa.length >= 10 && pa === digitsOf(b.phone)) return "same phone";
-  const ta = new Set(addressTokens(a.raw_text));
-  if (addressTokens(b.raw_text).some((t) => ta.has(t))) return "same house number and street";
+  if (sharedAddresses(a.raw_text, b.raw_text).length) return "same house number and street";
   // A full name is not an anchor: in a city of a few thousand callers,
   // two different households share one (20 such pairs in Freeze Day).
   return null;
@@ -477,7 +498,7 @@ export function mockLinks(leads: DispatchLead[]): LeadLink[] {
     if (SHARED_WORDS.test(l.raw_text)) for (const s of streetKeys(l.raw_text)) (byStreet.get(s) ?? byStreet.set(s, []).get(s)!).push(l);
   }
   for (const [t, g] of byAddr) {
-    if (g.length < 2) continue;
+    if (g.length < 2 || !g.some((l) => suffixedAddressTokens(l.raw_text).includes(t))) continue;
     const indices = g.map((l) => l.index).sort((a, b) => a - b);
     out.push({
       key: linkKey("same_job", indices), indices, kind: "same_job", confidence: "likely",
@@ -560,11 +581,33 @@ export interface DispatchPlan {
   slots: number;
   /** Hazard jobs placed on trucks beyond the slot count. */
   overflowHazards: number;
+  /** Stops that carry more than one message. */
   merged: number;
   pending: number;
 }
 
 /** A link merges its messages into one job when the owner said yes, or it is an anchored likely same_job not rejected. */
+/** true when another link of the same kind covers every message of this one (and more). */
+export function isSubsumed(link: LeadLink, links: LeadLink[]): boolean {
+  return links.some((o) => o !== link && o.kind === link.kind && o.indices.length > link.indices.length && link.indices.every((i) => o.indices.includes(i)));
+}
+
+/**
+ * Answers as they apply to every link: a link with no answer of its own
+ * takes the answer given on a same-kind link that contains it ("no" wins),
+ * so "Split" on a three-message link also splits the pairs inside it.
+ */
+export function resolveAnswers(links: LeadLink[], answers: Answers): Answers {
+  const out: Answers = { ...answers };
+  for (const l of links) {
+    if (answers[l.key]) continue;
+    const sup = links.filter((o) => o !== l && o.kind === l.kind && answers[o.key] && l.indices.every((i) => o.indices.includes(i)));
+    if (sup.some((o) => answers[o.key] === "no")) out[l.key] = "no";
+    else if (sup.length) out[l.key] = "yes";
+  }
+  return out;
+}
+
 export function linkIsActive(link: LeadLink, answers: Answers): boolean {
   const a = answers[link.key];
   if (a === "yes") return true;
@@ -660,17 +703,16 @@ export function buildPlan(
     parent.set(i, root);
     return root;
   };
-  let merged = 0;
   let pending = 0;
   const causeMembers = new Set<number>();
+  const resolved = resolveAnswers(links, answers);
   for (const link of links) {
     const inPlay = link.indices.filter((i) => byIndex.has(i));
     if (inPlay.length < 2) continue;
-    if (linkIsActive(link, answers)) {
-      merged++;
+    if (linkIsActive(link, resolved)) {
       if (link.kind === "shared_cause") for (const i of inPlay) causeMembers.add(i);
       for (const i of inPlay.slice(1)) parent.set(find(i), find(inPlay[0]));
-    } else if (!answers[link.key]) pending++;
+    } else if (!resolved[link.key] && !isSubsumed(link, links)) pending++;
   }
   const groups = new Map<number, ExtractionResult[]>();
   for (const [i, r] of byIndex) {
@@ -744,7 +786,9 @@ export function buildPlan(
     for (const m of job.members) {
       const r = m.record;
       let reply: { text: string; kind: ReplyKind };
-      if (r.safety_script) reply = { text: r.followup_draft, kind: "safety" };
+      const hazard = r.safety_script ?? job.primary.record.safety_script ?? null;
+      // A message merged into a hazard job gets that hazard's script too, never an AI draft.
+      if (hazard) reply = { text: SAFETY_SCRIPTS[hazard][r.language], kind: "safety" };
       else if (job.replyKind === "ai" || job.replyKind === "safety") reply = { text: m === job.primary ? job.reply : r.followup_draft, kind: "ai" };
       else reply = { text: HOLDING_SCRIPTS[job.replyKind][r.language], kind: job.replyKind };
       job.memberReplies.set(m.index ?? 0, reply);
@@ -758,5 +802,7 @@ export function buildPlan(
     job.truck = (n % trucks) + 1;
     job.stop = Math.floor(n / trucks) + 1;
   });
+  // Stops that carry more than one message.
+  const merged = jobs.filter((j) => j.members.length > 1).length;
   return { lanes, filtered, slots, overflowHazards, merged, pending };
 }

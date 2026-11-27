@@ -95,6 +95,37 @@ export interface DispatchResult {
   latency_ms?: number;
 }
 
+export interface InvestigateResult extends DispatchResult {
+  outcome: string;
+  steps: Array<{ tool: string; args: Record<string, unknown>; found: number[] }>;
+  turns: number;
+}
+
+/** One orphan message through POST /api/investigate (the bounded Ember tool loop). */
+export async function investigateMessage(target: DispatchLead, pile: DispatchLead[], config: BusinessConfig): Promise<InvestigateResult> {
+  let demoKey: string | null = null;
+  try {
+    demoKey = sessionStorage.getItem(DEMO_KEY_STORAGE);
+  } catch {
+    /* storage blocked */
+  }
+  const t0 = Date.now();
+  const res = await fetch("/api/investigate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(demoKey ? { "x-demo-key": demoKey } : {}) },
+    body: JSON.stringify({ leads: pile, target_index: target.index, config, mode: "ember" }),
+  });
+  const text = await res.text();
+  let data: (InvestigateResult & { error?: string }) | null = null;
+  try {
+    data = JSON.parse(text) as InvestigateResult & { error?: string };
+  } catch {
+    /* non-JSON body */
+  }
+  if (!res.ok || !data) throw new ExtractionError(data?.error || `Investigation failed (${res.status})`, data?.usage ?? null);
+  return { ...data, latency_ms: Date.now() - t0 };
+}
+
 /** One block through POST /api/dispatch (the cross-message pass). */
 export async function dispatchBlock(block: DispatchLead[], config: BusinessConfig): Promise<DispatchResult> {
   let demoKey: string | null = null;

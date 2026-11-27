@@ -38,6 +38,7 @@ export { emberExtract, emberEnvFromProcess, emberOptionsFromProcess, computeCost
 export { mockExtract } from ${JSON.stringify(join(REPO, "src/lib/mock.ts"))};
 export { extractionSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/schema.ts"))};
 export { SAMPLE_LEADS, SAMPLE_CONFIG, FREEZE_LEADS, FREEZE_GROUPS, HARD_LEADS, HARD_GROUPS } from ${JSON.stringify(join(REPO, "src/lib/sample.ts"))};
+export { pickOrphans } from ${JSON.stringify(join(REPO, "src/lib/investigate.ts"))};
 export { planBlocks, codeLinks, mockLinks, mergeLinks, recheckAnchors, buildPlan, linkIsActive, toDispatchLead, linkSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/dispatch.ts"))};
 `,
   );
@@ -228,6 +229,31 @@ export async function endpointDispatch(endpoint, demoKey, leads, config, { timeo
     }
   }
   return { ...emptyDispatch(null), httpStatus: null, attempts: 2, latency_ms: Date.now() - t0, error: lastError ?? "endpoint call failed", failedUsage };
+}
+
+/** One orphan through the deployed, passcode-gated POST /api/investigate. No retry (a loop may have billed several calls). */
+export async function endpointInvestigate(endpoint, demoKey, target, pile, config, { timeoutMs = 120_000 } = {}) {
+  const t0 = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", "x-demo-key": demoKey },
+      body: JSON.stringify({ mode: "ember", leads: pile, target_index: target.index, config }),
+    });
+    const text = await res.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch { /* raw below */ }
+    if (!res.ok) return { links: [], dropped: [], steps: [], turns: 0, outcome: "error", usage: json?.usage ?? null, latency_ms: Date.now() - t0, error: `HTTP ${res.status}: ${String(json?.error ?? text).slice(0, 200)}` };
+    if (!json || json.mode !== "ember") return { links: [], dropped: [], steps: [], turns: 0, outcome: "error", usage: json?.usage ?? null, latency_ms: Date.now() - t0, error: `gate fallback: ${String(json?.note ?? "").slice(0, 160)}` };
+    return { ...json, latency_ms: Date.now() - t0, error: null };
+  } catch (err) {
+    return { links: [], dropped: [], steps: [], turns: 0, outcome: "error", usage: null, latency_ms: Date.now() - t0, error: err?.name === "AbortError" ? `timeout after ${timeoutMs}ms` : String(err?.message ?? err).slice(0, 200) };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function emptyDispatch(usage) {

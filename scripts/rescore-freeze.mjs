@@ -70,7 +70,8 @@ try {
       why: "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence).",
       anchor_rule: "same phone, or same house number + street (phones removed first)",
       stored_likely_links_downgraded: downgradedNow,
-      re_read_messages: patched,
+      // Earlier re-reads stay on record when a later rescore re-reads nothing.
+      re_read_messages: patched.length ? patched : prev.summary.rescore?.re_read_messages ?? [],
       spend_usd: Number(spend.total.toFixed(6)),
     },
   };

@@ -17,6 +17,14 @@ import { createHash } from "node:crypto";
 import { applyHazardSafety } from "../../src/lib/safety.js";
 import { LINK_SCHEMA, linkSystemPrompt, linkUserMessage, type DispatchLead } from "../../src/lib/dispatch.js";
 import {
+  INVESTIGATE_TOOLS,
+  MAX_TURNS,
+  investigateSystemPrompt,
+  investigateUserMessage,
+  searchMessages,
+  type InvestigateStep,
+} from "../../src/lib/investigate.js";
+import {
   RECORD_LEAD_SCHEMA,
   RECORD_LEAD_TOOL,
   extractionSystemPrompt,
@@ -539,4 +547,142 @@ export async function emberLink(
     };
   }
   throw lastErr instanceof Error ? lastErr : new Error("Ember link call failed.");
+}
+
+// ---------- the investigator: a bounded tool loop ----------
+
+export interface EmberInvestigateResult {
+  /** propose_link arguments (pile-local ids), or null when no link. */
+  proposal: Record<string, unknown> | null;
+  /** Why it stopped: "proposed" | "no_link" | "turns" | "text". */
+  outcome: string;
+  steps: InvestigateStep[];
+  turns: number;
+  usage: Usage;
+  model: string;
+  promptHash: string;
+  requestVariant: string;
+}
+
+const INVESTIGATE_MAX_TOKENS = 2000;
+
+/**
+ * Up to MAX_TURNS Ember calls with tools over the pile (tool_choice
+ * "auto": forced choice returns 400 on this API, verified 2026-11-25).
+ * search_messages and read_message run here, in code, read-only; the
+ * loop ends on propose_link, no_link, a plain-text answer, or the turn
+ * cap. Usage is summed over every call so the cost is the whole loop.
+ */
+export async function emberInvestigate(
+  target: DispatchLead,
+  pile: DispatchLead[],
+  config: BusinessConfig,
+  env: EmberEnv,
+  opts: EmberOptions = emberOptionsFromProcess(),
+): Promise<EmberInvestigateResult> {
+  if (!env.apiKey) throw new Error("MODEL_API_KEY is not set on the server.");
+  const targetId = pile.findIndex((l) => l.index === target.index) + 1;
+  if (targetId < 1) throw new Error("target is not in the pile");
+  const systemPrompt = investigateSystemPrompt(config);
+  const promptHash = createHash("sha256").update(systemPrompt).digest("hex");
+  const messages: Array<Record<string, unknown>> = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: investigateUserMessage(target, targetId) },
+  ];
+  const capParam = opts.maxTokensParam === "max_tokens" ? "max_tokens" : "max_completion_tokens";
+  const usage = { tokens_in: 0, tokens_out: 0, known: true };
+  const steps: InvestigateStep[] = [];
+  let model = env.model;
+  let outcome = "turns";
+  let proposal: Record<string, unknown> | null = null;
+  let turns = 0;
+  for (; turns < MAX_TURNS && outcome === "turns"; turns++) {
+    const body: Record<string, unknown> = { model: env.model, temperature: 0, messages, tools: INVESTIGATE_TOOLS, tool_choice: "auto" };
+    body[capParam] = INVESTIGATE_MAX_TOKENS;
+    if (opts.reasoningEffort) body.reasoning_effort = opts.reasoningEffort;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20_000);
+    let res: Response;
+    try {
+      res = await fetch(`${env.base}/chat/completions`, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { Authorization: `Bearer ${env.apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) {
+      const err = new EmberHttpError(res.status, await res.text());
+      const u = err.usage;
+      if (u) {
+        usage.tokens_in += u.tokens_in;
+        usage.tokens_out += u.tokens_out;
+      } else usage.known = false;
+      (err as unknown as { usage: ReportedUsage }).usage = { tokens_in: usage.tokens_in, tokens_out: usage.tokens_out };
+      throw err;
+    }
+    const data = (await res.json()) as ChatResponse & {
+      choices?: Array<{ message?: { tool_calls?: Array<{ id?: string; type?: string; function?: { name?: string; arguments?: string } }> } }>;
+    };
+    const reported = usageFromBody(data);
+    if (reported) {
+      usage.tokens_in += reported.tokens_in;
+      usage.tokens_out += reported.tokens_out;
+    } else usage.known = false;
+    if (typeof data.model === "string" && data.model) model = data.model;
+    const msg = data.choices?.[0]?.message;
+    const calls = msg?.tool_calls ?? [];
+    if (!calls.length) {
+      outcome = "text";
+      break;
+    }
+    messages.push({ role: "assistant", content: msg?.content ?? "", tool_calls: calls });
+    for (const call of calls) {
+      const name = call.function?.name ?? "";
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(call.function?.arguments || "{}") as Record<string, unknown>;
+      } catch {
+        args = {};
+      }
+      let result: unknown;
+      if (name === "search_messages") {
+        const hits = searchMessages(pile, String(args.query ?? ""), targetId);
+        steps.push({ tool: name, args: { query: String(args.query ?? "").slice(0, 120) }, found: hits.map((h) => pile[h.id - 1].index) });
+        result = hits;
+      } else if (name === "read_message") {
+        const id = Number(args.id);
+        const l = Number.isInteger(id) && id >= 1 && id <= pile.length ? pile[id - 1] : null;
+        steps.push({ tool: name, args: { id }, found: l ? [l.index] : [] });
+        result = l ? { id, name: l.name, phone: l.phone, area: l.area, text: l.raw_text } : { error: "no such message" };
+      } else if (name === "propose_link") {
+        proposal = args;
+        outcome = "proposed";
+        steps.push({ tool: name, args: {}, found: Array.isArray(args.ids) ? (args.ids as unknown[]).filter((n): n is number => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= pile.length).map((n) => pile[n - 1].index) : [] });
+        result = { ok: true };
+      } else if (name === "no_link") {
+        outcome = "no_link";
+        steps.push({ tool: name, args: { reason: String(args.reason ?? "").slice(0, 200) }, found: [] });
+        result = { ok: true };
+      } else result = { error: "unknown tool" };
+      messages.push({ role: "tool", tool_call_id: call.id ?? name, content: JSON.stringify(result) });
+    }
+  }
+  return {
+    proposal,
+    outcome,
+    steps,
+    turns,
+    usage: {
+      tokens_in: usage.tokens_in,
+      tokens_out: usage.tokens_out,
+      cost_usd: usage.known ? computeCostUsd(usage.tokens_in, usage.tokens_out, env) : null,
+      estimated: false,
+    },
+    model,
+    promptHash,
+    requestVariant: `tools+auto+${capParam}${opts.reasoningEffort ? `+effort=${opts.reasoningEffort}` : ""}`,
+  };
 }

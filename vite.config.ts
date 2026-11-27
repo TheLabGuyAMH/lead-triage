@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from "vite";
 import { handleDispatch } from "./api/_lib/dispatch-core.js";
 import { handleExtract } from "./api/_lib/extract-core.js";
+import { handleInvestigate } from "./api/_lib/investigate-core.js";
 
 // Mounts the same /api/extract logic used by the Vercel function, so
 // `npm run dev` is a full local end-to-end run (mock until a key is set).
@@ -38,6 +39,7 @@ function localExtractApi(): Plugin {
       });
       mount("/api/extract", handleExtract as Handler);
       mount("/api/dispatch", handleDispatch as Handler);
+      mount("/api/investigate", handleInvestigate as Handler);
     },
   };
 }

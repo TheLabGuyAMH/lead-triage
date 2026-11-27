@@ -6,11 +6,14 @@
 // "Called" toggle remembered in localStorage. On first load the board
 // shows a clearly labeled replay of a recorded Ember run ($0 to view).
 
-import { ApiAdapter, DEMO_KEY_STORAGE, dispatchBlock, failureResult } from "./lib/api-adapter";
+import { ApiAdapter, DEMO_KEY_STORAGE, dispatchBlock, failureResult, investigateMessage } from "./lib/api-adapter";
+import { pickOrphans } from "./lib/investigate";
 import {
   buildPlan,
   codeLinks,
+  isSubsumed,
   linkIsActive,
+  resolveAnswers,
   mergeLinks,
   mockLinks,
   planBlocks,
@@ -120,6 +123,9 @@ let answers: Answers = {};
 let linkTrace: LinkTraceEntry[] = [];
 let replayLabel = "";
 let replayLinkTotals = emptyTotals();
+// Answers as they apply to every link (a "no" on a link also covers the links inside it); refreshed each render.
+let resolved: Answers = {};
+let linkFallbackSeen = false;
 let lastChange = "";
 // Reply text per paste index as last rendered (AI draft or code script).
 const replyByIndex = new Map<number, string>();
@@ -209,6 +215,7 @@ function setControlsDisabled(disabled: boolean) {
   runBtn.disabled = disabled;
   $<HTMLButtonElement>("view-replay").disabled = disabled;
   $<HTMLButtonElement>("view-freeze").disabled = disabled;
+  $<HTMLButtonElement>("view-hard").disabled = disabled;
   $<HTMLButtonElement>("clear-session").disabled = disabled;
   $<HTMLButtonElement>("clear-input").disabled = disabled;
 }
@@ -344,7 +351,7 @@ function evidenceHtml(link: LeadLink): string {
 /** The other messages merged into this job: each keeps its own reply and contact buttons, with the proof and an undo. */
 function membersHtml(job: Job): string {
   if (job.members.length < 2) return "";
-  const active = job.links.filter((l) => linkIsActive(l, answers));
+  const active = job.links.filter((l) => linkIsActive(l, resolved) && !isSubsumed(l, job.links.filter((o) => linkIsActive(o, resolved))));
   const others = job.members.slice(1);
   return `<div class="linked">
     <strong>${job.sharedCause ? `One stop covers ${job.members.length} homes: check the street supply (meter, main) before going house to house.` : "Merged into this stop:"}</strong>
@@ -398,7 +405,7 @@ const ANSWER_LABELS = {
 function questionHtml(link: LeadLink): string {
   const labels = ANSWER_LABELS[link.kind];
   const answer = answers[link.key];
-  const auto = !answer && linkIsActive(link, answers);
+  const auto = !answer && linkIsActive(link, resolved);
   const ask = link.ask_index !== null && link.question
     ? `<p class="ask">Ask ${esc(who(link.ask_index))}${results[link.ask_index]?.record.phone ? ` (${esc(results[link.ask_index]!.record.phone!)})` : ""}: “${esc(link.question)}”</p>`
     : "";
@@ -410,13 +417,45 @@ function questionHtml(link: LeadLink): string {
   return `<div class="q-item${answer ? " done" : ""}">
     <div class="q-head"><span class="badge q">${labels.badge}</span>
       <strong>${link.indices.map((i) => esc(who(i))).join(" · ")}</strong>
-      <span class="hint">${link.confidence}${auto ? ", merged until you say no" : ""} · ${link.source === "code" ? "found by code" : link.source === "mock" ? "practice-mode rule" : "found by Ember, quotes checked by code"}</span></div>
+      <span class="hint">${link.confidence}${auto ? ", merged until you say no" : ""} · ${link.source === "code" ? "found by code" : link.source === "mock" ? "practice-mode rule" : (link.investigation ? "found by Ember's investigator, quotes checked by code" : "found by Ember, quotes checked by code")}</span></div>
     <p>${esc(link.explanation)}</p>
     ${evidenceHtml(link)}
     ${link.downgraded ? `<p class="hint">Code kept this at "possible": ${esc(link.downgraded)}.</p>` : ""}
+    ${investigationHtml(link)}
     ${ask}
+    ${askButtons(link)}
     <div class="row">${buttons}</div>
   </div>`;
+}
+
+/** The investigator's tool steps, so the owner sees how Ember found the link. */
+function investigationHtml(link: LeadLink): string {
+  const inv = link.investigation;
+  if (!inv) return "";
+  const step = (s: { tool: string; args: Record<string, unknown>; found: number[] }) =>
+    s.tool === "search_messages"
+      ? `searched “${esc(String(s.args.query ?? ""))}” → ${s.found.length ? s.found.slice(0, 4).map((i) => `#${i + 1}`).join(", ") : "nothing"}`
+      : s.tool === "read_message"
+        ? `read ${s.found.map((i) => `#${i + 1}`).join(", ")}`
+        : s.tool === "propose_link"
+          ? "proposed this link"
+          : esc(s.tool);
+  return `<p class="hint investigation">Ember investigated in ${inv.turns} step${inv.turns === 1 ? "" : "s"} with tools over the whole pile: ${inv.steps.map(step).join("; ")}.</p>`;
+}
+
+/** Call / text / copy the deciding question to the customer it names. */
+function askButtons(link: LeadLink): string {
+  if (link.ask_index === null || !link.question) return "";
+  const rec = results[link.ask_index]?.record;
+  if (!rec) return "";
+  const digits = rec.phone?.replace(/\D/g, "") ?? "";
+  replyByIndex.set(-1 - link.ask_index, link.question);
+  return `<div class="row card-actions">${
+    digits
+      ? `<a class="btn small" href="tel:${digits}">Call ${esc(rec.name ?? "them")}</a>
+         <a class="btn small" href="sms:${digits}?&body=${encodeURIComponent(link.question)}">Text the question</a>`
+      : ""
+  }<button type="button" class="btn small" data-copy="${-1 - link.ask_index}">Copy the question</button></div>`;
 }
 
 function laneMap(plan: DispatchPlan): Map<number, Lane> {
@@ -493,8 +532,19 @@ function addToTotals(t: Totals, result: ExtractionResult) {
   addUsage(t, result.usage);
 }
 
+/** What actually produced this board, in one sentence (never claims Ember for a practice run). */
+function planHowLine(): string {
+  const present = results.filter(Boolean);
+  const ember = present.length > 0 && present.every((r) => r.mode === "ember");
+  const emberLinks = linkTrace.some((t) => t.mode === "ember");
+  const reader = ember ? "Ember read every message" : present.some((r) => r.mode === "ember") ? "Ember read some messages and practice mode the rest" : "Practice mode (keyword rules, not Ember) read every message";
+  const linker = emberLinks ? "then Ember read the pile for messages that belong together" : ember && showingReplay ? "no cross-message pass was recorded for this set, so only same-phone links (found by code) apply" : "then code and practice-mode rules looked for messages that belong together";
+  return `${reader}; ${linker}. Code checked every quote, merged only what is proven or what you confirm, and filled the truck slots in order.`;
+}
+
 function render() {
   const present = results.filter(Boolean);
+  resolved = resolveAnswers(links, answers);
   const plan = currentPlan();
   const ranked = rankResults(present);
   const real = ranked.filter((r) => !isFiltered(r.record));
@@ -511,23 +561,23 @@ function render() {
         <span><strong>${trucksUsed}</strong> on trucks${plan.overflowHazards ? ` (${plan.overflowHazards} hazard${plan.overflowHazards === 1 ? "" : "s"} over capacity)` : ""}</span>
         <span><strong>${L.made_safe.length}</strong> made safe by text</span>
         <span><strong>${L.not_today.length}</strong> told “not today”</span>
-        <span><strong>${plan.merged}</strong> merged</span>
+        <span><strong>${plan.merged}</strong> multi-message stops</span>
         <span><strong>${plan.pending}</strong> question${plan.pending === 1 ? "" : "s"} open</span>
       </div>
-      <p class="hint">Ember read every message, then read the pile for messages that belong together. Code checked every quote, merged only what is proven or what you confirm, and filled the truck slots in order. Change the trucks or answer a question and the plan re-flows.</p>
+      <p class="hint">${planHowLine()} Change the trucks or answer a question and the plan re-flows.</p>
       ${lastChange ? `<p class="change">${esc(lastChange)}</p>` : ""}`
     : "";
 
   const shownLinks = links.filter((l) => l.indices.filter((i) => results[i] && results[i].record.category === "real").length >= 2);
-  const open = shownLinks.filter((l) => !answers[l.key] && !linkIsActive(l, answers));
+  const open = shownLinks.filter((l) => !resolved[l.key] && !linkIsActive(l, resolved) && !isSubsumed(l, shownLinks));
   const answered = shownLinks.filter((l) => answers[l.key]);
-  const auto = shownLinks.filter((l) => !answers[l.key] && linkIsActive(l, answers));
+  const auto = shownLinks.filter((l) => !resolved[l.key] && linkIsActive(l, resolved) && !isSubsumed(l, shownLinks.filter((o) => linkIsActive(o, resolved))));
   questionsEl.hidden = shownLinks.length === 0;
   questionsEl.innerHTML = shownLinks.length
     ? `<h3>Questions that change the plan <span class="hint">(${open.length} open)</span></h3>
       ${open.map(questionHtml).join("")}
       ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map(questionHtml).join("")}</details>` : ""}
-      ${auto.length ? `<details class="q-group"><summary>Merged automatically: proven by a shared phone, address or name (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
+      ${auto.length ? `<details class="q-group"><summary>Merged automatically: proven by a shared phone or house number + street (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
     : "";
 
   const laneSection = (lane: Lane, title: string, hint: string, open: boolean) =>
@@ -576,7 +626,9 @@ function render() {
   const shown = trace.filter(Boolean).sort((a, b) => a.index - b.index);
   const linkLines = linkTrace.map(
     (t) =>
-      `link pass block ${t.block + 1} · ${t.messages} messages · ${t.mode}${t.model ? ` (${t.model})` : ""} · ${t.tokens_in}in/${t.tokens_out}out · ${fmtCost(t.cost_usd)} · ${t.links.length} link(s) kept${t.dropped.length ? ` · ${t.dropped.length} dropped by code: ${t.dropped.slice(0, 3).join("; ")}` : ""}${t.note ? " · NOTE: " + t.note : ""}`,
+      t.kind === "investigate"
+        ? `investigator · ${t.mode}${t.model ? ` (${t.model})` : ""} · ${t.turns ?? 0} turn(s) · ${t.outcome ?? "?"} · ${t.tokens_in}in/${t.tokens_out}out · ${fmtCost(t.cost_usd)} · ${t.links.length} link(s) kept${t.dropped.length ? ` · ${t.dropped.length} dropped by code` : ""}${t.note ? " · NOTE: " + t.note : ""}`
+        : `link pass block ${t.block + 1} · ${t.messages} messages · ${t.mode}${t.model ? ` (${t.model})` : ""} · ${t.tokens_in}in/${t.tokens_out}out · ${fmtCost(t.cost_usd)} · ${t.links.length} link(s) kept${t.dropped.length ? ` · ${t.dropped.length} dropped by code: ${t.dropped.slice(0, 3).join("; ")}` : ""}${t.note ? " · NOTE: " + t.note : ""}`,
   );
   traceView.textContent =
     shown.length === 0 && linkLines.length === 0
@@ -616,6 +668,7 @@ async function runTriage() {
   answers = {};
   linkTrace = [];
   lastChange = "";
+  linkFallbackSeen = false;
   showingReplay = false;
   boardNote.hidden = true;
   boardPrompt = { system_prompt: null, prompt_hash: null, model: null };
@@ -674,7 +727,7 @@ async function runTriage() {
   } finally {
     running = false;
     setControlsDisabled(false);
-    if (config.mode === "ember") updateBadge(fallbackSeen);
+    if (config.mode === "ember") updateBadge(fallbackSeen || linkFallbackSeen);
   }
   const notRun = leads.length - done;
   runStatus.textContent = stoppedForCap
@@ -721,6 +774,7 @@ async function runLinkPass(): Promise<string> {
         linkTrace.push(entry);
         addUsage(sessionTotals, r.usage);
         if (r.note) {
+          linkFallbackSeen = true;
           runNote.textContent = r.note;
           runNote.hidden = false;
         }
@@ -740,7 +794,46 @@ async function runLinkPass(): Promise<string> {
   };
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, blocks.length) }, worker));
   links = mergeLinks(found);
-  return `Cross-message pass: ${blocks.length} call(s), ${links.length} link(s)${failedBlocks ? `, ${failedBlocks} call(s) failed` : ""}${stopped ? ", stopped at the cap" : ""}.`;
+  // The investigator: messages that point back at someone but found no link.
+  const orphans = stopped ? [] : pickOrphans(real, links);
+  let investigated = 0;
+  let agentLinks = 0;
+  let nextO = 0;
+  const investigator = async () => {
+    while (nextO < orphans.length) {
+      if (capSpend(sessionTotals) >= config.capUsd) return;
+      const o = orphans[nextO++];
+      runStatus.textContent = `Investigating message #${o.index + 1} (Ember with search tools)…`;
+      const t0 = Date.now();
+      try {
+        const r = await investigateMessage(o, real, config);
+        investigated++;
+        agentLinks += r.links.length;
+        found.push(r.links);
+        linkTrace.push({
+          block: linkTrace.length, ts: new Date().toISOString(), mode: r.mode, model: r.model ?? null, prompt_hash: r.prompt_hash ?? null,
+          request_variant: r.request_variant ?? null, finish_reason: null, latency_ms: r.latency_ms ?? Date.now() - t0,
+          tokens_in: r.usage.tokens_in, tokens_out: r.usage.tokens_out, cost_usd: r.usage.cost_usd, estimated: r.usage.estimated,
+          messages: 1, links: r.links, dropped: r.dropped, note: r.note, kind: "investigate", turns: r.turns, outcome: r.outcome,
+        });
+        addUsage(sessionTotals, r.usage);
+        if (r.note) linkFallbackSeen = true;
+      } catch (err) {
+        const usage = (err as { usage?: ExtractionResult["usage"] | null }).usage ?? { tokens_in: 0, tokens_out: 0, cost_usd: null, estimated: false };
+        linkTrace.push({
+          block: linkTrace.length, ts: new Date().toISOString(), mode: "ember", model: null, prompt_hash: null, request_variant: null, finish_reason: null,
+          latency_ms: Date.now() - t0, tokens_in: usage.tokens_in, tokens_out: usage.tokens_out, cost_usd: usage.cost_usd, estimated: false,
+          messages: 1, links: [], dropped: [], note: err instanceof Error ? err.message : "investigation failed", kind: "investigate",
+        });
+        addUsage(sessionTotals, usage);
+      }
+      links = mergeLinks(found);
+      render();
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(3, orphans.length) }, investigator));
+  links = mergeLinks(found);
+  return `Cross-message pass: ${blocks.length} call(s), ${links.length} link(s)${failedBlocks ? `, ${failedBlocks} call(s) failed` : ""}${stopped ? ", stopped at the cap" : ""}. Investigator: ${investigated} message(s), ${agentLinks} link(s).`;
 }
 
 function loadReplay() {
@@ -776,12 +869,21 @@ function loadReplay() {
   render();
 }
 
-/** The recorded Freeze Day run (1,000 messages + its cross-message pass), loaded on demand. */
-async function loadFreezeReplay(): Promise<boolean> {
-  runStatus.textContent = "Loading the recorded Freeze Day run…";
-  const data = (await import("./lib/replay-freeze.json")).default as unknown as DispatchReplay;
+const REPLAY_NOTES: Record<"freeze" | "hard", (n: number, date: string, cost: string, linkCalls: number, linkCost: string) => string> = {
+  freeze: (n, date, cost, linkCalls, linkCost) =>
+    `Replay: Freeze Day, ${n.toLocaleString()} fictional messages from the morning after a hard freeze, run through Muse Ember on ${date}: ${n.toLocaleString()} per-message calls (${cost}) plus ${linkCalls} cross-message calls (${linkCost}). Viewing it spends $0. Trucks, stops and your answers re-plan it live in this browser.`,
+  hard: (n, date, cost, linkCalls, linkCost) =>
+    `Replay: hard links, ${n} fictional messages where the ones that belong together share no phone and no house number (a son calling for his mother, a tenant and the property manager, "Bobby" and "Robert"). Run through Muse Ember on ${date} (${cost} + ${linkCalls} cross-message call, ${linkCost}). Ember found 8 of 8 linked pairs; code rules alone find 1 of 8. None merged on its own: code can't prove them, so each is a question for you. Viewing it spends $0.`,
+};
+
+/** A recorded run with its cross-message pass, loaded on demand. */
+async function loadDispatchReplay(which: "freeze" | "hard"): Promise<boolean> {
+  runStatus.textContent = which === "freeze" ? "Loading the recorded Freeze Day run…" : "Loading the recorded hard-links run…";
+  const data = (
+    which === "freeze" ? (await import("./lib/replay-freeze.json")).default : (await import("./lib/replay-hard.json")).default
+  ) as unknown as DispatchReplay;
   if (!data.results.length) {
-    runStatus.textContent = "No recorded Freeze Day run is bundled in this build.";
+    runStatus.textContent = "That recorded run is not bundled in this build.";
     return false;
   }
   results = data.results.map((r, i) => ({ ...r, index: r.index ?? i }));
@@ -797,14 +899,14 @@ async function loadFreezeReplay(): Promise<boolean> {
   links = data.links;
   answers = {};
   lastChange = "";
-  replayLabel = "freeze";
+  replayLabel = which;
   config.trucks = data.capacity.trucks;
   config.stopsPerTruck = data.capacity.stopsPerTruck;
   syncConfigInputs();
   boardPrompt = { system_prompt: null, prompt_hash: results[0]?.prompt_hash ?? null, model: data.model };
   showingReplay = true;
   const cost = (t: Totals) => (t.costKnown ? `$${t.cost.toFixed(4)}` : "unknown");
-  boardNote.textContent = `Replay: Freeze Day, ${results.length} fictional messages from the morning after a hard freeze, run through Muse Ember on ${data.recorded_at.slice(0, 10)}: ${results.length} per-message calls (${cost(replayTotals)}) plus ${linkTrace.length} cross-message calls (${cost(replayLinkTotals)}). Viewing it spends $0. Trucks, stops and your answers re-plan it live in this browser.`;
+  boardNote.textContent = REPLAY_NOTES[which](results.length, data.recorded_at.slice(0, 10), cost(replayTotals), linkTrace.length, cost(replayLinkTotals));
   boardNote.hidden = false;
   runNote.hidden = true;
   runStatus.textContent = "";
@@ -827,7 +929,7 @@ function exportTrace() {
     system_prompt: boardPrompt.system_prompt,
     capUsd: config.capUsd,
     replay: showingReplay,
-    recorded_at: showingReplay ? (replayLabel === "freeze" ? trace.find(Boolean)?.ts ?? null : REPLAY.recorded_at) : null,
+    recorded_at: showingReplay ? (replayLabel === "freeze" || replayLabel === "hard" ? trace.find(Boolean)?.ts ?? null : REPLAY.recorded_at) : null,
   }, linkTrace);
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
@@ -838,6 +940,7 @@ function exportTrace() {
 }
 
 function clearSession() {
+  replayLinkTotals = emptyTotals();
   results = [];
   trace = [];
   links = [];
@@ -861,7 +964,8 @@ $<HTMLButtonElement>("load-sample").addEventListener("click", () => {
   runStatus.textContent = `Sample set loaded: ${SAMPLE_LEADS.length} fictional demo leads, shuffled.`;
 });
 $<HTMLButtonElement>("view-replay").addEventListener("click", loadReplay);
-$<HTMLButtonElement>("view-freeze").addEventListener("click", () => void loadFreezeReplay());
+$<HTMLButtonElement>("view-freeze").addEventListener("click", () => void loadDispatchReplay("freeze"));
+$<HTMLButtonElement>("view-hard").addEventListener("click", () => void loadDispatchReplay("hard"));
 $<HTMLButtonElement>("load-freeze").addEventListener("click", () => {
   pasteEl.value = FREEZE_LEADS.join("\n\n");
   runStatus.textContent = `Freeze morning loaded: ${FREEZE_LEADS.length} fictional messages, some about the same job.`;
@@ -911,9 +1015,10 @@ function onPlanClick(e: Event) {
   if (copyBtn) {
     const text = replyByIndex.get(Number(copyBtn.dataset.copy));
     if (text === undefined) return;
+    const label = copyBtn.textContent;
     void navigator.clipboard.writeText(text).then(() => {
       copyBtn.textContent = "Copied";
-      setTimeout(() => (copyBtn.textContent = "Copy reply"), 1200);
+      setTimeout(() => (copyBtn.textContent = label), 1200);
     });
     return;
   }
@@ -933,7 +1038,7 @@ syncConfigInputs();
 // the labeled $0 fallback; live Ember stays behind the demo key.
 // The public default is the recorded Freeze Day run when this build has
 // one, else the 12-lead replay; both are labeled and spend $0 to view.
-void loadFreezeReplay().then((ok) => {
+void loadDispatchReplay("freeze").then((ok) => {
   if (ok) return;
   if (REPLAY.results.length) loadReplay();
   else render();

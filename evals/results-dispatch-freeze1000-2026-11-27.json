@@ -34,8 +34,8 @@
       "not_today": 228,
       "read_first": 0,
       "filtered": 56,
-      "merged_links": 76,
-      "open_questions": 29
+      "merged_links": 60,
+      "open_questions": 27
     },
     "wall_clock_seconds": {
       "per_message_pass": 0,
@@ -43,7 +43,7 @@
       "concurrency": 6
     },
     "spend_usd": 0.069369,
-    "per_message_pass_reused_from": "/private/tmp/claude-501/-Users-owner-Library-Mobile-Documents-com-apple-CloudDocs-T3-Code/0871e11f-b00b-484a-8cb1-d2f58ea83208/scratchpad/replay-freeze-v1.json",
+    "per_message_pass_reused_from": "replay-freeze-v1.json",
     "spend_detail": "$0.069369 over 122 billed call(s)",
     "ember_links": 68,
     "ember_recall": "136/205",
@@ -73,10 +73,10 @@
       "likely_downgraded_by_code": 0
     },
     "rescore": {
-      "at": "2026-11-27T16:09:59.312Z",
-      "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence).",
+      "at": "2026-11-27T16:21:37.837Z",
+      "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence). Then Gemini review: see history.",
       "anchor_rule": "same phone, or same house number + street (phones removed first)",
-      "stored_likely_links_downgraded": 2,
+      "stored_likely_links_downgraded": 0,
       "re_read_messages": [
         {
           "message": 230,
@@ -91,7 +91,19 @@
           "cost_usd": 0.0005503999999999999
         }
       ],
-      "spend_usd": 0.00055
+      "spend_usd": 0.00055,
+      "history": [
+        {
+          "at": "2026-11-27T16:09:59.312Z",
+          "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence).",
+          "stored_likely_links_downgraded": 2
+        },
+        {
+          "at": "2026-11-27T16:21:37.837Z",
+          "why": "Gemini review 2026-11-27: an address token now needs a street suffix in at least one of the two messages; answers cover links inside a link; 'merged' counts multi-message stops.",
+          "stored_likely_links_downgraded": 0
+        }
+      ]
     }
   },
   "links": [
@@ -2578,7 +2590,7 @@
       "question": "Are you following up on Eric Okafor's water heater on Purdue?",
       "ask_index": 658,
       "source": "ember",
-      "downgraded": "code found no shared phone, house number + street, or full name"
+      "downgraded": "code found no shared phone or house number + street"
     },
     {
       "key": "same_job:598,803",

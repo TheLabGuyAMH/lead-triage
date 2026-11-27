@@ -34,6 +34,10 @@ export interface LinkTraceEntry {
   links: LeadLink[];
   dropped: string[];
   note?: string;
+  /** "block" (the cross-message pass) or "investigate" (one bounded tool loop). */
+  kind?: "block" | "investigate";
+  turns?: number;
+  outcome?: string;
 }
 
 export interface TraceEntry {
@@ -106,6 +110,9 @@ function operationalLinkCall(t: LinkTraceEntry) {
     messages: t.messages,
     links: t.links.length,
     dropped: t.dropped.length,
+    kind: t.kind ?? "block",
+    turns: t.turns ?? null,
+    outcome: t.outcome ?? null,
   };
 }
 
