@@ -86,7 +86,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 10px 20px 24px; display: grid
 @media (max-width: 959px) {
   .board-zone { order: -1; }
 }
-.h1-sub { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+.h1-sub { white-space: nowrap; font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
 
 .panel {
   background: var(--card);
