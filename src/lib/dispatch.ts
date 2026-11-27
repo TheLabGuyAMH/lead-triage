@@ -118,33 +118,63 @@ function areaKey(area: string | null): string | null {
   return words.length ? words.join(" ") : null;
 }
 
+// A message that points back at another one ("Linda's husband",
+// "calling for my mom", "following up", "me again").
+const FOLLOW_UP_RE = /('s (husband|wife|son|daughter|mom|dad|tenant|landlord|neighbou?r)|calling for|following up|follow(ing)? up for|me again|messaged (you )?earlier|texted (you )?earlier|called (you )?earlier|still waiting|familiar de|soy .{1,30}(esposa|esposo|hij[oa]|mam[aá]|pap[aá])|por lo del)/i;
+
+/** Weak street mentions ("on Laguna", "block of Laguna", "calle Laguna") count only for streets seen with a house number. */
+function weakStreetWords(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.toLowerCase().matchAll(/\b(?:on|of|along|calle|en)\s+(?:the\s+|la\s+)?([a-z\u00e0-\u00ff]{3,})/g)) out.push(m[1]);
+  return out;
+}
+
 /**
  * Group real messages into blocks for the link call. A small pile is one
- * block. Otherwise each message joins a block per street it names (up
- * to three); a message naming no street joins its area's block; the
- * rest share leftover blocks. Blocks over BLOCK_MAX are split in paste
- * order. Single-message blocks are dropped (nothing to link).
+ * block. Otherwise a message joins a block for each street it names (a
+ * house-number street, or a bare street name already seen with a house
+ * number elsewhere in the pile), up to three; a message that points back
+ * at someone ("Linda's husband") also joins a block with every message
+ * whose sender has that name; a message with no street joins its area's
+ * block; the rest share leftover blocks. Blocks over BLOCK_MAX are split
+ * in paste order. Single-message blocks are dropped (nothing to link).
  */
 export function planBlocks(leads: DispatchLead[]): DispatchLead[][] {
   if (leads.length < 2) return [];
   if (leads.length <= BLOCK_MAX) return [leads];
-  const groups = new Map<string, DispatchLead[]>();
+  const groups = new Map<string, Set<DispatchLead>>();
   const put = (k: string, l: DispatchLead) => {
     const g = groups.get(k);
-    if (g) g.push(l);
-    else groups.set(k, [l]);
+    if (g) g.add(l);
+    else groups.set(k, new Set([l]));
   };
+  const strong = new Map(leads.map((l) => [l, streetKeys(`${l.raw_text} ${l.area ?? ""}`)]));
+  const knownStreets = new Set([...strong.values()].flat());
+  const byName = new Map<string, DispatchLead[]>();
+  for (const l of leads)
+    for (const t of (l.name ?? "").toLowerCase().split(/[^a-z\u00e0-\u00ff]+/).filter((w) => w.length >= 3))
+      (byName.get(t) ?? byName.set(t, []).get(t)!).push(l);
   const leftovers: DispatchLead[] = [];
   for (const l of leads) {
-    const streets = streetKeys(`${l.raw_text} ${l.area ?? ""}`).slice(0, MAX_BLOCKS_PER_LEAD);
-    if (streets.length) for (const s of streets) put(`street:${s}`, l);
-    else {
+    const streets = [...new Set([...strong.get(l)!, ...weakStreetWords(l.raw_text).filter((w) => knownStreets.has(w))])].slice(0, MAX_BLOCKS_PER_LEAD);
+    for (const st of streets) put(`street:${st}`, l);
+    let named = false;
+    if (FOLLOW_UP_RE.test(l.raw_text)) {
+      const own = new Set((l.name ?? "").toLowerCase().split(/[^a-z\u00e0-\u00ff]+/));
+      const tokens = [...new Set(l.raw_text.toLowerCase().replace(/'s\b/g, "").split(/[^a-z\u00e0-\u00ff]+/))].filter((t) => t.length >= 3 && !own.has(t) && byName.has(t));
+      for (const t of tokens.slice(0, 2)) {
+        named = true;
+        put(`name:${t}`, l);
+        for (const other of byName.get(t)!) put(`name:${t}`, other);
+      }
+    }
+    if (!streets.length && !named) {
       const a = areaKey(l.area);
       if (a) put(`area:${a}`, l);
       else leftovers.push(l);
     }
   }
-  if (leftovers.length) groups.set("rest", leftovers);
+  if (leftovers.length) groups.set("rest", new Set(leftovers));
   const seen = new Set<string>();
   const out: DispatchLead[][] = [];
   for (const [, g] of [...groups.entries()].sort(([a], [b]) => a.localeCompare(b))) {
