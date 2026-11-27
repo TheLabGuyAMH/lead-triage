@@ -387,7 +387,10 @@ async function main() {
   // Investigator (bounded Ember tool loop): pure parts and gates, $0
   const orph = INV.pickOrphans(fzLeads, []);
   check("orphans are messages that point back at someone", orph.some((l) => l.index === 6) && !orph.some((l) => l.index === 3), JSON.stringify(orph.map((l) => l.index)));
-  check("orphans skip messages already in a link", !INV.pickOrphans(fzLeads, linksAll).some((l) => l.index === 6));
+  check("orphans skip messages already linked to their original", !INV.pickOrphans(fzLeads, linksAll).some((l) => l.index === 6));
+  const fu = [{ index: 50, raw_text: "Calling for my mom Sandra at 3321 Ayers St, they messaged you earlier", name: null, phone: null, area: null, service_needed: null, urgency: "same-day" }, { index: 51, raw_text: "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers", name: null, phone: null, area: null, service_needed: null, urgency: "same-day" }, { index: 52, raw_text: "Water heater won't light. Sandra Moore, Padre Island", name: "Sandra Moore", phone: null, area: null, service_needed: null, urgency: "same-day" }];
+  const fuLink = { key: "same_job:50,51", indices: [50, 51], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 50, source: "ember" };
+  check("a group made only of follow-ups gets one investigation", INV.pickOrphans(fu, [fuLink]).map((l) => l.index).join() === "50");
   const hits = INV.searchMessages(fzLeads, "Linda Mesquite", fzLeads.findIndex((l) => l.index === 6) + 1);
   check("search_messages finds Linda's message by name and street, not the target itself", hits.length >= 1 && fzLeads[hits[0].id - 1].index === 0 && !hits.some((h) => fzLeads[h.id - 1].index === 6));
   check("search_messages ignores filler words", INV.searchMessages(fzLeads, "the and please", 1).length === 0);

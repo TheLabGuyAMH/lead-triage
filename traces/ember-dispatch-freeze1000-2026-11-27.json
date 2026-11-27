@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T16:26:29.736Z",
+  "recorded_at": "2026-11-27T16:28:27.032Z",
   "app": "lead-triage",
   "label": "dispatch-freeze1000",
   "fictional_data_only": true,
@@ -10,7 +10,7 @@
   "totals": {
     "extract_calls": 1000,
     "link_calls": 122,
-    "spend_usd": 0.003034
+    "spend_usd": 0.011442
   },
   "extract_calls": [
     {
@@ -12017,7 +12017,7 @@
   "link_calls": [
     {
       "block": 0,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12034,7 +12034,7 @@
     },
     {
       "block": 1,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12076,7 +12076,7 @@
     },
     {
       "block": 2,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12118,7 +12118,7 @@
     },
     {
       "block": 3,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12184,7 +12184,7 @@
     },
     {
       "block": 4,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12226,7 +12226,7 @@
     },
     {
       "block": 5,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12243,7 +12243,7 @@
     },
     {
       "block": 6,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12309,7 +12309,7 @@
     },
     {
       "block": 7,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12351,7 +12351,7 @@
     },
     {
       "block": 8,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12368,7 +12368,7 @@
     },
     {
       "block": 9,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12415,7 +12415,7 @@
     },
     {
       "block": 10,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12457,7 +12457,7 @@
     },
     {
       "block": 11,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12499,7 +12499,7 @@
     },
     {
       "block": 12,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12541,7 +12541,7 @@
     },
     {
       "block": 13,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12655,7 +12655,7 @@
     },
     {
       "block": 14,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12697,7 +12697,7 @@
     },
     {
       "block": 15,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12744,7 +12744,7 @@
     },
     {
       "block": 16,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12786,7 +12786,7 @@
     },
     {
       "block": 17,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12803,7 +12803,7 @@
     },
     {
       "block": 18,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12820,7 +12820,7 @@
     },
     {
       "block": 19,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12862,7 +12862,7 @@
     },
     {
       "block": 20,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12940,7 +12940,7 @@
     },
     {
       "block": 21,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -12982,7 +12982,7 @@
     },
     {
       "block": 22,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13024,7 +13024,7 @@
     },
     {
       "block": 23,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13066,7 +13066,7 @@
     },
     {
       "block": 24,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13113,7 +13113,7 @@
     },
     {
       "block": 25,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13179,7 +13179,7 @@
     },
     {
       "block": 26,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13245,7 +13245,7 @@
     },
     {
       "block": 27,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13287,7 +13287,7 @@
     },
     {
       "block": 28,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13334,7 +13334,7 @@
     },
     {
       "block": 29,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13376,7 +13376,7 @@
     },
     {
       "block": 30,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13418,7 +13418,7 @@
     },
     {
       "block": 31,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13489,7 +13489,7 @@
     },
     {
       "block": 32,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13506,7 +13506,7 @@
     },
     {
       "block": 33,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13548,7 +13548,7 @@
     },
     {
       "block": 34,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13614,7 +13614,7 @@
     },
     {
       "block": 35,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13656,7 +13656,7 @@
     },
     {
       "block": 36,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13727,7 +13727,7 @@
     },
     {
       "block": 37,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13744,7 +13744,7 @@
     },
     {
       "block": 38,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13761,7 +13761,7 @@
     },
     {
       "block": 39,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13778,7 +13778,7 @@
     },
     {
       "block": 40,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13820,7 +13820,7 @@
     },
     {
       "block": 41,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -13870,7 +13870,7 @@
     },
     {
       "block": 42,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14004,7 +14004,7 @@
     },
     {
       "block": 43,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14021,7 +14021,7 @@
     },
     {
       "block": 44,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14038,7 +14038,7 @@
     },
     {
       "block": 45,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14055,7 +14055,7 @@
     },
     {
       "block": 46,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14126,7 +14126,7 @@
     },
     {
       "block": 47,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14207,7 +14207,7 @@
     },
     {
       "block": 48,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14224,7 +14224,7 @@
     },
     {
       "block": 49,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14241,7 +14241,7 @@
     },
     {
       "block": 50,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14283,7 +14283,7 @@
     },
     {
       "block": 51,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14300,7 +14300,7 @@
     },
     {
       "block": 52,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14317,7 +14317,7 @@
     },
     {
       "block": 53,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14334,7 +14334,7 @@
     },
     {
       "block": 54,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14478,7 +14478,7 @@
     },
     {
       "block": 55,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14525,7 +14525,7 @@
     },
     {
       "block": 56,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14608,7 +14608,7 @@
     },
     {
       "block": 57,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14625,7 +14625,7 @@
     },
     {
       "block": 58,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14696,7 +14696,7 @@
     },
     {
       "block": 59,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14713,7 +14713,7 @@
     },
     {
       "block": 60,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14730,7 +14730,7 @@
     },
     {
       "block": 61,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14747,7 +14747,7 @@
     },
     {
       "block": 62,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14821,7 +14821,7 @@
     },
     {
       "block": 63,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14838,7 +14838,7 @@
     },
     {
       "block": 64,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14904,7 +14904,7 @@
     },
     {
       "block": 65,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14921,7 +14921,7 @@
     },
     {
       "block": 66,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14938,7 +14938,7 @@
     },
     {
       "block": 67,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -14980,7 +14980,7 @@
     },
     {
       "block": 68,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15022,7 +15022,7 @@
     },
     {
       "block": 69,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15039,7 +15039,7 @@
     },
     {
       "block": 70,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15081,7 +15081,7 @@
     },
     {
       "block": 71,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15147,7 +15147,7 @@
     },
     {
       "block": 72,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15164,7 +15164,7 @@
     },
     {
       "block": 73,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15181,7 +15181,7 @@
     },
     {
       "block": 74,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15198,7 +15198,7 @@
     },
     {
       "block": 75,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15215,7 +15215,7 @@
     },
     {
       "block": 76,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15232,7 +15232,7 @@
     },
     {
       "block": 77,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15249,7 +15249,7 @@
     },
     {
       "block": 78,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15384,7 +15384,7 @@
     },
     {
       "block": 79,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15482,7 +15482,7 @@
     },
     {
       "block": 80,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15524,7 +15524,7 @@
     },
     {
       "block": 81,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15595,7 +15595,7 @@
     },
     {
       "block": 82,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15669,7 +15669,7 @@
     },
     {
       "block": 83,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15686,7 +15686,7 @@
     },
     {
       "block": 84,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15703,7 +15703,7 @@
     },
     {
       "block": 85,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15720,7 +15720,7 @@
     },
     {
       "block": 86,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15833,7 +15833,7 @@
     },
     {
       "block": 87,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15875,7 +15875,7 @@
     },
     {
       "block": 88,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15892,7 +15892,7 @@
     },
     {
       "block": 89,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15909,7 +15909,7 @@
     },
     {
       "block": 90,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15926,7 +15926,7 @@
     },
     {
       "block": 91,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15968,7 +15968,7 @@
     },
     {
       "block": 92,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -15985,7 +15985,7 @@
     },
     {
       "block": 93,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16002,7 +16002,7 @@
     },
     {
       "block": 94,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16019,7 +16019,7 @@
     },
     {
       "block": 95,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16093,7 +16093,7 @@
     },
     {
       "block": 96,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16110,7 +16110,7 @@
     },
     {
       "block": 97,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16127,7 +16127,7 @@
     },
     {
       "block": 98,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16210,7 +16210,7 @@
     },
     {
       "block": 99,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16300,7 +16300,7 @@
     },
     {
       "block": 100,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16317,7 +16317,7 @@
     },
     {
       "block": 101,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16334,7 +16334,7 @@
     },
     {
       "block": 102,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16351,7 +16351,7 @@
     },
     {
       "block": 103,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16417,7 +16417,7 @@
     },
     {
       "block": 104,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16434,7 +16434,7 @@
     },
     {
       "block": 105,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16451,7 +16451,7 @@
     },
     {
       "block": 106,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16501,7 +16501,7 @@
     },
     {
       "block": 107,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16518,7 +16518,7 @@
     },
     {
       "block": 108,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16535,7 +16535,7 @@
     },
     {
       "block": 109,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16630,7 +16630,7 @@
     },
     {
       "block": 110,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16701,7 +16701,7 @@
     },
     {
       "block": 111,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16772,7 +16772,7 @@
     },
     {
       "block": 112,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16789,7 +16789,7 @@
     },
     {
       "block": 113,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16855,7 +16855,7 @@
     },
     {
       "block": 114,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16937,7 +16937,7 @@
     },
     {
       "block": 115,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16954,7 +16954,7 @@
     },
     {
       "block": 116,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -16971,7 +16971,7 @@
     },
     {
       "block": 117,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -17052,7 +17052,7 @@
     },
     {
       "block": 118,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -17123,7 +17123,7 @@
     },
     {
       "block": 119,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -17180,7 +17180,7 @@
     },
     {
       "block": 120,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -17197,7 +17197,7 @@
     },
     {
       "block": 121,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
@@ -17268,28 +17268,29 @@
     },
     {
       "block": 122,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "kind": "investigate",
       "model": "muse-ember-1.0",
-      "prompt_hash": "8034f818257f945cbec1e788a7495a0c06626367fedf7efe0a80546e7fcc72b6",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
       "request_variant": "tools+auto+max_completion_tokens+effort=low",
       "finish_reason": null,
-      "latency_ms": 4504,
-      "tokens_in": 11530,
-      "tokens_out": 1043,
-      "cost_usd": 0.0016745,
+      "latency_ms": 4186,
+      "tokens_in": 8765,
+      "tokens_out": 647,
+      "cost_usd": 0.0012,
       "estimated": false,
       "messages": 1,
       "links": [],
       "dropped": [],
-      "turns": 4,
-      "outcome": "turns",
+      "turns": 5,
+      "outcome": "no_link",
       "steps": [
         {
           "tool": "search_messages",
           "args": {
-            "query": "Sandra Ramirez"
+            "query": "Sandra Ramirez Lipes",
+            "turn": 1
           },
           "found": [
             0,
@@ -17305,7 +17306,8 @@
         {
           "tool": "search_messages",
           "args": {
-            "query": "Lipes"
+            "query": "Lipes",
+            "turn": 2
           },
           "found": [
             5,
@@ -17321,201 +17323,63 @@
         {
           "tool": "search_messages",
           "args": {
-            "query": "432-555-0152"
+            "query": "432-555-0152",
+            "turn": 3
           },
-          "found": [
-            11,
-            12,
-            31,
-            36,
-            41,
-            57,
-            65,
-            68
-          ]
+          "found": []
         },
         {
           "tool": "search_messages",
           "args": {
-            "query": "Ramirez water heater"
-          },
-          "found": [
-            287,
-            666,
-            11,
-            12,
-            14,
-            21,
-            27,
-            40
-          ]
-        },
-        {
-          "tool": "search_messages",
-          "args": {
-            "query": "water heater Lipes"
+            "query": "water heater Lipes",
+            "turn": 4
           },
           "found": [
             554,
             660,
             729,
+            5,
             11,
             12,
             14,
-            21,
-            27
+            21
           ]
         },
         {
-          "tool": "search_messages",
+          "tool": "no_link",
           "args": {
-            "query": "0152"
+            "reason": "No earlier message matches Sandra Ramirez, phone 432-555-0152, or a water heater on Lipes for that customer. Searches for 'Sandra Ramirez Lipes', 'Lipes', '432-555-0152', and 'water heater Lipes' retu"
           },
-          "found": [
-            231,
-            382,
-            641,
-            816,
-            887,
-            905,
-            906,
-            973
-          ]
-        },
-        {
-          "tool": "search_messages",
-          "args": {
-            "query": "Jose Sandra"
-          },
-          "found": [
-            12,
-            21,
-            24,
-            41,
-            64,
-            98,
-            130,
-            138
-          ]
-        },
-        {
-          "tool": "search_messages",
-          "args": {
-            "query": "Following up for Sandra"
-          },
-          "found": [
-            12,
-            21,
-            24,
-            64,
-            98,
-            130,
-            137,
-            138
-          ]
-        },
-        {
-          "tool": "search_messages",
-          "args": {
-            "query": "nobody has called back"
-          },
-          "found": [
-            137,
-            280,
-            293,
-            307,
-            336,
-            455,
-            597,
-            625
-          ]
-        },
-        {
-          "tool": "search_messages",
-          "args": {
-            "query": "Ramirez"
-          },
-          "found": [
-            0,
-            75,
-            89,
-            99,
-            128,
-            159,
-            287,
-            305
-          ]
-        },
-        {
-          "tool": "read_message",
-          "args": {
-            "id": 130
-          },
-          "found": [
-            138
-          ]
+          "found": []
         }
       ],
       "target": 115
     },
     {
       "block": 123,
-      "ts": "2026-11-27T16:26:29.736Z",
+      "ts": "2026-11-27T16:28:27.032Z",
       "mode": "ember",
       "kind": "investigate",
       "model": "muse-ember-1.0",
-      "prompt_hash": "8034f818257f945cbec1e788a7495a0c06626367fedf7efe0a80546e7fcc72b6",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
       "request_variant": "tools+auto+max_completion_tokens+effort=low",
       "finish_reason": null,
-      "latency_ms": 5787,
-      "tokens_in": 6609,
-      "tokens_out": 1397,
-      "cost_usd": 0.0013594000000000002,
+      "latency_ms": 6047,
+      "tokens_in": 12322,
+      "tokens_out": 1485,
+      "cost_usd": 0.0019747000000000002,
       "estimated": false,
       "messages": 1,
       "links": [],
       "dropped": [],
-      "turns": 4,
-      "outcome": "turns",
+      "turns": 5,
+      "outcome": "no_link",
       "steps": [
         {
           "tool": "search_messages",
           "args": {
-            "query": "Beth Mendez Rodd Field"
-          },
-          "found": [
-            6,
-            17,
-            58,
-            75,
-            92,
-            100,
-            118,
-            133
-          ]
-        },
-        {
-          "tool": "read_message",
-          "args": {
-            "id": 7
-          },
-          "found": [
-            6
-          ]
-        },
-        {
-          "tool": "read_message",
-          "args": {
-            "id": 129
-          },
-          "found": [
-            137
-          ]
-        },
-        {
-          "tool": "search_messages",
-          "args": {
-            "query": "Beth Mendez"
+            "query": "Beth Mendez",
+            "turn": 1
           },
           "found": [
             6,
@@ -17531,7 +17395,33 @@
         {
           "tool": "search_messages",
           "args": {
-            "query": "heat pump"
+            "query": "Rodd Field",
+            "turn": 1
+          },
+          "found": [
+            17,
+            58,
+            75,
+            92,
+            100,
+            118,
+            133,
+            177
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "979-555-0158",
+            "turn": 1
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "heat pump",
+            "turn": 2
           },
           "found": [
             0,
@@ -17543,9 +17433,835 @@
             33,
             37
           ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Brian",
+            "turn": 2
+          },
+          "found": [
+            33,
+            55,
+            89,
+            135,
+            139,
+            143,
+            162,
+            177
+          ]
+        },
+        {
+          "tool": "read_message",
+          "args": {
+            "id": 7,
+            "turn": 3
+          },
+          "found": [
+            6
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "0158",
+            "turn": 4
+          },
+          "found": [
+            32,
+            47,
+            452,
+            656,
+            780,
+            790,
+            880
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Mendez heat pump",
+            "turn": 4
+          },
+          "found": [
+            6,
+            584,
+            4,
+            261,
+            691,
+            0,
+            3,
+            7
+          ]
+        },
+        {
+          "tool": "no_link",
+          "args": {
+            "reason": "Only candidate is id 7, Beth Mendez heat pump, but it lists phone 210-555-0172 and area Flour Bluff, while message 129 lists 979-555-0158 and Rodd Field, with no shared address, unit, or building to p"
+          },
+          "found": []
         }
       ],
       "target": 137
+    },
+    {
+      "block": 124,
+      "ts": "2026-11-27T16:28:27.032Z",
+      "mode": "ember",
+      "kind": "investigate",
+      "model": "muse-ember-1.0",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
+      "request_variant": "tools+auto+max_completion_tokens+effort=low",
+      "finish_reason": null,
+      "latency_ms": 5031,
+      "tokens_in": 12722,
+      "tokens_out": 813,
+      "cost_usd": 0.0016787,
+      "estimated": false,
+      "messages": 1,
+      "links": [],
+      "dropped": [],
+      "turns": 5,
+      "outcome": "no_link",
+      "steps": [
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "2668 Cayo",
+            "turn": 1
+          },
+          "found": [
+            44,
+            152,
+            243,
+            272,
+            286,
+            389,
+            444,
+            556
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Amy",
+            "turn": 1
+          },
+          "found": [
+            40,
+            45,
+            63,
+            150,
+            285,
+            403,
+            437,
+            462
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Felipe",
+            "turn": 1
+          },
+          "found": [
+            44,
+            46,
+            151,
+            260,
+            264,
+            645,
+            675,
+            681
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "2668",
+            "turn": 2
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Cayo water heater",
+            "turn": 2
+          },
+          "found": [
+            11,
+            12,
+            14,
+            21,
+            27,
+            40,
+            44,
+            46
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "tenant",
+            "turn": 3
+          },
+          "found": [
+            345,
+            490
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "landlord",
+            "turn": 3
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "713-555-0196",
+            "turn": 3
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Cayo",
+            "turn": 4
+          },
+          "found": [
+            44,
+            152,
+            243,
+            272,
+            286,
+            389,
+            444,
+            556
+          ]
+        },
+        {
+          "tool": "no_link",
+          "args": {
+            "reason": "No other message matches 2668 Cayo, Felipe's phone 713-555-0196, or Amy as landlord for that address. Searches for 2668, Cayo, Amy, Felipe, tenant and phone returned only different addresses/phones (e"
+          },
+          "found": []
+        }
+      ],
+      "target": 268
+    },
+    {
+      "block": 125,
+      "ts": "2026-11-27T16:28:27.032Z",
+      "mode": "ember",
+      "kind": "investigate",
+      "model": "muse-ember-1.0",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
+      "request_variant": "tools+auto+max_completion_tokens+effort=low",
+      "finish_reason": null,
+      "latency_ms": 4169,
+      "tokens_in": 9919,
+      "tokens_out": 935,
+      "cost_usd": 0.0014594,
+      "estimated": false,
+      "messages": 1,
+      "links": [],
+      "dropped": [],
+      "turns": 4,
+      "outcome": "no_link",
+      "steps": [
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Rosa Alameda",
+            "turn": 1
+          },
+          "found": [
+            827,
+            52,
+            345,
+            352,
+            399,
+            435,
+            454,
+            466
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "4153 Alameda",
+            "turn": 1
+          },
+          "found": [
+            180,
+            313,
+            324,
+            332,
+            335,
+            358,
+            360,
+            379
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Rosa water heater",
+            "turn": 1
+          },
+          "found": [
+            52,
+            860,
+            345,
+            352,
+            399,
+            435,
+            454,
+            466
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Gabe",
+            "turn": 2
+          },
+          "found": [
+            131,
+            185,
+            212,
+            283,
+            309,
+            319,
+            343,
+            392
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "4153",
+            "turn": 2
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Alameda water heater",
+            "turn": 3
+          },
+          "found": [
+            824,
+            11,
+            12,
+            14,
+            21,
+            27,
+            40,
+            46
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Rosa daughter",
+            "turn": 3
+          },
+          "found": [
+            52,
+            345,
+            352,
+            399,
+            435,
+            454,
+            466,
+            631
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "713-555-0100",
+            "turn": 3
+          },
+          "found": []
+        },
+        {
+          "tool": "no_link",
+          "args": {
+            "reason": "No message matches Gabe's reference to Rosa at 4153 Alameda for a water heater. Searches for 4153, Rosa, and Alameda water heater found Rosa messages at other addresses (e.g., 4548 Alameda St pipe bur"
+          },
+          "found": []
+        }
+      ],
+      "target": 271
+    },
+    {
+      "block": 126,
+      "ts": "2026-11-27T16:28:27.032Z",
+      "mode": "ember",
+      "kind": "investigate",
+      "model": "muse-ember-1.0",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
+      "request_variant": "tools+auto+max_completion_tokens+effort=low",
+      "finish_reason": null,
+      "latency_ms": 4234,
+      "tokens_in": 14117,
+      "tokens_out": 1063,
+      "cost_usd": 0.0019432,
+      "estimated": false,
+      "messages": 1,
+      "links": [],
+      "dropped": [],
+      "turns": 5,
+      "outcome": "no_link",
+      "steps": [
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Carmen 791 Ocean",
+            "turn": 1
+          },
+          "found": [
+            1,
+            56,
+            122,
+            166,
+            232,
+            236,
+            261,
+            272
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "791 Ocean",
+            "turn": 1
+          },
+          "found": [
+            40,
+            67,
+            256,
+            275,
+            399,
+            462,
+            518,
+            548
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Carmen calentador",
+            "turn": 1
+          },
+          "found": [
+            1,
+            56,
+            122,
+            166,
+            232,
+            236,
+            261,
+            272
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Ray Carmen",
+            "turn": 2
+          },
+          "found": [
+            1,
+            56,
+            60,
+            122,
+            166,
+            182,
+            232,
+            236
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "979-555-0115",
+            "turn": 2
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "791",
+            "turn": 2
+          },
+          "found": [
+            275
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Ocean Dr Carmen",
+            "turn": 3
+          },
+          "found": [
+            1,
+            56,
+            122,
+            166,
+            232,
+            236,
+            261,
+            272
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "calentador",
+            "turn": 3
+          },
+          "found": [
+            16,
+            18,
+            59,
+            108,
+            146,
+            150,
+            160,
+            161
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Ocean",
+            "turn": 4
+          },
+          "found": [
+            40,
+            67,
+            256,
+            399,
+            462,
+            518,
+            548,
+            606
+          ]
+        },
+        {
+          "tool": "no_link",
+          "args": {
+            "reason": "Searched for Carmen, 791 Ocean, Ocean, and calentador. No other message shows Carmen at 791 Ocean or any message at 791 Ocean; Carmen messages are at other addresses (e.g., 2177 Nile Dr, 4777 Airline "
+          },
+          "found": []
+        }
+      ],
+      "target": 505
+    },
+    {
+      "block": 127,
+      "ts": "2026-11-27T16:28:27.032Z",
+      "mode": "ember",
+      "kind": "investigate",
+      "model": "muse-ember-1.0",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
+      "request_variant": "tools+auto+max_completion_tokens+effort=low",
+      "finish_reason": null,
+      "latency_ms": 4222,
+      "tokens_in": 12959,
+      "tokens_out": 830,
+      "cost_usd": 0.0017109,
+      "estimated": false,
+      "messages": 1,
+      "links": [],
+      "dropped": [],
+      "turns": 5,
+      "outcome": "no_link",
+      "steps": [
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Eric Up River",
+            "turn": 1
+          },
+          "found": [
+            327,
+            390,
+            391,
+            432,
+            465,
+            524,
+            579,
+            587
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "4231 Up River Rd",
+            "turn": 1
+          },
+          "found": [
+            524,
+            881,
+            45,
+            78,
+            105,
+            224,
+            357,
+            398
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Eric water heater",
+            "turn": 1
+          },
+          "found": [
+            597,
+            691,
+            327,
+            390,
+            391,
+            432,
+            465,
+            579
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "4231",
+            "turn": 2
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Up River Rd water heater",
+            "turn": 2
+          },
+          "found": [
+            398,
+            524,
+            881,
+            11,
+            12,
+            14,
+            21,
+            27
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Eric",
+            "turn": 3
+          },
+          "found": [
+            327,
+            390,
+            391,
+            432,
+            465,
+            579,
+            587,
+            597
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Ken sister",
+            "turn": 4
+          },
+          "found": [
+            58,
+            85,
+            117,
+            118,
+            216,
+            220,
+            365,
+            375
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "713-555-0135",
+            "turn": 4
+          },
+          "found": []
+        },
+        {
+          "tool": "no_link",
+          "args": {
+            "reason": "No earlier message matches Eric at 4231 Up River Rd about a water heater. Searches for '4231', '4231 Up River Rd', 'Eric Up River', and 'Eric' found no message with that address; other Eric water-heat"
+          },
+          "found": []
+        }
+      ],
+      "target": 692
+    },
+    {
+      "block": 128,
+      "ts": "2026-11-27T16:28:27.032Z",
+      "mode": "ember",
+      "kind": "investigate",
+      "model": "muse-ember-1.0",
+      "prompt_hash": "6d67bdecdee5e88f88937c4256e733a8c4674aacd1a1dc1e84a16c28ebf7c74e",
+      "request_variant": "tools+auto+max_completion_tokens+effort=low",
+      "finish_reason": null,
+      "latency_ms": 4826,
+      "tokens_in": 10016,
+      "tokens_out": 948,
+      "cost_usd": 0.0014755999999999999,
+      "estimated": false,
+      "messages": 1,
+      "links": [],
+      "dropped": [],
+      "turns": 4,
+      "outcome": "no_link",
+      "steps": [
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "4679 Flynn",
+            "turn": 1
+          },
+          "found": [
+            65,
+            68,
+            218,
+            514,
+            579,
+            775,
+            960
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Eric Flynn water heater",
+            "turn": 1
+          },
+          "found": [
+            579,
+            597,
+            691,
+            65,
+            327,
+            390,
+            391,
+            432
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Flynn",
+            "turn": 1
+          },
+          "found": [
+            65,
+            68,
+            218,
+            514,
+            579,
+            775,
+            960
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "4679",
+            "turn": 2
+          },
+          "found": []
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Felipe",
+            "turn": 2
+          },
+          "found": [
+            44,
+            46,
+            151,
+            260,
+            264,
+            268,
+            645,
+            675
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "Eric neighbor",
+            "turn": 2
+          },
+          "found": [
+            327,
+            390,
+            391,
+            432,
+            465,
+            579,
+            587,
+            597
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "water heater Eric",
+            "turn": 3
+          },
+          "found": [
+            597,
+            691,
+            327,
+            390,
+            391,
+            432,
+            465,
+            579
+          ]
+        },
+        {
+          "tool": "search_messages",
+          "args": {
+            "query": "361-555-0187",
+            "turn": 3
+          },
+          "found": []
+        },
+        {
+          "tool": "no_link",
+          "args": {
+            "reason": "No message matches 4679 Flynn or a water heater for Eric at that address. Search for '4679' returned nothing, and the only Eric on Flynn Pkwy is at 248 Flynn Pkwy with frozen pipes (id 550), a differe"
+          },
+          "found": []
+        }
+      ],
+      "target": 813
     }
   ]
 }

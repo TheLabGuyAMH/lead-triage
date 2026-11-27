@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T16:26:29.736Z",
+  "recorded_at": "2026-11-27T16:28:27.032Z",
   "summary": {
     "set": "freeze1000",
     "messages": 1000,
@@ -33,19 +33,29 @@
       "precision": "174/187"
     },
     "investigator": {
-      "orphans": 2,
+      "orphans": 7,
       "failed": 0,
       "links_kept": 0,
       "outcomes": [
-        "turns",
-        "turns"
+        "no_link",
+        "no_link",
+        "no_link",
+        "no_link",
+        "no_link",
+        "no_link",
+        "no_link"
       ],
       "turns": [
+        5,
+        5,
+        5,
         4,
+        5,
+        5,
         4
       ],
       "quotes_dropped_by_code": 0,
-      "wall_clock_seconds": 6
+      "wall_clock_seconds": 13
     },
     "member_quotes_dropped_by_code": 0,
     "link_calls": 122,
@@ -72,9 +82,9 @@
       "cross_message_pass": 0,
       "concurrency": 6
     },
-    "spend_usd": 0.003034,
+    "spend_usd": 0.011442,
     "per_message_pass_reused_from": "replay-freeze-base.json",
-    "spend_detail": "$0.003034 over 2 billed call(s)"
+    "spend_detail": "$0.011442 over 7 billed call(s)"
   },
   "links": [
     {
