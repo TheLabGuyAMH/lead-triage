@@ -15,24 +15,24 @@
       <a class="brand" href="#top">Morning Dispatcher</a>
       <div class="mast-side">
         <span id="mode-badge" class="mode-badge mock">Practice mode, no Ember spend</span>
-        <span id="cost-pill" class="cost-pill">$0.0000 spent this session</span>
       </div>
     </header>
 
     <section class="hero" id="top">
       <div class="hero-copy">
-        <h1>A thousand messages after the freeze. One truck plan.</h1>
+        <h1>A thousand messages after the freeze.<br />One truck plan.</h1>
         <p class="lede">A small plumbing shop wakes up to voicemails, texts and web forms in English and Spanish, and many of them are the same job. Muse Ember reads every one, finds the ones that belong together, and quotes the words that prove it. Code fills today's trucks. Anything doubtful becomes one question for you.</p>
         <div class="cta">
           <a class="btn primary" href="#plan">See the Freeze Day plan</a>
           <a class="btn" href="#run-own">Run your own messages</a>
         </div>
+        <ul class="stubs" aria-label="Measured on recorded runs">
+          <li class="stub"><span class="stub-num">8 of 8</span><span class="stub-label">hidden links found, where messages share no phone or address. Keyword rules found 1.</span></li>
+          <li class="stub"><span class="stub-num">0</span><span class="stub-label">wrong merges in 1,000 messages, checked against an answer key</span></li>
+          <li class="stub"><span class="stub-num">48¢</span><span class="stub-label">and about 6½ minutes to read, link and plan the whole morning</span></li>
+        </ul>
       </div>
-      <ul class="stubs" aria-label="Measured on recorded runs">
-        <li class="stub"><span class="stub-num">0</span><span class="stub-label">wrong merges across 1,000 messages, checked against an answer key</span></li>
-        <li class="stub"><span class="stub-num">8 of 8</span><span class="stub-label">links found where the messages share no phone or address; plain rules find 1</span></li>
-        <li class="stub"><span class="stub-num">48¢</span><span class="stub-label">to read the whole 1,000-message morning, link it and investigate the loose ends</span></li>
-      </ul>
+      <a id="hero-preview" class="hero-preview" href="#plan" hidden aria-label="Open the plan"></a>
     </section>
 
     <main>
@@ -41,7 +41,7 @@
           <h2 id="plan-title">Today's plan</h2>
           <div class="switch" role="group" aria-label="Recorded runs">
             <button id="view-freeze" type="button" class="switch-btn">Freeze Day, 1,000 messages</button>
-            <button id="view-hard" type="button" class="switch-btn">Hard links, 23</button>
+            <button id="view-hard" type="button" class="switch-btn">Hidden links test, 23</button>
             <button id="view-replay" type="button" class="switch-btn">Ordinary morning, 12</button>
           </div>
         </div>
@@ -62,6 +62,7 @@
           <div id="spam-list"></div>
         </details>
 
+        <p class="session-spend"><span id="cost-pill">$0.0000 spent this session</span></p>
         <details id="cost-trace" class="cost-trace">
           <summary id="cost-trace-summary">Cost and trace</summary>
           <section id="meter" class="meter" aria-label="Session meter">

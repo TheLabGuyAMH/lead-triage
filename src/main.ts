@@ -9,6 +9,7 @@
 import { ApiAdapter, DEMO_KEY_STORAGE, dispatchBlock, failureResult, investigateMessage } from "./lib/api-adapter";
 import { pickOrphans } from "./lib/investigate";
 import {
+  parseAddresses,
   buildPlan,
   codeLinks,
   isSubsumed,
@@ -85,6 +86,7 @@ const spamList = $<HTMLDivElement>("spam-list");
 const spamSummary = $<HTMLElement>("spam-summary");
 const planSummary = $<HTMLDivElement>("plan-summary");
 const questionsEl = $<HTMLDivElement>("questions");
+const heroPreview = $<HTMLAnchorElement>("hero-preview");
 const traceView = $<HTMLPreElement>("trace-view");
 const modeBadge = $<HTMLDivElement>("mode-badge");
 const costPill = $<HTMLDivElement>("cost-pill");
@@ -296,6 +298,13 @@ function contactButtons(record: LeadRecord, reply: string, index: number): strin
     <button type="button" class="btn small" data-called="${index}">${called ? "Called ✓" : "Mark called"}</button>`;
 }
 
+/** Where the job is: the street address in the message, else the area Ember read, else a plain note. */
+function whereOf(record: LeadRecord): string {
+  const a = parseAddresses(record.raw_text).find((x) => x.suffix) ?? parseAddresses(record.raw_text)[0];
+  const street = a ? a.label.replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\b(St|Dr|Rd|Ave|Blvd|Ln|Ct|Pl|Pkwy|Hwy|Cir|Trl)\b/g, "$1.") : null;
+  return [street, record.area && (!street || !street.toLowerCase().includes(record.area.toLowerCase())) ? record.area : null].filter(Boolean).join(", ") || "No address given";
+}
+
 /** One job as a carbon ticket: the summary is the stop; opening it shows the reply, proof and actions. */
 function ticketHtml(job: Job, stopLabel: string): string {
   const result = job.primary;
@@ -304,11 +313,11 @@ function ticketHtml(job: Job, stopLabel: string): string {
   replyByIndex.set(index, job.reply);
   const called = isCalled(record.raw_text);
   const moved = job.members.some((m) => recentlyMoved.has(m.index ?? 0));
-  const what = [record.service_needed ?? "Service not stated", record.area].filter(Boolean).join(", ");
+  const what = record.service_needed ?? "Service not stated";
   const tags = [
-    `<span class="tag ${esc(record.urgency)}">${URGENCY_LABEL[record.urgency]}</span>`,
+    record.urgency === "emergency" ? "" : `<span class="tag ${esc(record.urgency)}">${URGENCY_LABEL[record.urgency]}</span>`,
     record.safety_script ? `<span class="tag safety">Safety script</span>` : "",
-    job.members.length > 1 ? `<span class="tag merged">${job.members.length} ${job.sharedCause ? "homes" : "messages"}, one stop</span>` : "",
+    job.members.length > 1 ? `<span class="tag merged" title="${job.members.length} ${job.sharedCause ? "homes" : "messages"}, one stop">${job.members.length} ${job.sharedCause ? "homes" : "messages"}</span>` : "",
     record.language === "es" ? `<span class="tag">Spanish</span>` : "",
     called ? `<span class="tag">Called</span>` : "",
   ].join("");
@@ -321,14 +330,15 @@ function ticketHtml(job: Job, stopLabel: string): string {
       <span class="stop-no" aria-label="${esc(stopLabel)}">${esc(stopLabel)}</span>
       <span class="t-name">${esc(record.name ?? "Unknown caller")}</span>
       <span class="t-what">${esc(what)}</span>
-      <span class="t-tags">${tags}</span>
+      <span class="t-where">${esc(whereOf(record))}</span>
+      ${tags.trim() ? `<span class="t-tags">${tags}</span>` : ""}
     </summary>
     <div class="ticket-body">
       ${record.needs_review ? `<div class="review-banner">Needs review: ${esc(record.needs_review)}</div>` : ""}
       <p class="reason">${esc(record.urgency_reason)}</p>
       <div class="fields">
         ${fieldHtml("Phone", record.phone)}
-        ${fieldHtml("Area", record.area)}
+        <div><span class="k">Where</span>${esc(whereOf(record))}</div>
         ${fieldHtml("Language", record.language === "es" ? "Spanish" : "English")}
       </div>
       <p class="summary">${esc(record.owner_summary)}</p>
@@ -346,9 +356,17 @@ function who(i: number): string {
   return `#${i + 1} ${r?.name ?? "unknown"}`;
 }
 
+const FILLER = new Set(["that", "this", "with", "from", "have", "about", "your", "they", "there", "their", "since", "still", "nobody", "called", "back", "morning", "please", "house", "home", "water"]);
+
+/** Quotes, with the words they share marked, so the link is visible at a glance. */
 function evidenceHtml(link: LeadLink): string {
+  const words = (q: string) => new Set(q.toLowerCase().match(/[a-z\u00e0-\u00ff0-9]{4,}/g) ?? []);
+  const sets = link.evidence.map((e) => words(e.quote));
+  const shared = new Set([...new Set(sets.flatMap((x) => [...x]))].filter((w) => !FILLER.has(w) && sets.filter((x) => x.has(w)).length >= 2));
+  const mark = (q: string) =>
+    esc(q).replace(/[A-Za-z\u00c0-\u00ff0-9]{4,}/g, (w) => (shared.has(w.toLowerCase()) ? `<mark>${w}</mark>` : w));
   return `<ul class="evidence">${link.evidence
-    .map((e) => `<li><span class="k">#${e.index + 1}</span> “${esc(e.quote)}”</li>`)
+    .map((e) => `<li><span class="k">#${e.index + 1}</span> “${mark(e.quote)}”</li>`)
     .join("")}</ul>`;
 }
 
@@ -389,7 +407,7 @@ const ANSWER_LABELS = {
   shared_cause: { badge: "Same cause?", yes: "Yes, same cause", no: "No, separate problems" },
 } as const;
 
-function questionHtml(link: LeadLink): string {
+function questionHtml(link: LeadLink, openProof = false): string {
   const labels = ANSWER_LABELS[link.kind];
   const answer = answers[link.key];
   const auto = !answer && linkIsActive(link, resolved);
@@ -405,9 +423,9 @@ function questionHtml(link: LeadLink): string {
     <div class="q-head"><span class="q-kind">${labels.badge}</span>
       <span class="q-who">${link.indices.map((i) => esc(who(i))).join(", ")}</span></div>
     ${ask}
+    <div class="row answer-row">${buttons}</div>
     ${askButtons(link)}
-    <div class="row">${buttons}</div>
-    <details class="proof"><summary>Why Ember thinks so</summary>
+    <details class="proof"${openProof ? " open" : ""}><summary>Ember's proof</summary>
       <p>${esc(link.explanation)}</p>
       ${evidenceHtml(link)}
       <p class="q-source">${link.confidence === "likely" ? "Likely" : "Possible"}${auto ? ", merged until you say no" : ""}. ${link.source === "code" ? "Found by code" : link.source === "mock" ? "Practice-mode rule" : link.investigation ? "Found by Ember's investigator; every quote checked by code" : "Found by Ember; every quote checked by code"}.</p>
@@ -440,7 +458,7 @@ function askButtons(link: LeadLink): string {
   if (!rec) return "";
   const digits = rec.phone?.replace(/\D/g, "") ?? "";
   replyByIndex.set(-1 - link.ask_index, link.question);
-  return `<div class="row">${
+  return `<div class="row contact-row">${
     digits
       ? `<a class="btn small" href="tel:${digits}">Call ${esc(rec.name ?? "them")}</a>
          <a class="btn small" href="sms:${digits}?&body=${encodeURIComponent(link.question)}">Text the question</a>`
@@ -526,6 +544,33 @@ function addToTotals(t: Totals, result: ExtractionResult) {
   addUsage(t, result.usage);
 }
 
+/** The hero shows the real product: the first open question with its proof, and truck 1's first stops. */
+function renderHeroPreview(open: LeadLink[], byTruck: Map<number, Job[]>) {
+  const q = open[0];
+  const t1 = byTruck.get(1) ?? [];
+  if (!showingReplay || (!q && !t1.length)) {
+    heroPreview.hidden = true;
+    return;
+  }
+  const qHtml = q
+    ? `<p class="pv-label">A question Ember found this morning</p>
+       <div class="q-item"><div class="q-head"><span class="q-kind">${ANSWER_LABELS[q.kind].badge}</span><span class="q-who">${q.indices.map((i) => esc(who(i))).join(", ")}</span></div>
+       ${q.ask_index !== null && q.question ? `<p class="ask">Ask ${esc(who(q.ask_index))}: “${esc(q.question)}”</p>` : ""}${evidenceHtml(q)}</div>`
+    : "";
+  const tHtml = t1.length
+    ? `<p class="pv-truck">Truck 1</p><ol class="stops">${t1
+        .slice(0, 3)
+        .map((j) => {
+          const r = j.primary.record;
+          // Plain, non-interactive copies of the first tickets: the whole preview is one link to the plan.
+          return `<li><div class="ticket ${esc(r.urgency)}"><div class="pv-sum"><span class="stop-no">${j.stop}</span><span class="t-name">${esc(r.name ?? "Unknown caller")}</span><span class="t-what">${esc(r.service_needed ?? "")}</span></div></div></li>`;
+        })
+        .join("")}</ol>`
+    : "";
+  heroPreview.innerHTML = qHtml + tHtml;
+  heroPreview.hidden = false;
+}
+
 /** What actually produced this board, in one sentence (never claims Ember for a practice run). */
 function planHowLine(): string {
   const present = results.filter(Boolean);
@@ -548,15 +593,17 @@ function render() {
   boardEmpty.hidden = present.length > 0;
   const L = plan.lanes;
   const trucksUsed = L.trucks.length;
+  const jobCount = L.read_first.length + L.trucks.length + L.made_safe.length + L.not_today.length;
   planSummary.hidden = present.length === 0;
   planSummary.innerHTML = present.length
-    ? `<ul class="legend">
-        <li class="white"><strong>${trucksUsed}</strong> stops on ${config.trucks} truck${config.trucks === 1 ? "" : "s"}${plan.overflowHazards ? `, ${plan.overflowHazards} hazard${plan.overflowHazards === 1 ? "" : "s"} over capacity` : ""}</li>
-        <li class="canary"><strong>${L.made_safe.length}</strong> urgent replies ready to send</li>
-        <li class="pink"><strong>${L.not_today.length}</strong> honest “not today” replies ready</li>
-        <li class="plain"><strong>${plan.merged}</strong> stops carry more than one message</li>
+    ? `<p class="funnel">${present.length.toLocaleString()} messages<span class="arrow">→</span>${real.length.toLocaleString()} real<span class="arrow">→</span>${jobCount.toLocaleString()} jobs<span class="arrow">→</span><span class="end">${trucksUsed} on today's trucks</span></p>
+      <ul class="legend">
+        <li class="canary"><strong>${L.made_safe.length}</strong> urgent, no truck today: a safety reply is ready for each</li>
+        <li class="pink"><strong>${L.not_today.length}</strong> routine: an honest “not today” is ready for each</li>
         <li class="plain"><strong>${plan.pending}</strong> question${plan.pending === 1 ? "" : "s"} for you</li>
+        <li class="plain"><strong>${plan.merged}</strong> stops carry more than one message</li>
       </ul>
+      ${replayLabel === "hard" && showingReplay ? `<div class="versus" aria-label="Linked pairs found"><div><span>Muse Ember</span><span class="bar"><span style="width:100%"></span></span><span>8 of 8</span></div><div><span>Keyword rules</span><span class="bar"><span style="width:12.5%"></span></span><span>1 of 8</span></div></div><p class="how">The 6 questions below cover all 8 linked pairs (one building has three tenants, one street two homes).</p>` : ""}
       <p class="how">${planHowLine()}</p>
       ${lastChange ? `<p class="change" role="status">${esc(lastChange)}</p>` : ""}`
     : "";
@@ -569,10 +616,10 @@ function render() {
   questionsEl.innerHTML = shownLinks.length
     ? `<h3>${open.length ? `${open.length} question${open.length === 1 ? "" : "s"} that change the plan` : "No open questions"}</h3>
       <p class="sub">Ember found these messages may belong together but code can't prove it. Ask the customer, tap the answer, and the trucks re-plan.</p>
-      ${open.slice(0, 3).map(questionHtml).join("")}
-      ${open.length > 3 ? `<details class="q-group"><summary>${open.length - 3} more question${open.length - 3 === 1 ? "" : "s"}</summary>${open.slice(3).map(questionHtml).join("")}</details>` : ""}
-      ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map(questionHtml).join("")}</details>` : ""}
-      ${auto.length ? `<details class="q-group"><summary>Merged automatically because code found the same phone or address (${auto.length})</summary>${auto.map(questionHtml).join("")}</details>` : ""}`
+      ${open.slice(0, 3).map((l, n) => questionHtml(l, n === 0)).join("")}
+      ${open.length > 3 ? `<details class="q-group"><summary>${open.length - 3} more question${open.length - 3 === 1 ? "" : "s"}</summary>${open.slice(3).map((l) => questionHtml(l)).join("")}</details>` : ""}
+      ${answered.length ? `<details class="q-group"><summary>Answered (${answered.length})</summary>${answered.map((l) => questionHtml(l)).join("")}</details>` : ""}
+      ${auto.length ? `<details class="q-group"><summary>Merged automatically because code found the same phone or address (${auto.length})</summary>${auto.map((l) => questionHtml(l)).join("")}</details>` : ""}`
     : "";
 
   // Trucks are rows of white tickets, dealt in turn (truck 1, 2, 3...).
@@ -590,7 +637,7 @@ function render() {
     .join("");
   const stack = (lane: "made_safe" | "not_today", cls: string, title: string, sub: string) =>
     L[lane].length
-      ? `<details class="stack ${cls}"${L[lane].length <= 12 ? " open" : ""}><summary><h3>${title} (${L[lane].length})</h3><span class="sub">${sub}</span></summary>${L[lane].map(rowHtml).join("")}</details>`
+      ? `<details class="stack ${cls}"${L[lane].length <= 12 ? " open" : ""}><summary><h3>${title} (${L[lane].length})</h3><span class="sub">${sub}</span><span class="show show-closed">Show all ${L[lane].length}</span><span class="show show-open">Hide</span></summary>${L[lane].map(rowHtml).join("")}</details>`
       : "";
   boardEl.innerHTML =
     (L.read_first.length
@@ -602,11 +649,12 @@ function render() {
     stack("made_safe", "canary", "Urgent, no truck today", "A fixed safety reply for each, ready for you to send.") +
     stack("not_today", "pink", "Not today", "An honest reply for each instead of silence, ready for you to send.");
   recentlyMoved = new Set();
+  renderHeroPreview(open, byTruck);
 
   // The filtered fold opens whenever it holds anything, so a real lead
   // misread as spam stays visible instead of disappearing.
   spamBox.hidden = filtered.length === 0;
-  spamBox.open = filtered.length > 0;
+  spamBox.open = false;
   spamSummary.textContent = `Spam and wrong numbers, set aside (${filtered.length})`;
   spamList.innerHTML = filtered
     .map((r) => {
