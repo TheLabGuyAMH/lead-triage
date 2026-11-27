@@ -597,7 +597,11 @@ export async function emberInvestigate(
   let proposal: Record<string, unknown> | null = null;
   let turns = 0;
   for (; turns < MAX_TURNS && outcome === "turns"; turns++) {
-    const body: Record<string, unknown> = { model: env.model, temperature: 0, messages, tools: INVESTIGATE_TOOLS, tool_choice: "auto" };
+    // The last turn may only finish: offer just propose_link / no_link and say so.
+    const last = turns === MAX_TURNS - 1;
+    if (last) messages.push({ role: "user", content: "Last turn: finish now with propose_link (if a message matches) or no_link." });
+    const tools = last ? INVESTIGATE_TOOLS.filter((t) => t.function.name === "propose_link" || t.function.name === "no_link") : INVESTIGATE_TOOLS;
+    const body: Record<string, unknown> = { model: env.model, temperature: 0, messages, tools, tool_choice: "auto" };
     body[capParam] = INVESTIGATE_MAX_TOKENS;
     if (opts.reasoningEffort) body.reasoning_effort = opts.reasoningEffort;
     const controller = new AbortController();
