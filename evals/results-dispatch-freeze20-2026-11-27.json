@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T15:50:27.185Z",
+  "recorded_at": "2026-11-27T16:10:29.902Z",
   "summary": {
     "set": "freeze20",
     "messages": 20,
@@ -12,11 +12,22 @@
     "recall_same_job": "3/3",
     "recall_shared_cause": "3/3",
     "precision_any_link": "6/6",
+    "ember_links": 3,
+    "ember_recall": "5/6",
+    "ember_recall_same_job": "2/3",
+    "ember_recall_shared_cause": "3/3",
+    "ember_precision": "5/5",
     "auto_merged_pairs": 2,
     "auto_merged_correct": 2,
     "wrong_auto_merges": 0,
     "wrong_auto_merge_examples": [],
     "likely_downgraded_by_code": 0,
+    "no_model_rules": {
+      "what": "same phone + practice-mode keyword links on the same records, $0",
+      "recall": "5/6",
+      "precision": "5/5",
+      "wrong_auto_merges": 0
+    },
     "member_quotes_dropped_by_code": 0,
     "link_calls": 1,
     "link_calls_failed": 0,
@@ -24,8 +35,8 @@
     "extraction": null,
     "plan_at_capacity": {
       "trucks": 6,
-      "made_safe": 6,
-      "not_today": 3,
+      "made_safe": 7,
+      "not_today": 2,
       "read_first": 0,
       "filtered": 3,
       "merged_links": 2,
@@ -36,9 +47,9 @@
       "cross_message_pass": 4,
       "concurrency": 4
     },
-    "spend_usd": 0.009116,
+    "spend_usd": 0.00872,
     "per_message_pass_reused_from": null,
-    "spend_detail": "$0.009116 over 21 billed call(s)"
+    "spend_detail": "$0.008720 over 21 billed call(s)"
   },
   "links": [
     {
@@ -52,15 +63,15 @@
       "evidence": [
         {
           "index": 0,
-          "quote": "Linda Garza, 418 Mesquite St, 361-555-0110"
+          "quote": "418 Mesquite St, 361-555-0110"
         },
         {
           "index": 6,
-          "quote": "This is Ray, Linda's husband, about the burst pipe at 418 Mesquite."
+          "quote": "about the burst pipe at 418 Mesquite"
         }
       ],
-      "explanation": "Ray identifies himself as Linda's husband and references the same burst pipe at 418 Mesquite.",
-      "question": "Are you calling about Linda Garza's burst pipe at 418 Mesquite St?",
+      "explanation": "Ray identifies himself as Linda's husband and references the same burst pipe at the same address.",
+      "question": "Is Ray's burst pipe at 418 Mesquite the same hall bathroom pipe Linda reported?",
       "ask_index": 6,
       "source": "ember",
       "downgraded": null
@@ -88,11 +99,11 @@
         },
         {
           "index": 10,
-          "quote": "Still no heat here, she's wrapped up in blankets. Can you send someone this morning? 361-555-0142"
+          "quote": "Still no heat here, she's wrapped up in blankets."
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same home where your 81-year-old mom has no heat?",
+      "question": "Is this follow-up about the same heater and same 81-year-old mother from the earlier call?",
       "ask_index": 10,
       "source": "code",
       "downgraded": null
@@ -120,8 +131,8 @@
           "quote": "no tenemos agua desde la mañana en la calle Laguna, 1230 Laguna Dr. Mis vecinos tampoco."
         }
       ],
-      "explanation": "Three different Laguna Dr addresses report no water this morning and say neighbors are also out, indicating a street-level outage.",
-      "question": "Has the city reported a water main outage on Laguna Dr this morning?",
+      "explanation": "Three different Laguna Dr addresses report no water this morning, with neighbors also out, indicating a street-wide supply problem.",
+      "question": "Are all three Laguna Dr homes out of water from the same street supply outage?",
       "ask_index": 2,
       "source": "ember",
       "downgraded": null
@@ -142,14 +153,10 @@
         {
           "index": 14,
           "quote": "Tenant in unit A says water is coming through the shared wall from next door."
-        },
-        {
-          "index": 14,
-          "quote": "2240 Ocean Dr."
         }
       ],
-      "explanation": "Unit B reports a kitchen sink leak on Ocean Dr while unit A at 2240 Ocean Dr reports water through the shared wall from next door, suggesting the same duplex.",
-      "question": "Is the duplex at 2240 Ocean Dr the same one where unit B has a kitchen sink leak?",
+      "explanation": "Unit B's kitchen sink leak on Ocean Dr may be causing water through the shared wall into unit A, but Tina gives no street number to confirm it is the same duplex.",
+      "question": "Is Tina's leaking unit B the duplex at 2240 Ocean Dr next to Marcus's tenant in unit A?",
       "ask_index": 14,
       "source": "ember",
       "downgraded": null

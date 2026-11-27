@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T15:50:27.185Z",
+  "recorded_at": "2026-11-27T16:10:29.902Z",
   "app": "lead-triage",
   "label": "dispatch-freeze20",
   "fictional_data_only": true,
@@ -10,7 +10,7 @@
   "totals": {
     "extract_calls": 20,
     "link_calls": 1,
-    "spend_usd": 0.009116
+    "spend_usd": 0.00872
   },
   "extract_calls": [
     {
@@ -18,11 +18,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2613,
+      "latency_ms": 1895,
       "attempts": 1,
       "tokens_in": 712,
-      "tokens_out": 632,
-      "cost_usd": 0.0003872,
+      "tokens_out": 546,
+      "cost_usd": 0.00034419999999999996,
       "error": null
     },
     {
@@ -30,11 +30,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1996,
+      "latency_ms": 1801,
       "attempts": 1,
       "tokens_in": 697,
-      "tokens_out": 455,
-      "cost_usd": 0.0002972,
+      "tokens_out": 563,
+      "cost_usd": 0.00035119999999999997,
       "error": null
     },
     {
@@ -42,11 +42,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2540,
+      "latency_ms": 1978,
       "attempts": 1,
       "tokens_in": 709,
-      "tokens_out": 745,
-      "cost_usd": 0.0004434,
+      "tokens_out": 636,
+      "cost_usd": 0.00038889999999999997,
       "error": null
     },
     {
@@ -54,11 +54,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 3427,
+      "latency_ms": 2580,
       "attempts": 1,
       "tokens_in": 700,
-      "tokens_out": 945,
-      "cost_usd": 0.0005425,
+      "tokens_out": 724,
+      "cost_usd": 0.000432,
       "error": null
     },
     {
@@ -66,11 +66,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1289,
+      "latency_ms": 1331,
       "attempts": 1,
       "tokens_in": 693,
-      "tokens_out": 327,
-      "cost_usd": 0.00023280000000000002,
+      "tokens_out": 394,
+      "cost_usd": 0.0002663,
       "error": null
     },
     {
@@ -78,11 +78,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2038,
+      "latency_ms": 2043,
       "attempts": 1,
       "tokens_in": 701,
-      "tokens_out": 615,
-      "cost_usd": 0.0003776,
+      "tokens_out": 784,
+      "cost_usd": 0.0004621,
       "error": null
     },
     {
@@ -90,11 +90,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1945,
+      "latency_ms": 1769,
       "attempts": 1,
       "tokens_in": 703,
-      "tokens_out": 622,
-      "cost_usd": 0.0003813,
+      "tokens_out": 646,
+      "cost_usd": 0.0003933,
       "error": null
     },
     {
@@ -102,11 +102,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 3619,
+      "latency_ms": 2348,
       "attempts": 1,
       "tokens_in": 695,
-      "tokens_out": 1193,
-      "cost_usd": 0.000666,
+      "tokens_out": 906,
+      "cost_usd": 0.0005225,
       "error": null
     },
     {
@@ -114,11 +114,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2282,
+      "latency_ms": 2256,
       "attempts": 1,
       "tokens_in": 702,
-      "tokens_out": 880,
-      "cost_usd": 0.0005102,
+      "tokens_out": 763,
+      "cost_usd": 0.0004517,
       "error": null
     },
     {
@@ -126,11 +126,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1332,
+      "latency_ms": 1759,
       "attempts": 1,
       "tokens_in": 702,
-      "tokens_out": 541,
-      "cost_usd": 0.0003407,
+      "tokens_out": 454,
+      "cost_usd": 0.0002972,
       "error": null
     },
     {
@@ -138,11 +138,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1851,
+      "latency_ms": 2351,
       "attempts": 1,
       "tokens_in": 693,
-      "tokens_out": 627,
-      "cost_usd": 0.00038280000000000003,
+      "tokens_out": 662,
+      "cost_usd": 0.0004003,
       "error": null
     },
     {
@@ -150,11 +150,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1414,
+      "latency_ms": 1413,
       "attempts": 1,
       "tokens_in": 696,
-      "tokens_out": 441,
-      "cost_usd": 0.0002901,
+      "tokens_out": 531,
+      "cost_usd": 0.0003351,
       "error": null
     },
     {
@@ -162,11 +162,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2729,
+      "latency_ms": 2311,
       "attempts": 1,
       "tokens_in": 699,
-      "tokens_out": 993,
-      "cost_usd": 0.0005664,
+      "tokens_out": 911,
+      "cost_usd": 0.0005254,
       "error": null
     },
     {
@@ -174,11 +174,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2324,
+      "latency_ms": 2692,
       "attempts": 1,
       "tokens_in": 704,
-      "tokens_out": 916,
-      "cost_usd": 0.0005283999999999999,
+      "tokens_out": 1029,
+      "cost_usd": 0.0005849,
       "error": null
     },
     {
@@ -186,11 +186,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 2351,
+      "latency_ms": 2098,
       "attempts": 1,
       "tokens_in": 702,
-      "tokens_out": 817,
-      "cost_usd": 0.0004787,
+      "tokens_out": 680,
+      "cost_usd": 0.0004102,
       "error": null
     },
     {
@@ -198,11 +198,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1401,
+      "latency_ms": 1452,
       "attempts": 1,
       "tokens_in": 681,
-      "tokens_out": 369,
-      "cost_usd": 0.0002526,
+      "tokens_out": 466,
+      "cost_usd": 0.0003011,
       "error": null
     },
     {
@@ -210,11 +210,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1817,
+      "latency_ms": 1813,
       "attempts": 1,
       "tokens_in": 696,
-      "tokens_out": 726,
-      "cost_usd": 0.0004326,
+      "tokens_out": 638,
+      "cost_usd": 0.0003886,
       "error": null
     },
     {
@@ -222,11 +222,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1449,
+      "latency_ms": 1595,
       "attempts": 1,
       "tokens_in": 699,
-      "tokens_out": 585,
-      "cost_usd": 0.00036239999999999997,
+      "tokens_out": 554,
+      "cost_usd": 0.0003469,
       "error": null
     },
     {
@@ -234,11 +234,11 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 1421,
+      "latency_ms": 1420,
       "attempts": 1,
       "tokens_in": 699,
-      "tokens_out": 495,
-      "cost_usd": 0.00031739999999999996,
+      "tokens_out": 465,
+      "cost_usd": 0.0003024,
       "error": null
     },
     {
@@ -246,27 +246,27 @@
       "model": "muse-ember-1.0",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 979,
+      "latency_ms": 1337,
       "attempts": 1,
       "tokens_in": 688,
-      "tokens_out": 284,
-      "cost_usd": 0.0002108,
+      "tokens_out": 369,
+      "cost_usd": 0.00025330000000000003,
       "error": null
     }
   ],
   "link_calls": [
     {
       "block": 0,
-      "ts": "2026-11-27T15:50:27.185Z",
+      "ts": "2026-11-27T16:10:29.902Z",
       "mode": "ember",
       "model": "muse-ember-1.0",
       "prompt_hash": "c34543308c9d8154bc6f0bdca6ee73869324a227f596d565f9b6d5c8203855af",
       "request_variant": "structured+max_completion_tokens+effort=low",
       "finish_reason": "stop",
-      "latency_ms": 4485,
-      "tokens_in": 1809,
-      "tokens_out": 1867,
-      "cost_usd": 0.0011144,
+      "latency_ms": 3854,
+      "tokens_in": 1796,
+      "tokens_out": 1566,
+      "cost_usd": 0.0009626,
       "estimated": false,
       "messages": 17,
       "links": [
@@ -281,15 +281,15 @@
           "evidence": [
             {
               "index": 0,
-              "quote": "Linda Garza, 418 Mesquite St, 361-555-0110"
+              "quote": "418 Mesquite St, 361-555-0110"
             },
             {
               "index": 6,
-              "quote": "This is Ray, Linda's husband, about the burst pipe at 418 Mesquite."
+              "quote": "about the burst pipe at 418 Mesquite"
             }
           ],
-          "explanation": "Ray identifies himself as Linda's husband and references the same burst pipe at 418 Mesquite.",
-          "question": "Are you calling about Linda Garza's burst pipe at 418 Mesquite St?",
+          "explanation": "Ray identifies himself as Linda's husband and references the same burst pipe at the same address.",
+          "question": "Is Ray's burst pipe at 418 Mesquite the same hall bathroom pipe Linda reported?",
           "ask_index": 6,
           "source": "ember",
           "downgraded": null
@@ -317,11 +317,11 @@
             },
             {
               "index": 10,
-              "quote": "Still no heat here, she's wrapped up in blankets. Can you send someone this morning? 361-555-0142"
+              "quote": "Still no heat here, she's wrapped up in blankets."
             }
           ],
           "explanation": "Same phone number in each message.",
-          "question": "Is this the same home where your 81-year-old mom has no heat?",
+          "question": "Is this follow-up about the same heater and same 81-year-old mother from the earlier call?",
           "ask_index": 10,
           "source": "code",
           "downgraded": null
@@ -349,8 +349,8 @@
               "quote": "no tenemos agua desde la mañana en la calle Laguna, 1230 Laguna Dr. Mis vecinos tampoco."
             }
           ],
-          "explanation": "Three different Laguna Dr addresses report no water this morning and say neighbors are also out, indicating a street-level outage.",
-          "question": "Has the city reported a water main outage on Laguna Dr this morning?",
+          "explanation": "Three different Laguna Dr addresses report no water this morning, with neighbors also out, indicating a street-wide supply problem.",
+          "question": "Are all three Laguna Dr homes out of water from the same street supply outage?",
           "ask_index": 2,
           "source": "ember",
           "downgraded": null
@@ -371,14 +371,10 @@
             {
               "index": 14,
               "quote": "Tenant in unit A says water is coming through the shared wall from next door."
-            },
-            {
-              "index": 14,
-              "quote": "2240 Ocean Dr."
             }
           ],
-          "explanation": "Unit B reports a kitchen sink leak on Ocean Dr while unit A at 2240 Ocean Dr reports water through the shared wall from next door, suggesting the same duplex.",
-          "question": "Is the duplex at 2240 Ocean Dr the same one where unit B has a kitchen sink leak?",
+          "explanation": "Unit B's kitchen sink leak on Ocean Dr may be causing water through the shared wall into unit A, but Tina gives no street number to confirm it is the same duplex.",
+          "question": "Is Tina's leaking unit B the duplex at 2240 Ocean Dr next to Marcus's tenant in unit A?",
           "ask_index": 14,
           "source": "ember",
           "downgraded": null

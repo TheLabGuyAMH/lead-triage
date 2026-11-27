@@ -6,26 +6,28 @@ The morning after a hard freeze, a 1–10 truck plumbing shop wakes up to hundre
 
 1. **Ember reads every message** into a strict schema (urgency, service, phone, area, language, a reply draft).
 2. **Ember reads the pile.** A second pass looks across messages for ones that belong together, quotes the exact words that prove it, and writes the one question that would settle a doubtful link ("Is the leak in unit B what's coming through unit A's wall?").
-3. **Code decides what's safe.** A link survives only if every quote is really in the message it cites, and it merges automatically only when code finds a shared phone, house number + street, or full name. Anything weaker waits for the owner's answer. Code then fills today's truck slots in priority order.
+3. **Code decides what's safe.** A link survives only if every quote is really in the message it cites, and it merges automatically only when code finds a shared phone or the same house number and street. Anything weaker waits for the owner's answer. Code then fills today's truck slots in priority order.
 4. **Nobody is left guessing.** Urgent jobs that miss the trucks get a fixed shut-off-your-water or stay-warm-safely script; routine ones get an honest "we can't come today". Gas, carbon-monoxide and electrical hazards always get a truck and a fixed "leave now, call 911" script, never AI text.
 
 Answer a question or change the number of trucks and the plan re-flows on screen. The owner reviews and sends everything; nothing is sent automatically.
 
-**Why Ember.** One message costs about **$0.0004** to read (measured: $0.3907 for 1,000 Freeze Day messages; $0.000347 per lead on the 40 held-out leads). Reading the pile for links cost **$0.0694** for the same 1,000 messages (122 calls of up to 30 messages each). The whole 1,000-message morning, both passes, is about **46 cents**, and took 297 s + 76 s at six calls at a time. That is what makes "read everything, twice, every morning" a normal thing for a small shop to do.
+**Why Ember.** One message costs about **$0.0004** to read (measured: $0.3907 for 1,000 Freeze Day messages; $0.000347 per lead on the 40 held-out leads). Reading the pile for links cost **$0.0694** for the same 1,000 messages (122 calls of up to 30 messages each). The whole 1,000-message morning, both passes, is about **46 cents**, and took 297 s + 76 s (six per-message calls at a time, four link calls at a time). That is what makes "read everything, twice, every morning" a normal thing for a small shop to do.
 
 **Why it matters.** Invoca's platform data found that [27% of calls to home services businesses go unanswered, and fewer than 3% of callers sent to voicemail leave a message](https://www.invoca.com/blog/how-much-missed-sales-calls-cost-home-services-businesses) (May 2024). During the February 2021 Texas freeze, an Austin plumbing company had [triple its normal number of calls and more than 2,500 customers awaiting service](https://www.texastribune.org/2021/02/26/texas-plumber-shortage-winter-storm).
 
 | Freeze Day: 1,000 fictional messages, answer key by construction | Result |
 |---|---|
-| Message pairs merged automatically / merged wrongly | 99 / **0** |
-| True linked pairs Ember suggested (recall) | 174 of 205 (85%) |
+| Message pairs merged automatically / merged wrongly | 96 / **0** |
+| True linked pairs found, Ember + same-phone code (recall) | 174 of 205 (85%) |
 | Suggested pairs that were right (precision) | 174 of 187 (93%) |
-| Questions left for the owner | 27 |
+| Found by Ember's own links / no-model rules on the same messages | 136 of 205 / 115 of 205 |
+| Shared-cause pairs: Ember / no-model rules | 76 of 87 / 24 of 87 |
+| Questions left for the owner | 29 |
 | Category matches the generator's label | 999 of 1,000 |
 | Calls failed / quotes that weren't really in the message | 0 / 0 |
 | Cost, both passes | $0.3907 + $0.0694 |
 
-On the hand-written 20-message freeze morning, Ember found all 4 true groups (6 of 6 linked pairs) with no wrong suggestions, and turned the doubtful duplex leak into the question "Is the duplex at 2240 Ocean Dr the same one where unit B has a kitchen sink leak?".
+**Where rules can't reach.** A hand-written 23-message set where the messages that belong together share no phone and no house number: a son calling for his mother, a grandmother in Spanish and her grandson in English, a tenant and the property manager, "Bobby" and "Robert Nguyen" at the same duplex, a building with no hot water, a street with no house numbers. Ember found **8 of 8** linked pairs with no wrong suggestions; the no-model rules found **1 of 8**. Because code can't anchor those same-job links, none merged on its own: each became a question for the owner, such as "Is this the Bayview Apartments unit 12 toilet overflow Kim reported?". On the 20-message freeze morning, Ember found 6 of 6 (rules: 5 of 6).
 
 | Per-message reading, 40 held-out synthetic leads | Result |
 |---|---|
@@ -39,7 +41,8 @@ On the hand-written 20-message freeze morning, Ember found all 4 true groups (6 
 **Honest limits.**
 - All messages are synthetic. The Freeze Day set comes from templates in `scripts/gen-freeze.mjs`, so it is more repetitive than real texts; the 20-message set and the 40 held-out leads were written by AI models that also helped build the app. No contractor has used it yet.
 - The link prompt was tightened once **after** seeing the first Freeze Day results (v1: precision 173/292, mostly "possible shared cause" guesses between same-street homes with ordinary freeze damage; still 0 wrong merges). Both runs are committed (`*-v1-*` and the final files).
-- Urgency agreed with the generator's labels on 770 of 884 labeled messages; most disagreements are "kitchen pipes frozen, bathroom still works" read as routine where the template said same-day.
+- Urgency agreed with the generator's labels on 771 of 884 labeled messages. Of the 113 disagreements, 75 are same-day read as routine (mostly "kitchen pipes frozen, bathroom still works" and "toilet won't fill"), 32 are emergency read lower, 6 routine read as same-day.
+- A review found and we fixed: a phone's last four digits could pass for a house number, a shared full name counted as proof, and one Spanish no-water message got the electrical safety script because hazard detection read the model's explanation ("no ... electrical hazard is stated"). That message was re-read on fixed code, and the stored links were re-checked under the stricter rule (2 lowered to "possible"); numbers above are after the fix.
 - Stops are filled in priority order, not routed by geography. The safety and holding scripts are demo wording; a licensed professional should review them before real use.
 - Ember spend for this build is in the committed traces and on the account's usage page, far under the $10 cap (see Evaluation).
 
@@ -49,8 +52,8 @@ On the hand-written 20-message freeze morning, Ember found all 4 true groups (6 
 
 - **Blocks** (`src/lib/dispatch.ts` `planBlocks`): a pile of 30 or fewer is one block. A bigger pile is grouped so related messages meet: by street (a house-number street, or a bare street name seen elsewhere with a house number), by sender name for messages that point back at someone ("Linda's husband", "calling for my mom"), else by area. Blocks are capped at 30 messages. The 1,000-message Freeze Day became 122 blocks.
 - **Ember link call** (`api/_lib/ember.ts` `emberLink`, endpoint `POST /api/dispatch`, same three gates as `/api/extract`): strict JSON-schema output of links, each with kind (`same_job` / `shared_cause`), confidence, exact quotes per message, a one-line explanation and one deciding question.
-- **Code checks** (`validateLinks`): every member needs a quote that is really in its own message, or it is removed; "likely" `same_job` stays "likely" only if code finds a shared phone, house number + street, or full name; the same phone alone is linked by code with no model at all (`codeLinks`).
-- **Plan** (`buildPlan`): merges only anchored "likely" same-job links and links the owner confirms; ranks jobs (hazards, urgency, more messages, paste order); fills trucks × stops; urgent overflow gets the water shut-off, stay-warm (with the carbon-monoxide warning) or urgent-list script; routine overflow gets an honest "not today". Hazards always get a truck, even past capacity. Answers and capacity changes re-plan instantly in the browser and the board says who moved.
+- **Code checks** (`validateLinks`): every member needs a quote that is really in its own message, or it is removed; "likely" `same_job` stays "likely" only if code finds a shared phone or house number + street (phone numbers are removed first, so a phone's last digits can't pass for a house number); the same phone alone is linked by code with no model at all (`codeLinks`).
+- **Plan** (`buildPlan`): merges only anchored "likely" same-job links and links the owner confirms; ranks jobs (hazards, urgency, more messages, paste order); deals them to trucks in turn (truck 1, 2, 3...), so stops count per truck; urgent overflow gets the water shut-off, frozen-pipe, stay-warm (with the carbon-monoxide warning) or urgent-list script; routine overflow gets an honest "not today". A confirmed street-wide cause on a truck becomes one stop with a street-check reply for every home, each in its own language, each with its own call and text buttons. Hazards always get a truck, even past capacity. Answers and capacity changes re-plan instantly in the browser and the board says who moved.
 
 ## How it works
 
@@ -58,7 +61,7 @@ On the hand-written 20-message freeze morning, Ember found all 4 true groups (6 
 - **One extraction call per lead** through a single adapter boundary (`src/lib/schema.ts` defines the lead record, the `record_lead` schema, and the extraction prompt). Leads run through a 4-worker pool with per-lead error isolation: one failure becomes a flagged emergency card, never a dropped batch.
   - **Ember adapter** (`api/_lib/ember.ts`, server-side only): Muse Ember (`muse-ember-1.0`) on the Meta Model API. Primary path is **strict JSON-schema structured output** (`response_format`), proved live on 2026-11-26: request variant `structured+max_completion_tokens` answered 200 with a schema-valid record (see [traces/ember-live-smoke-2026-11-26.json](traces/ember-live-smoke-2026-11-26.json)). The `record_lead` tool path (`tool_choice: "auto"` — forced choice returns 400, verified live 2026-11-25) plus a plain-text JSON fallback remain as the negotiated fallbacks. Parameters the docs disagree on are settled by a 400-only negotiation ladder that stamps the accepted `request_variant` on every result; every rung keeps an output-token cap (the ladder may rename the cap parameter, never drop it), `reasoning_effort` survives every cap/mode change and is dropped only on the last rungs, and nothing is remembered across requests, so a downgrade can never stick.
   - **Mock adapter** (`src/lib/mock.ts`): deterministic heuristics, $0, works offline. A labeled fallback, never passed off as Ember.
-  - **Replay:** the public board opens on a clearly labeled replay of a real Ember run of the 12-lead sample on the final prompt and settings (`src/lib/replay-data.ts`, recorded 2026-11-26 by `scripts/record-replay.mjs` through the gated production endpoint; trace in [traces/ember-sample12-replay-2026-11-26.json](traces/ember-sample12-replay-2026-11-26.json)), so viewing proof costs $0.
+  - **Replays:** the public board opens on the recorded Freeze Day run (`src/lib/replay-freeze.json`, loaded on demand); "View recorded 12-lead run" shows a labeled replay of a real Ember run of the 12-lead sample on the final prompt and settings (`src/lib/replay-data.ts`, recorded 2026-11-26 by `scripts/record-replay.mjs` through the gated production endpoint; trace in [traces/ember-sample12-replay-2026-11-26.json](traces/ember-sample12-replay-2026-11-26.json)), so viewing proof costs $0.
 - **The model classifies; code orders.** Ember judges each lead's category and urgency; `src/lib/ranking.ts` sorts deterministically — critically untrusted records first (extraction failure, unknown urgency/category), then category, then urgency, then paste position; softer `needs_review` flags (phone grounding, draft content, truncation, mock heuristics) keep their urgency tier and show their banner there.
 - **Fail-closed by construction:**
   - An unknown urgency becomes *emergency* and an unknown category *real*, both flagged `needs_review` — never silently sunk.
@@ -97,16 +100,20 @@ Each run writes `evals/results-<name>.json` (every record, the endpoint response
 
 ### Morning Dispatcher evaluation (2026-11-27)
 
-Run through the deployed, passcode-gated endpoints with `scripts/record-dispatch.mjs` (per-message `/api/extract`, then `/api/dispatch` per block; six calls at a time; hard spend guard). The answer key for the 1,000-message Freeze Day comes from the generator itself (`scripts/gen-freeze.mjs`, fixed seed): 72 households that wrote more than once, 12 streets where several homes lost water together, 12 hazards, 55 spam / not-a-lead, and singles, including same-street homes with unrelated damage as traps. The 20-message freeze morning has a hand-written answer key (`FREEZE_GROUPS` in `src/lib/sample.ts`).
+Run through the deployed, passcode-gated endpoints with `scripts/record-dispatch.mjs` (per-message `/api/extract`, then `/api/dispatch` per block; six per-message and four link calls at a time; hard spend guard). The answer key for the 1,000-message Freeze Day comes from the generator itself (`scripts/gen-freeze.mjs`, fixed seed): 72 households that wrote more than once, 12 streets where several homes lost water together, 12 hazards, 55 spam / not-a-lead, and singles, including same-street homes with unrelated damage as traps. The 20-message freeze morning has a hand-written answer key (`FREEZE_GROUPS` in `src/lib/sample.ts`).
 
 | Set | Link prompt | Pairs suggested (right / total) | True pairs found | Auto-merged (wrong) | Open questions | Link calls | Spend |
 |---|---|---|---|---|---|---|---|
 | Freeze Day 1,000 | v1 | 173 / 292 | 173 / 205 | 100 (0) | 49 | 122 | $0.3907 extract + $0.0857 links |
-| Freeze Day 1,000 | final (shared cause needs a message saying it goes beyond one home) | 174 / 187 | 174 / 205 | 99 (0) | 27 | 122 | $0.0694 links (per-message pass reused) |
+| Freeze Day 1,000 | final (shared cause needs a message saying it goes beyond one home) | 174 / 187 | 174 / 205 | 96 (0) | 29 | 122 | $0.0694 links (per-message pass reused) + $0.0006 re-read of #230 |
+| Freeze Day 1,000 | no-model rules (same phone + keyword links), $0 | 115 / 145 | 115 / 205 | 96 (0) | — | 0 | $0 |
+| Hard links 23 | final | 8 / 8 | 8 / 8 | 0 (0): all became questions | 4 | 1 | $0.0098 |
+| Hard links 23 | no-model rules, $0 | 1 / 1 | 1 / 8 | 0 (0) | — | 0 | $0 |
 | Freeze morning 20 | v1 | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0091 |
-| Freeze morning 20 | final | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0091 |
+| Freeze morning 20 | final | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0087 (re-run after the fix round) |
+| Freeze morning 20 | no-model rules, $0 | 5 / 5 | 5 / 6 | 2 (0) | — | 0 | $0 |
 
-Results: [Freeze Day final](evals/results-dispatch-freeze1000-2026-11-27.json) · [Freeze Day v1](evals/results-dispatch-freeze1000-v1-2026-11-27.json) · [freeze morning final](evals/results-dispatch-freeze20-2026-11-27.json) · [freeze morning v1](evals/results-dispatch-freeze20-v1-2026-11-27.json), traces with every call's tokens and cost under [traces/](traces/) (`ember-dispatch-*`). Per-message pass on the Freeze Day: 1,000 of 1,000 calls succeeded in 297 s, category agreed with the generator's label on 999 of 1,000, urgency on 770 of 884 labeled. "Pairs" counts every pair of messages inside a link, so a three-home street is three pairs. Spend for this round, from the traces: **$0.5641 over 1,286 billed calls**; with the earlier rounds' committed traces ($0.0798 over 167 calls) the build total is **$0.6439**, far under the $10 cap. The account's usage page is the authority for the submission.
+Results: [Freeze Day final](evals/results-dispatch-freeze1000-2026-11-27.json) · [Freeze Day v1](evals/results-dispatch-freeze1000-v1-2026-11-27.json) · [freeze morning final](evals/results-dispatch-freeze20-2026-11-27.json) · [freeze morning v1](evals/results-dispatch-freeze20-v1-2026-11-27.json), traces with every call's tokens and cost under [traces/](traces/) (`ember-dispatch-*`). Per-message pass on the Freeze Day: 1,000 of 1,000 calls succeeded in 297 s, category agreed with the generator's label on 999 of 1,000, urgency on 771 of 884 labeled. "Pairs" counts every pair of messages inside a link, so a three-home street is three pairs. Spend for this round, from the traces and run logs: **$0.5831 over 1,332 billed calls** (two freeze-morning runs, the Freeze Day run and its v2 link pass, the fix-round re-read of #230, the hard-links set, and a third freeze-morning run after the fixes); with the earlier rounds' committed traces ($0.0798 over 167 calls) the build total is **$0.6629**, far under the $10 cap. The account's usage page is the authority for the submission.
 
 ## Run it locally
 
@@ -142,16 +149,22 @@ src/lib/mock.ts             mock adapter (heuristics, $0, labeled)
 src/lib/safety.ts           hazard detection + fixed gas/CO/electrical safety scripts (code-owned)
 src/lib/trace-export.ts     trace export builder (operational-only redaction, row-computed totals)
 src/lib/ranking.ts          batch splitting (blank line or ---) + deterministic ordering
-src/lib/sample.ts           the 12-lead fictional sample set
+src/lib/sample.ts           the 12-lead sample, the 20-message freeze morning and the 23-message hard-links set (with answer keys)
+src/lib/dispatch.ts         Morning Dispatcher: blocks, link prompt + schema, quote/anchor checks, code links, the truck plan and holding scripts
+src/lib/replay-freeze.json  recorded 1,000-message Freeze Day run (generated)
 src/lib/api-adapter.ts      client adapter -> POST /api/extract (sends x-demo-key, status before JSON)
 src/lib/replay-data.ts      recorded Ember run shown as the $0 public default (generated)
 api/extract.ts              Vercel function (thin wrapper)
 api/_lib/extract-core.ts    gates (kill switch + passcode), 413, config caps, generic 502
-api/_lib/ember.ts           the Ember call: structured-first, negotiation ladder, grounding, honest cost
+api/_lib/ember.ts           the Ember calls: per-message (structured-first, negotiation ladder, grounding, honest cost) and emberLink
+api/dispatch.ts, api/_lib/dispatch-core.ts  POST /api/dispatch: one block, same gates, links quote-checked before they leave
 scripts/verify.mjs          $0 ground-truth + gate verification
 scripts/test-structured.mjs one-lead probes for structured output / token cap / reasoning_effort
 scripts/eval-ember.mjs      held-out / calibration eval harness (direct or --endpoint, budget-guarded)
 scripts/record-replay.mjs   records the replay + sample trace (direct or --endpoint)
+scripts/gen-freeze.mjs      generates the 1,000-message Freeze Day set with its answer key (fixed seed, no model)
+scripts/record-dispatch.mjs runs a set through both passes on the live endpoints, scores links, writes results/trace/replay
+scripts/rescore-freeze.mjs  re-scores the recorded Freeze Day after a code fix (re-reads named messages, re-checks anchors, no-model baseline)
 evals/                      heldout.jsonl (40, pre-registered), sample12.jsonl (calibration), results-*.json
 traces/                     committed fictional prompt/token traces
 docs/adr/README.md          decision log
