@@ -100,3 +100,66 @@ export const FREEZE_GROUPS: Array<{ kind: "same_job" | "shared_cause"; members: 
   { kind: "shared_cause", members: [2, 7, 12], note: "three homes on Laguna Dr, no water since morning" },
   { kind: "same_job", members: [5, 14], note: "duplex on Ocean Dr: unit B leak may be what comes through unit A's wall" },
 ];
+
+// Hard links (fictional demo data): 23 messages where the messages that
+// belong together share no phone number and no house number + street, so
+// code rules alone can't connect them. Written 2026-11-27, after the
+// Freeze Day run, to measure what Ember adds over rules. HARD_GROUPS is
+// the answer key (0-based positions in HARD_LEADS).
+export const HARD_LEADS: string[] = [
+  // 0 — G1a
+  "Water heater flooded the garage at my mom's place on Holly, she's 79 and can't get to the shut-off. I'm her son Victor, 512-555-0181",
+  // 1 — negative: same first name as 13, different person
+  "Maria here, kitchen faucet dripping on Weber, no rush. 361-555-0113",
+  // 2 — G5a
+  "No hot water in the whole building at Seaside Villas this morning, the other tenants are complaining too. Unit 4, Ana 361-555-0151",
+  // 3 — G3a
+  "Tenant at Bayview Apartments unit 12, toilet overflowing and water going under the door into the hall. Kim 956-555-0144",
+  // 4 — negative: same street as G1, different house and problem
+  "Pipes froze at my place on Holly Rd, the blue house on the corner. 979-555-0101",
+  // 5 — G4a
+  "Hey it's Bobby, heater died overnight at the duplex on Purdue, left side. 830-555-0105",
+  // 6 — G2a
+  "Hola, soy Alma Treviño, se reventó un tubo debajo del lavabo y está mojado todo el piso. Estoy en Gollihar cerca de la escuela. 361-555-0127",
+  // 7 — G6a
+  "Nobody on Tiger Lane has water, my whole cul-de-sac is dry. Carla 361-555-0109",
+  // 8 — negative: another building
+  "Furnace not working at my apartment, unit 7 at Harbor Point. 254-555-0168",
+  // 9 — G1b
+  "This is Gloria Salinas, my son Victor said he called you about my garage flooding. I'm at home on Holly Rd, the white house by the church. 361-555-0119",
+  // 10 — spam
+  "Storm damage restoration leads for contractors! Exclusive zip codes, call now.",
+  // 11 — G5b
+  "Seaside Villas unit 9, no hot water since 6am, my neighbor across the hall has none either. Omar 713-555-0177",
+  // 12 — negative: same street as G4, different building
+  "Heater out at the Purdue Street fourplex, unit C. Lena 979-555-0139",
+  // 13 — negative: another Maria
+  "Maria Lopez, burst pipe in the attic, water coming through the ceiling, Calallen. 281-555-0164",
+  // 14 — G3b
+  "Property manager for Bayview Apartments. Unit 12 called me about an overflowing toilet leaking into the hallway, please send someone, bill us. Hector 361-555-0162",
+  // 15 — negative: says only their house
+  "No water at my house on Airline Rd this morning, I think my pipes froze. Just my house, neighbors are fine. 432-555-0119",
+  // 16 — G2b
+  "Hi, calling for my grandma Alma Treviño, she doesn't speak much English. Pipe under her sink burst, she's near the school on Gollihar. I'm Daniel, 210-555-0188",
+  // 17 — negative: similar problem, different place
+  "Toilet overflowing at my house in Flour Bluff. Sam 361-555-0171",
+  // 18 — G6b
+  "Water's off at our house on Tiger Ln and the neighbors say theirs too, is it the main? Ray 409-555-0123",
+  // 19 — routine
+  "Quote for a water softener next month. Tim, Padre Island, 361-555-0185",
+  // 20 — G4b
+  "Robert Nguyen here, left side of the Purdue duplex. Wrote earlier, still no heat and it's 50 inside. 830-555-0192",
+  // 21 — negative: a store, not the apartments
+  "Hot water heater leaking at Seaside Market (the store, not the apartments). 361-555-0147",
+  // 22 — G5c
+  "Hola, en Seaside Villas no hay agua caliente, apartamento 2. Rosa 956-555-0133",
+];
+
+export const HARD_GROUPS: Array<{ kind: "same_job" | "shared_cause"; members: number[]; note: string }> = [
+  { kind: "same_job", members: [0, 9], note: "son calls for his mother; she writes herself; no shared phone or house number" },
+  { kind: "same_job", members: [6, 16], note: "grandmother in Spanish, grandson in English" },
+  { kind: "same_job", members: [3, 14], note: "tenant and property manager, same unit" },
+  { kind: "same_job", members: [5, 20], note: "Bobby and Robert, left side of the Purdue duplex, different phones" },
+  { kind: "shared_cause", members: [2, 11, 22], note: "whole building without hot water" },
+  { kind: "shared_cause", members: [7, 18], note: "Tiger Lane without water, no house numbers" },
+];

@@ -11,8 +11,7 @@
 //     copied from the messages and one deciding question.
 //  3. validateLinks() keeps a link only if every quote is really in the
 //     message it cites, and lowers "likely" to "possible" unless code
-//     finds a concrete shared anchor (phone, house number + street,
-//     full name). Ember reads; code decides what's safe to merge.
+//     finds a concrete shared anchor (phone, or house number + street). Ember reads; code decides what's safe to merge.
 //  4. buildPlan() merges only confirmed links (an owner's "yes", or an
 //     anchored "likely" same_job), ranks the jobs, fills the truck
 //     slots, and gives every job that doesn't fit a code-owned reply.
@@ -92,10 +91,14 @@ const NOT_STREET = new Set([
   "años", "grados", "personas", "minutos", "horas", "block", "cuadra",
 ]);
 
+/** Phone numbers removed, so a phone's last digits can't pass for a house number ("0175 lucia"). */
+const PHONE_LIKE = /\+?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]\d{4}\b|\b\d{10,11}\b/g;
+const withoutPhones = (text: string) => text.replace(PHONE_LIKE, " ");
+
 /** Street names a message mentions: words after a house number, after "on"/"calle", or before a suffix. */
 export function streetKeys(text: string): string[] {
   const keys = new Set<string>();
-  const lower = text.toLowerCase();
+  const lower = withoutPhones(text).toLowerCase();
   const add = (w: string | undefined) => {
     if (!w) return;
     const k = w.replace(/[^a-zà-ÿ]/g, "");
@@ -301,17 +304,12 @@ const digitsOf = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").
 /** House number + street word pairs, e.g. "412 elm". */
 export function addressTokens(text: string): string[] {
   const out = new Set<string>();
-  for (const m of text.toLowerCase().matchAll(/\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-zà-ÿ]{3,})/g)) {
+  for (const m of withoutPhones(text).toLowerCase().matchAll(/\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-zà-ÿ]{3,})/g)) {
     if (!NOT_STREET.has(m[2]) && !STREET_SUFFIX.has(m[2])) out.add(`${m[1]} ${m[2]}`);
   }
   return [...out];
 }
 
-function fullName(n: string | null): string | null {
-  if (!n) return null;
-  const parts = n.toLowerCase().replace(/[^a-zà-ÿ\s'-]/g, " ").split(/\s+/).filter(Boolean);
-  return parts.length >= 2 ? parts.join(" ") : null;
-}
 
 /** A concrete thing two messages share that code can check, or null. */
 export function sharedAnchor(a: DispatchLead, b: DispatchLead): string | null {
@@ -319,8 +317,8 @@ export function sharedAnchor(a: DispatchLead, b: DispatchLead): string | null {
   if (pa.length >= 10 && pa === digitsOf(b.phone)) return "same phone";
   const ta = new Set(addressTokens(a.raw_text));
   if (addressTokens(b.raw_text).some((t) => ta.has(t))) return "same house number and street";
-  const na = fullName(a.name);
-  if (na && na === fullName(b.name)) return "same full name";
+  // A full name is not an anchor: in a city of a few thousand callers,
+  // two different households share one (20 such pairs in Freeze Day).
   return null;
 }
 
@@ -332,6 +330,21 @@ function anchorsConnect(members: DispatchLead[]): boolean {
     for (let j = i + 1; j < members.length; j++)
       if (sharedAnchor(members[i], members[j])) parent[find(i)] = find(j);
   return members.every((_, i) => find(i) === find(0));
+}
+
+/**
+ * Re-apply today's anchor rule to links recorded earlier (downgrade
+ * only: a stored "likely" that code can no longer anchor becomes
+ * "possible"). Used on the recorded Freeze Day links.
+ */
+export function recheckAnchors(links: LeadLink[], leads: DispatchLead[]): LeadLink[] {
+  const byIndex = new Map(leads.map((l) => [l.index, l]));
+  return links.map((l) => {
+    if (l.kind !== "same_job" || l.confidence !== "likely" || l.source === "code") return l;
+    const members = l.indices.map((i) => byIndex.get(i)).filter((m): m is DispatchLead => Boolean(m));
+    if (members.length === l.indices.length && anchorsConnect(members)) return l;
+    return { ...l, confidence: "possible" as const, downgraded: "code found no shared phone or house number + street" };
+  });
 }
 
 export const linkKey = (kind: LinkKind, indices: number[]) => `${kind}:${[...indices].sort((a, b) => a - b).join(",")}`;
@@ -347,8 +360,8 @@ export interface ValidationOutcome {
  * must be distinct messages in the block; each member needs at least one
  * quote that is really in its own message, or it is removed; a link
  * left with fewer than two members is dropped; "likely" same_job is
- * lowered to "possible" unless code finds a shared phone, house number
- * + street, or full name connecting every member; the ask target must
+ * lowered to "possible" unless code finds a shared phone or house number
+ * + street connecting every member; the ask target must
  * be a member.
  */
 export function validateLinks(raw: unknown, block: DispatchLead[], source: LinkSource = "ember"): ValidationOutcome {
@@ -389,7 +402,7 @@ export function validateLinks(raw: unknown, block: DispatchLead[], source: LinkS
     let downgraded: string | null = null;
     if (kind === "same_job" && confidence === "likely" && !anchorsConnect(members)) {
       confidence = "possible";
-      downgraded = "code found no shared phone, house number + street, or full name";
+      downgraded = "code found no shared phone or house number + street";
     }
     const askId = Number.isInteger(item.ask_id) && kept.includes(item.ask_id as number) ? (item.ask_id as number) : kept[0];
     const indices = members.map((m) => m.index).sort((a, b) => a - b);
@@ -522,7 +535,7 @@ export interface Capacity {
   stopsPerTruck: number;
 }
 
-export type ReplyKind = "ai" | "safety" | "water" | "cold" | "urgent" | "not_today";
+export type ReplyKind = "ai" | "safety" | "water" | "cold" | "frozen" | "urgent" | "not_today" | "street";
 
 export interface Job {
   id: string;
@@ -533,6 +546,10 @@ export interface Job {
   links: LeadLink[];
   reply: string;
   replyKind: ReplyKind;
+  /** Reply per member paste index (merged households each keep one). */
+  memberReplies: Map<number, { text: string; kind: ReplyKind }>;
+  /** The job joins different homes through a confirmed shared cause. */
+  sharedCause: boolean;
   truck: number | null;
   stop: number | null;
 }
@@ -567,14 +584,16 @@ function leadOrder(a: ExtractionResult, b: ExtractionResult): number {
   );
 }
 
-const WATER_RE = /(burst|busted|broke|broken|split|crack|leak|flood|pour|spray|gush|overflow|sewage|backing up|backed up|water (everywhere|all over|coming)|revent|fuga|gote|inund|sale agua|roto)/i;
+const WATER_RE = /(burst|busted|leak|flood|pour|spray|gush|overflow|sewage|backing up|backed up|water (everywhere|all over|coming|running)|(split|crack(ed)?|broke(n)?)\s+(\w+\s+)?(pipe|line|tank)|(pipe|line|tank)\s+(\w+\s+)?(split|crack(ed)?|broke(n)?)|revent|fuga|gote|inund|sale agua|tubo roto)/i;
+const FROZEN_RE = /(froze|frozen|freez|no water|nothing comes out|no (water )?pressure|won'?t fill|congel|no (sale|tenemos|hay) agua|sin agua)/i;
 const COLD_RE = /(no heat|heat(er|ing)? (is |went |has )?(out|off|quit|died|stopped|broke|not working|isn'?t working|won'?t)|furnace|cold air|freezing inside|sin calefacci|calefacci[oó]n|hace (mucho )?fr[ií]o)/i;
 
 /** Which code-owned holding reply fits an urgent job that misses the trucks. */
-export function holdingKind(r: LeadRecord): "water" | "cold" | "urgent" {
+export function holdingKind(r: LeadRecord): "water" | "cold" | "frozen" | "urgent" {
   const text = `${r.raw_text} ${r.service_needed ?? ""}`.replace(/water heater|calentador de agua|boiler/gi, " ");
   if (WATER_RE.test(text)) return "water";
   if (COLD_RE.test(text)) return "cold";
+  if (FROZEN_RE.test(text)) return "frozen";
   return "urgent";
 }
 
@@ -582,7 +601,15 @@ export function holdingKind(r: LeadRecord): "water" | "cold" | "urgent" {
 // Safety lines follow ready.gov / CDC winter-storm guidance (shut off the
 // main to stop water damage; never heat a home with an oven, grill or
 // generator: carbon monoxide). Gap fill, not yet reviewed by Anthony.
-export const HOLDING_SCRIPTS: Record<"water" | "cold" | "urgent" | "not_today", Record<Language, string>> = {
+export const HOLDING_SCRIPTS: Record<"water" | "cold" | "frozen" | "urgent" | "not_today" | "street", Record<Language, string>> = {
+  frozen: {
+    en: "We can't get a truck to you today. Until we can: open the cabinet doors under sinks so warm air reaches the pipes, leave a faucet open a little, and never use an open flame to thaw a pipe. If a pipe bursts, turn off your main water shut-off valve. You're on our urgent list and we'll call you back as soon as a truck frees up.",
+    es: "No podemos enviarle un técnico hoy. Mientras tanto: abra las puertas de los gabinetes bajo los lavabos para que llegue aire caliente a la tubería, deje una llave un poco abierta y nunca use una llama para descongelar un tubo. Si un tubo se revienta, cierre la llave de paso principal del agua. Está en nuestra lista urgente y le llamaremos en cuanto se libere un técnico.",
+  },
+  street: {
+    en: "Several homes near you reported the same problem this morning, so it may be the street's water supply rather than your pipes. A tech will check the street first and call you with what they find. If water is leaking inside, turn off your main water shut-off valve.",
+    es: "Varias casas cerca de usted reportaron el mismo problema esta mañana, así que puede ser el suministro de agua de la calle y no su tubería. Un técnico revisará primero la calle y le llamará con lo que encuentre. Si hay agua saliendo adentro, cierre la llave de paso principal.",
+  },
   water: {
     en: "We can't get a truck to you today. To limit the damage now: turn off your home's main water shut-off valve (often where the water line enters the house, or at the meter), open a faucet to drain the pipes, and keep water away from outlets and cords. If anyone is in danger, call 911. You're on our urgent list and we'll call you back as soon as a truck frees up.",
     es: "No podemos enviarle un técnico hoy. Para limitar el daño ahora: cierre la llave de paso principal del agua (suele estar donde entra la tubería a la casa o junto al medidor), abra una llave para vaciar la tubería y mantenga el agua lejos de enchufes y cables. Si alguien está en peligro, llame al 911. Está en nuestra lista urgente y le llamaremos en cuanto se libere un técnico.",
@@ -608,8 +635,11 @@ export const HOLDING_SCRIPTS: Record<"water" | "cold" | "urgent" | "not_today", 
  * unreadable first (they go to "read first", using no truck), then
  * hazards, urgency, more messages, paste order. Hazards always get a
  * truck, even past the slot count. Other jobs fill the remaining slots
- * in rank order; urgent jobs that miss get a code-owned holding reply
- * ("made safe by text"), routine ones an honest "not today".
+ * in rank order and are dealt to trucks in turn; urgent jobs that miss
+ * get a code-owned holding reply ("made safe by text"), routine ones an
+ * honest "not today". A truck job joining homes through a confirmed
+ * shared cause gets the street-check reply; every merged message keeps
+ * its own reply.
  */
 export function buildPlan(
   results: ExtractionResult[],
@@ -632,11 +662,13 @@ export function buildPlan(
   };
   let merged = 0;
   let pending = 0;
+  const causeMembers = new Set<number>();
   for (const link of links) {
     const inPlay = link.indices.filter((i) => byIndex.has(i));
     if (inPlay.length < 2) continue;
     if (linkIsActive(link, answers)) {
       merged++;
+      if (link.kind === "shared_cause") for (const i of inPlay) causeMembers.add(i);
       for (const i of inPlay.slice(1)) parent.set(find(i), find(inPlay[0]));
     } else if (!answers[link.key]) pending++;
   }
@@ -658,11 +690,24 @@ export function buildPlan(
       links: links.filter((l) => l.indices.some((i) => idx.has(i))),
       reply: members[0].record.followup_draft,
       replyKind: members[0].record.safety_script ? "safety" : "ai",
+      memberReplies: new Map(),
+      sharedCause: members.some((m) => causeMembers.has(m.index ?? 0)),
       truck: null,
       stop: null,
     };
   });
-  jobs.sort((a, b) => leadOrder(a.primary, b.primary) || b.members.length - a.members.length);
+  // Rank: unreadable, hazard, urgency, more messages, paste order.
+  jobs.sort((a, b) => {
+    const pa = a.primary;
+    const pb = b.primary;
+    return (
+      Number(critical(pb)) - Number(critical(pa)) ||
+      Number(Boolean(pb.record.safety_script)) - Number(Boolean(pa.record.safety_script)) ||
+      URGENCY_RANK[pa.record.urgency] - URGENCY_RANK[pb.record.urgency] ||
+      b.members.length - a.members.length ||
+      (pa.index ?? 0) - (pb.index ?? 0)
+    );
+  });
 
   const slots = Math.max(0, Math.floor(capacity.trucks) * Math.floor(capacity.stopsPerTruck));
   const lanes: Record<Lane, Job[]> = { read_first: [], trucks: [], made_safe: [], not_today: [] };
@@ -689,12 +734,29 @@ export function buildPlan(
       job.replyKind = "not_today";
       job.reply = HOLDING_SCRIPTS.not_today[rec.language];
     }
+    // A confirmed street-wide cause on a truck gets the street-check reply.
+    if (job.lane === "trucks" && job.sharedCause && !rec.safety_script) {
+      job.replyKind = "street";
+      job.reply = HOLDING_SCRIPTS.street[rec.language];
+    }
+    // Every merged message keeps a reply in its own language: the job's
+    // reply kind, or that household's own safety script if it has one.
+    for (const m of job.members) {
+      const r = m.record;
+      let reply: { text: string; kind: ReplyKind };
+      if (r.safety_script) reply = { text: r.followup_draft, kind: "safety" };
+      else if (job.replyKind === "ai" || job.replyKind === "safety") reply = { text: m === job.primary ? job.reply : r.followup_draft, kind: "ai" };
+      else reply = { text: HOLDING_SCRIPTS[job.replyKind][r.language], kind: job.replyKind };
+      job.memberReplies.set(m.index ?? 0, reply);
+    }
     lanes[job.lane].push(job);
   }
-  const perTruck = Math.max(1, Math.floor(capacity.stopsPerTruck));
+  // Deal jobs to trucks in turn (truck 1 gets the top job, truck 2 the
+  // next...), so hazards spread across trucks and stops count per truck.
+  const trucks = Math.max(1, Math.floor(capacity.trucks));
   lanes.trucks.forEach((job, n) => {
-    job.stop = n + 1;
-    job.truck = Math.min(Math.max(1, Math.floor(capacity.trucks)), Math.floor(n / perTruck) + 1);
+    job.truck = (n % trucks) + 1;
+    job.stop = Math.floor(n / trucks) + 1;
   });
   return { lanes, filtered, slots, overflowHazards, merged, pending };
 }

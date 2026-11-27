@@ -34,7 +34,10 @@ import type {
   LeadRecord,
 } from "./lib/schema";
 
-const BATCH_CAP = 25;
+// Live runs: up to 100 messages (about $0.05 on Ember); over 30 the
+// cross-message pass splits into blocks. The 1,000-message Freeze Day
+// is a recorded run.
+const BATCH_CAP = 100;
 const CONCURRENCY = 4;
 const CONFIG_KEY = "lead-triage-config-v1";
 const CALLED_KEY = "lead-triage-called-v1";
@@ -263,6 +266,8 @@ const REPLY_BADGE: Record<Job["replyKind"], string> = {
   safety: `<span class="badge safety">Safety script, not AI text</span>`,
   water: `<span class="badge script">Water shut-off script, not AI text</span>`,
   cold: `<span class="badge script">Stay-warm script, not AI text</span>`,
+  frozen: `<span class="badge script">Frozen-pipe script, not AI text</span>`,
+  street: `<span class="badge script">Street-check script, not AI text</span>`,
   urgent: `<span class="badge script">Urgent-list script, not AI text</span>`,
   not_today: `<span class="badge script">Honest "not today" script, not AI text</span>`,
 };
@@ -336,20 +341,30 @@ function evidenceHtml(link: LeadLink): string {
     .join("")}</ul>`;
 }
 
-/** The other messages merged into this job, with the proof and an undo. */
+/** The other messages merged into this job: each keeps its own reply and contact buttons, with the proof and an undo. */
 function membersHtml(job: Job): string {
   if (job.members.length < 2) return "";
   const active = job.links.filter((l) => linkIsActive(l, answers));
   const others = job.members.slice(1);
   return `<div class="linked">
-    <strong>Merged into this stop:</strong>
-    <ul>${others
-      .map((m) => `<li>${esc(who(m.index ?? 0))}${m.record.phone ? ` · ${esc(m.record.phone)}` : ""} — ${esc(m.record.owner_summary)}</li>`)
-      .join("")}</ul>
+    <strong>${job.sharedCause ? `One stop covers ${job.members.length} homes: check the street supply (meter, main) before going house to house.` : "Merged into this stop:"}</strong>
+    ${others
+      .map((m) => {
+        const i = m.index ?? 0;
+        const reply = job.memberReplies.get(i) ?? { text: m.record.followup_draft, kind: "ai" as const };
+        replyByIndex.set(i, reply.text);
+        return `<div class="member">
+          <div>${esc(who(i))}${m.record.phone ? ` · ${esc(m.record.phone)}` : ""} — ${esc(m.record.owner_summary)}</div>
+          <div class="followup"><blockquote>${esc(reply.text)}</blockquote></div>
+          <div>${REPLY_BADGE[reply.kind]}</div>
+          <div class="row card-actions">${contactButtons(m.record, reply.text, i)}</div>
+        </div>`;
+      })
+      .join("")}
     ${active
       .map(
         (l) => `<div class="link-proof"><span class="hint">${l.source === "code" ? "Code" : "Ember"}: ${esc(l.explanation)}</span>${evidenceHtml(l)}
-        <button type="button" class="btn small" data-answer="${esc(l.key)}|no">Split: different jobs</button></div>`,
+        <button type="button" class="btn small" data-answer="${esc(l.key)}|no">Split: ${l.kind === "shared_cause" ? "separate problems" : "different jobs"}</button></div>`,
       )
       .join("")}
   </div>`;
@@ -524,9 +539,9 @@ function render() {
       ? `<h3 class="lane-head">Read first: couldn't be read automatically (${L.read_first.length})</h3>${L.read_first.map((j) => cardHtml(j, "Read")).join("")}`
       : "") +
     (L.trucks.length
-      ? `<h3 class="lane-head">Trucks today (${L.trucks.length} of ${plan.slots} slots)</h3>${L.trucks.map((j) => cardHtml(j, `Truck ${j.truck} · stop ${j.stop}`)).join("")}`
+      ? `<h3 class="lane-head">Trucks today (${L.trucks.length} of ${plan.slots} slots)</h3>${L.trucks.map((j) => cardHtml(j, j.stop! > config.stopsPerTruck ? `Truck ${j.truck} · over capacity (hazard)` : `Truck ${j.truck} · stop ${j.stop}`)).join("")}`
       : "") +
-    laneSection("made_safe", "Made safe by text: urgent, no truck today", "Each gets a fixed code-written script to limit damage now (shut off the water, stay warm safely), not AI text.", true) +
+    laneSection("made_safe", "Made safe by text: urgent, no truck today", "Each gets a fixed code-written reply, not AI text: water shut-off, frozen-pipe or stay-warm advice where the message fits one, otherwise a plain urgent-list message.", true) +
     laneSection("not_today", "Told the truth: not today", "Routine jobs past today's capacity get an honest “we can't come today” message instead of silence.", false);
 
   // The filtered fold opens whenever it holds anything, so a real lead

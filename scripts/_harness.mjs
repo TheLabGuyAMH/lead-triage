@@ -37,8 +37,8 @@ export async function loadLib() {
 export { emberExtract, emberEnvFromProcess, emberOptionsFromProcess, computeCostUsd } from ${JSON.stringify(join(REPO, "api/_lib/ember.ts"))};
 export { mockExtract } from ${JSON.stringify(join(REPO, "src/lib/mock.ts"))};
 export { extractionSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/schema.ts"))};
-export { SAMPLE_LEADS, SAMPLE_CONFIG, FREEZE_LEADS, FREEZE_GROUPS } from ${JSON.stringify(join(REPO, "src/lib/sample.ts"))};
-export { planBlocks, codeLinks, mergeLinks, buildPlan, linkIsActive, toDispatchLead, linkSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/dispatch.ts"))};
+export { SAMPLE_LEADS, SAMPLE_CONFIG, FREEZE_LEADS, FREEZE_GROUPS, HARD_LEADS, HARD_GROUPS } from ${JSON.stringify(join(REPO, "src/lib/sample.ts"))};
+export { planBlocks, codeLinks, mockLinks, mergeLinks, recheckAnchors, buildPlan, linkIsActive, toDispatchLead, linkSystemPrompt } from ${JSON.stringify(join(REPO, "src/lib/dispatch.ts"))};
 `,
   );
   const out = join(dir, "bundle.mjs");
@@ -232,4 +232,58 @@ export async function endpointDispatch(endpoint, demoKey, leads, config, { timeo
 
 function emptyDispatch(usage) {
   return { links: [], dropped: [], usage, model: null, promptHash: null, requestVariant: null, finishReason: null };
+}
+
+/**
+ * Score links against an answer key (groups of 0-based positions).
+ * "Pairs" = every pair of messages inside a link or group. Reports all
+ * links, Ember-proposed links only, and what merges by default.
+ */
+export function scoreLinks(lib, links, truth) {
+  const pairKey = (a, b) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const pairsOf = (m) => {
+    const out = [];
+    for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) out.push(pairKey(m[i], m[j]));
+    return out;
+  };
+  const truthPairs = new Map();
+  for (const g of truth) for (const p of pairsOf(g.members)) truthPairs.set(p, g.kind);
+  const covered = (ls) => new Set(ls.flatMap((l) => pairsOf(l.indices)));
+  const anyPairs = covered(links);
+  const emberPairs = covered(links.filter((l) => l.source === "ember"));
+  const parent = new Map();
+  const find = (i) => ((parent.get(i) ?? i) === i ? i : find(parent.get(i)));
+  const active = links.filter((l) => lib.linkIsActive(l, {}));
+  for (const l of active) for (const i of l.indices.slice(1)) parent.set(find(i), find(l.indices[0]));
+  const comps = new Map();
+  for (const l of active) for (const i of l.indices) {
+    const r = find(i);
+    (comps.get(r) ?? comps.set(r, new Set()).get(r)).add(i);
+  }
+  const autoPairs = new Set([...comps.values()].flatMap((c) => pairsOf([...c])));
+  const hit = (set) => [...set].filter((p) => truthPairs.has(p)).length;
+  const byKind = (set, kind) => [...truthPairs].filter(([p, k]) => k === kind && set.has(p)).length;
+  const nKind = (kind) => [...truthPairs.values()].filter((k) => k === kind).length;
+  const wrongAuto = [...autoPairs].filter((p) => !truthPairs.has(p));
+  return {
+    true_link_pairs: truthPairs.size,
+    true_groups: truth.length,
+    links_found: links.length,
+    pairs_suggested: anyPairs.size,
+    pairs_suggested_correct: hit(anyPairs),
+    recall_any_link: `${hit(anyPairs)}/${truthPairs.size}`,
+    recall_same_job: `${byKind(anyPairs, "same_job")}/${nKind("same_job")}`,
+    recall_shared_cause: `${byKind(anyPairs, "shared_cause")}/${nKind("shared_cause")}`,
+    precision_any_link: `${hit(anyPairs)}/${anyPairs.size}`,
+    ember_links: links.filter((l) => l.source === "ember").length,
+    ember_recall: `${hit(emberPairs)}/${truthPairs.size}`,
+    ember_recall_same_job: `${byKind(emberPairs, "same_job")}/${nKind("same_job")}`,
+    ember_recall_shared_cause: `${byKind(emberPairs, "shared_cause")}/${nKind("shared_cause")}`,
+    ember_precision: `${hit(emberPairs)}/${emberPairs.size}`,
+    auto_merged_pairs: autoPairs.size,
+    auto_merged_correct: hit(autoPairs),
+    wrong_auto_merges: wrongAuto.length,
+    wrong_auto_merge_examples: wrongAuto.slice(0, 5).map((p) => p.split("-").map((n) => `#${Number(n) + 1}`).join(" + ")),
+    likely_downgraded_by_code: links.filter((l) => l.downgraded).length,
+  };
 }

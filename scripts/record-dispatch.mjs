@@ -14,7 +14,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { REPO, Spend, costFromUsage, endpointDispatch, endpointExtract, loadEnvFile, loadLib, pooled } from "./_harness.mjs";
+import { REPO, Spend, costFromUsage, endpointDispatch, endpointExtract, loadEnvFile, loadLib, pooled, scoreLinks } from "./_harness.mjs";
 
 const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) ?? "").split("=").slice(1).join("=") || d;
 const set = arg("set", "freeze20");
@@ -38,6 +38,9 @@ try {
   if (set === "freeze20") {
     texts = lib.FREEZE_LEADS;
     truth = lib.FREEZE_GROUPS.map((g) => ({ kind: g.kind, members: g.members }));
+  } else if (set === "hard23") {
+    texts = lib.HARD_LEADS;
+    truth = lib.HARD_GROUPS.map((g) => ({ kind: g.kind, members: g.members }));
   } else if (set === "freeze1000") {
     const rows = readFileSync(join(REPO, "evals/freeze-day.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
     const limit = Number(arg("limit", String(rows.length)));
@@ -102,34 +105,10 @@ try {
   if (linkFailed.length) console.log(`  failures: ${linkFailed.slice(0, 5).map((f) => `block ${f.block + 1} ${f.error}`).join(" | ")}`);
 
   // ---- 3. score ----
-  const pairKey = (a, b) => (a < b ? `${a}-${b}` : `${b}-${a}`);
-  const pairsOf = (members) => {
-    const out = [];
-    for (let i = 0; i < members.length; i++) for (let j = i + 1; j < members.length; j++) out.push(pairKey(members[i], members[j]));
-    return out;
-  };
-  const truthPairs = new Map();
-  for (const g of truth) for (const p of pairsOf(g.members)) truthPairs.set(p, g.kind);
-  const anyPairs = new Set(links.flatMap((l) => pairsOf(l.indices)));
-  const activeLinks = links.filter((l) => lib.linkIsActive(l, {}));
-  // Pairs merged by default = pairs inside the same component of active links.
-  const parent = new Map();
-  const find = (i) => (parent.get(i) ?? i) === i ? i : find(parent.get(i));
-  for (const l of activeLinks) for (const i of l.indices.slice(1)) parent.set(find(i), find(l.indices[0]));
-  const comps = new Map();
-  for (const l of activeLinks) for (const i of l.indices) {
-    const r = find(i);
-    (comps.get(r) ?? comps.set(r, new Set()).get(r)).add(i);
-  }
-  const autoPairs = new Set([...comps.values()].flatMap((c) => pairsOf([...c])));
-  const hit = (set) => [...set].filter((p) => truthPairs.has(p)).length;
-  const sameJobTruth = [...truthPairs.values()].filter((k) => k === "same_job").length;
-  const causeTruth = truthPairs.size - sameJobTruth;
-  const coveredByKind = (kind) => [...truthPairs].filter(([p, k]) => k === kind && anyPairs.has(p)).length;
-  const wrongAuto = [...autoPairs].filter((p) => !truthPairs.has(p));
+  const sc = scoreLinks(lib, links, truth);
+  // The same records through the no-model rules, for comparison ($0).
+  const noModel = scoreLinks(lib, lib.mergeLinks([lib.codeLinks(real), lib.mockLinks(real)]), truth);
   const dropped = linkCalls.flatMap((c) => c.dropped ?? []);
-  const downgraded = links.filter((l) => l.downgraded).length;
-
   let extraction = null;
   if (labels) {
     const scored = items.filter((i) => i.record);
@@ -148,20 +127,8 @@ try {
   const summary = {
     set,
     messages: texts.length,
-    true_link_pairs: truthPairs.size,
-    true_groups: truth.length,
-    links_found: links.length,
-    pairs_suggested: anyPairs.size,
-    pairs_suggested_correct: hit(anyPairs),
-    recall_any_link: `${hit(anyPairs)}/${truthPairs.size}`,
-    recall_same_job: `${coveredByKind("same_job")}/${sameJobTruth}`,
-    recall_shared_cause: `${coveredByKind("shared_cause")}/${causeTruth}`,
-    precision_any_link: `${hit(anyPairs)}/${anyPairs.size}`,
-    auto_merged_pairs: autoPairs.size,
-    auto_merged_correct: hit(autoPairs),
-    wrong_auto_merges: wrongAuto.length,
-    wrong_auto_merge_examples: wrongAuto.slice(0, 5).map((p) => p.split("-").map((n) => `#${Number(n) + 1}`).join(" + ")),
-    likely_downgraded_by_code: downgraded,
+    ...sc,
+    no_model_rules: { what: "same phone + practice-mode keyword links on the same records, $0", recall: noModel.recall_any_link, precision: noModel.precision_any_link, wrong_auto_merges: noModel.wrong_auto_merges },
     member_quotes_dropped_by_code: dropped.length,
     link_calls: blocks.length,
     link_calls_failed: linkFailed.length,
@@ -170,7 +137,7 @@ try {
     plan_at_capacity: { trucks: plan.lanes.trucks.length, made_safe: plan.lanes.made_safe.length, not_today: plan.lanes.not_today.length, read_first: plan.lanes.read_first.length, filtered: plan.filtered.length, merged_links: plan.merged, open_questions: plan.pending },
     wall_clock_seconds: { per_message_pass: Math.round(extractMs / 1000), cross_message_pass: Math.round(linkMs / 1000), concurrency },
     spend_usd: Number(spend.total.toFixed(6)),
-    per_message_pass_reused_from: reuse || null,
+    per_message_pass_reused_from: reuse ? reuse.split("/").pop() : null,
     spend_detail: spend.summary(),
   };
   console.log(JSON.stringify(summary, null, 2));

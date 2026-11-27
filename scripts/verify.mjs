@@ -23,7 +23,7 @@ async function main() {
   export { SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG } from ${JSON.stringify(join(process.cwd(), "src/lib/sample.ts"))};
   export { handleExtract, cleanConfigField } from ${JSON.stringify(join(process.cwd(), "api/_lib/extract-core.ts"))};
   export { normalizeRecord, phoneIsGrounded, buildVariants, sanitizeDraft } from ${JSON.stringify(join(process.cwd(), "api/_lib/ember.ts"))};
-  export { SAFETY_SCRIPTS, detectHazard } from ${JSON.stringify(join(process.cwd(), "src/lib/safety.ts"))};
+  export { SAFETY_SCRIPTS, detectHazard, applyHazardSafety } from ${JSON.stringify(join(process.cwd(), "src/lib/safety.ts"))};
   export { buildTraceExport } from ${JSON.stringify(join(process.cwd(), "src/lib/trace-export.ts"))};
   export { failureResult, ExtractionError } from ${JSON.stringify(join(process.cwd(), "src/lib/api-adapter.ts"))};
   export * as dispatch from ${JSON.stringify(join(process.cwd(), "src/lib/dispatch.ts"))};
@@ -34,7 +34,7 @@ async function main() {
   const out = join(dir, "bundle.mjs");
   await build({ entryPoints: [entry], bundle: true, format: "esm", platform: "node", outfile: out, logLevel: "silent" });
   const lib = await import(pathToFileURL(out).href);
-  const { dispatch: D, handleDispatch, FREEZE_LEADS, FREEZE_GROUPS } = lib;
+  const { dispatch: D, handleDispatch, FREEZE_LEADS, FREEZE_GROUPS, applyHazardSafety } = lib;
   const { mockExtract, MOCK_REVIEW_NOTE, rankLeads, rankResults, splitBatch, SAMPLE_LEADS, SAMPLE_PASTE, SAMPLE_CONFIG, handleExtract, cleanConfigField, normalizeRecord, phoneIsGrounded, buildVariants, sanitizeDraft, SAFETY_SCRIPTS, detectHazard, buildTraceExport, failureResult, ExtractionError } = lib;
 
   let failures = 0;
@@ -381,6 +381,30 @@ async function main() {
   const dBig = await handleDispatch({ leads: many.slice(0, 31), mode: "mock" });
   check("dispatch endpoint rejects a block over the cap", dBig.status === 400);
   check("answer key covers 4 groups", FREEZE_GROUPS.length === 4);
+  // Fixes from the 2026-11-27 Fable review
+  const negRec = applyHazardSafety({ raw_text: "Hola, no tenemos agua desde la mañana en la calle Baldwin, 1424 Baldwin Blvd. Mis vecinos tampoco.", name: null, phone: null, service_needed: "no water supply", urgency: "same-day", urgency_reason: "No water since morning; no emergency criteria such as flooding, gas, or electrical hazard are stated.", area: null, language: "es", category: "real", category_reason: "", owner_summary: "", followup_draft: "Hola", needs_review: null, safety_script: null });
+  check("a model reason that says 'no electrical hazard' does not trigger a safety script", negRec.safety_script === null && negRec.urgency === "same-day");
+  const lA = { index: 0, raw_text: "576 Staples St. 361-555-0175 Lucia", name: "Lucia", phone: "361-555-0175", area: null, service_needed: null, urgency: "same-day" };
+  const lB = { index: 1, raw_text: "1130 Cimarron Blvd. call 915-555-0175 Lucia", name: "Lucia", phone: "915-555-0175", area: null, service_needed: null, urgency: "same-day" };
+  check("a phone's last digits are not a house number", D.sharedAnchor(lA, lB) === null && D.mockLinks([lA, lB]).length === 0, JSON.stringify(D.addressTokens(lA.raw_text)));
+  const nA = { ...lA, raw_text: "pipe burst at 12 Elm St", name: "Maria Lopez", phone: null };
+  const nB = { ...lB, raw_text: "no heat at 900 Oak Dr", name: "Maria Lopez", phone: null };
+  check("a shared full name alone is not an anchor", D.sharedAnchor(nA, nB) === null);
+  check("recheckAnchors lowers a stored likely link code can't anchor", D.recheckAnchors([{ key: "same_job:0,1", indices: [0, 1], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 0, source: "ember" }], [nA, nB])[0].confidence === "possible");
+  check("'furnace broke, no heat' gets the stay-warm script, not water", D.holdingKind({ raw_text: "furnace broke last night, no heat", service_needed: null }) === "cold");
+  check("frozen pipes / no water get the frozen-pipe script", D.holdingKind({ raw_text: "No water at all this morning, I think the pipes froze.", service_needed: null }) === "frozen" && /open flame/.test(D.HOLDING_SCRIPTS.frozen.en));
+  const tieRes = [0, 1, 2].map((i) => ({ index: i, mode: "mock", usage: { tokens_in: 0, tokens_out: 0, cost_usd: 0, estimated: true }, record: { ...mockExtract(["pipe burst water everywhere 10 Elm St", "pipe burst water everywhere 20 Oak St", "this is her husband, pipe burst at 20 Oak St, water everywhere"][i], SAMPLE_CONFIG).record } }));
+  const tieLinks = D.mockLinks(tieRes.map(D.toDispatchLead));
+  const tiePlan = D.buildPlan(tieRes, tieLinks, {}, { trucks: 1, stopsPerTruck: 1 });
+  check("tie-break: the job with more messages gets the last slot", tiePlan.lanes.trucks.length === 1 && tiePlan.lanes.trucks[0].members.length === 2, JSON.stringify(tiePlan.lanes.trucks.map((j) => j.members.map((m) => m.index))));
+  const dealPlan = D.buildPlan(fz, linksAll, {}, { trucks: 3, stopsPerTruck: 2 });
+  check("jobs are dealt to trucks in turn with per-truck stop numbers", dealPlan.lanes.trucks.slice(0, 3).map((j) => j.truck).join(",") === "1,2,3" && dealPlan.lanes.trucks.every((j) => j.stop <= 2 || j.primary.record.safety_script));
+  const causeLink = { key: "shared_cause:2,7,12", indices: [2, 7, 12], kind: "shared_cause", confidence: "likely", evidence: [], explanation: "Laguna", question: "", ask_index: 2, source: "ember" };
+  const causePlan = D.buildPlan(fz, [...linksAll, causeLink], { "shared_cause:2,7,12": "yes" }, { trucks: 4, stopsPerTruck: 3 });
+  const causeJob = jobOf(causePlan, 2);
+  check("'yes, same cause' makes one job where every home keeps its own reply", causeJob === jobOf(causePlan, 7) && causeJob === jobOf(causePlan, 12) && causeJob.memberReplies.size === 3 && [...causeJob.memberReplies.values()].every((r) => r.text.length > 20), JSON.stringify([...(causeJob?.memberReplies ?? new Map()).entries()].map(([k, v]) => [k, v.kind])));
+  check("a street-wide job on a truck gets the street-check reply, Spanish for the Spanish home", causeJob.lane === "trucks" && causeJob.replyKind === "street" && causeJob.memberReplies.get(12).text.includes("calle"), `${causeJob.lane} ${causeJob.replyKind}`);
+
   console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
   return failures === 0 ? 0 : 1;
 

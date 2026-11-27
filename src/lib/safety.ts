@@ -99,8 +99,8 @@ const ELECTRICAL_PATTERNS: RegExp[] = [
 ];
 
 /**
- * Detect a life-safety hazard in any of the given texts (raw lead,
- * model service_needed, model urgency_reason). Gas wins over CO wins
+ * Detect a life-safety hazard in any of the given texts (the raw lead,
+ * or the model's short service label). Gas wins over CO wins
  * over electrical when several match: each script starts with "leave
  * now, call 911", so the order only picks the most specific wording.
  */
@@ -122,7 +122,11 @@ export function detectHazard(texts: Array<string | null | undefined>): HazardKin
  * freshly produced records.
  */
 export function applyHazardSafety(record: LeadRecord): LeadRecord {
-  const kind = detectHazard([record.raw_text]) ?? detectHazard([record.service_needed, record.urgency_reason]);
+  // The model's urgency_reason is never read here: it can explain why a
+  // message is NOT a hazard ("no gas or electrical hazard is stated"),
+  // and a pattern can't tell that negation from a report. The short
+  // service label is consulted only when the raw text names no hazard.
+  const kind = detectHazard([record.raw_text]) ?? detectHazard([record.service_needed]);
   if (!kind) {
     record.safety_script = record.safety_script ?? null;
     return record;

@@ -236,3 +236,4 @@ footer { max-width: 1240px; margin: 0 auto; padding: 0 20px 28px; color: var(--m
 .row-item { border-top: 1px solid var(--line); padding: 6px 0; }
 .row-item > summary { cursor: pointer; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .row-body { padding: 8px 0 4px 8px; }
+.member { border-top: 1px solid #d5def3; padding: 8px 0 4px; }
