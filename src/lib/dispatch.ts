@@ -305,38 +305,84 @@ export function quoteFound(quote: string, raw: string): boolean {
 const digitsOf = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
 
 /** House number + street word pairs, e.g. "412 elm". */
-export function addressTokens(text: string): string[] {
-  const out = new Set<string>();
-  for (const m of withoutPhones(text).toLowerCase().matchAll(/\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-z\u00e0-\u00ff]{3,})/g)) {
-    if (!NOT_STREET.has(m[2]) && !STREET_SUFFIX.has(m[2])) out.add(`${m[1]} ${m[2]}`);
-  }
-  return [...out];
-}
+const DIRECTIONS: Record<string, string> = { n: "n", s: "s", e: "e", w: "w", north: "n", south: "s", east: "e", west: "w" };
+const SUFFIX_NORM: Record<string, string> = {
+  st: "st", street: "st", dr: "dr", drive: "dr", ave: "ave", avenue: "ave", rd: "rd", road: "rd", blvd: "blvd", boulevard: "blvd",
+  ln: "ln", lane: "ln", ct: "ct", court: "ct", way: "way", pl: "pl", place: "pl", pkwy: "pkwy", parkway: "pkwy", hwy: "hwy",
+  cir: "cir", circle: "cir", trl: "trl", trail: "trl",
+};
 
-/** The subset of addressTokens followed by a street suffix ("412 elm st"), i.e. clearly an address. */
-export function suffixedAddressTokens(text: string): string[] {
-  const out = new Set<string>();
-  const re = /\b(\d{2,5})\s+(?:[nsew]\.?\s+)?([a-z\u00e0-\u00ff]{3,})(?:\s+[a-z\u00e0-\u00ff]+)?\s+(st|street|dr|drive|ave|avenue|rd|road|blvd|boulevard|ln|lane|ct|court|way|pl|place|pkwy|hwy|cir|circle|trl)\b/g;
-  for (const m of withoutPhones(text).toLowerCase().matchAll(re)) out.add(`${m[1]} ${m[2]}`);
-  return [...out];
+/** A street address as written: house number, direction, street name, suffix (null when not written). */
+export interface Address {
+  num: string;
+  dir: string;
+  name: string;
+  suffix: string | null;
+  /** "412 elm st", "120 n park ave", "418 mesquite" */
+  label: string;
 }
 
 /**
- * Address tokens two messages share, counting a token only when at least
- * one of them writes it with a street suffix: "418 Mesquite St" and
- * "418 Mesquite" match; "50 inside" and "50 inside" never do.
+ * House-number addresses in a message, with the whole street name kept:
+ * direction ("120 North Elm" = "120 n elm"), a two-word name when a
+ * suffix follows ("Rodd Field Rd"), and the suffix normalized ("Road" =
+ * "rd"). Phone numbers are removed first, so a phone's last digits can't
+ * pass for a house number.
  */
-export function sharedAddresses(a: string, b: string): string[] {
-  const tb = new Set(addressTokens(b));
-  const sure = new Set([...suffixedAddressTokens(a), ...suffixedAddressTokens(b)]);
-  return addressTokens(a).filter((t) => tb.has(t) && sure.has(t));
+export function parseAddresses(text: string): Address[] {
+  const out: Address[] = [];
+  const seen = new Set<string>();
+  const re = /\b(\d{2,5})\s+(?:(n|s|e|w|north|south|east|west)\.?\s+)?([a-zà-ÿ]{3,})(?:\s+([a-zà-ÿ]{2,}))?(?:\s+([a-zà-ÿ]{2,}))?/g;
+  for (const m of withoutPhones(text).toLowerCase().matchAll(re)) {
+    const [, num, dirRaw, w1, w2, w3] = m;
+    if (NOT_STREET.has(w1) || SUFFIX_NORM[w1]) continue;
+    let name = w1;
+    let suffix: string | null = null;
+    if (w2 && SUFFIX_NORM[w2]) suffix = SUFFIX_NORM[w2];
+    else if (w2 && w3 && SUFFIX_NORM[w3] && !NOT_STREET.has(w2)) {
+      name = `${w1} ${w2}`;
+      suffix = SUFFIX_NORM[w3];
+    }
+    const dir = dirRaw ? DIRECTIONS[dirRaw] : "";
+    const label = [num, dir, name, suffix].filter(Boolean).join(" ");
+    if (seen.has(label)) continue;
+    seen.add(label);
+    out.push({ num, dir, name, suffix, label });
+  }
+  return out;
 }
 
+/** Number + street only, for blocking and display ("412 elm"). */
+export function addressTokens(text: string): string[] {
+  return [...new Set(parseAddresses(text).map((a) => `${a.num} ${a.name}`))];
+}
+
+/** Two written addresses name the same place: same number, direction (when both give one), street name, and suffix (when both give one); at least one writes a suffix. */
+export function sameAddress(a: Address, b: Address): boolean {
+  if (a.num !== b.num || a.name !== b.name) return false;
+  if (a.dir && b.dir && a.dir !== b.dir) return false;
+  if (a.suffix && b.suffix && a.suffix !== b.suffix) return false;
+  return Boolean(a.suffix || b.suffix);
+}
+
+/** Addresses two messages share ("418 Mesquite St" = "418 Mesquite"; "18 Oak Rd" ≠ "18 Oak St"; "50 inside" never). */
+export function sharedAddresses(a: string, b: string): string[] {
+  const pb = parseAddresses(b);
+  return parseAddresses(a).filter((x) => pb.some((y) => sameAddress(x, y))).map((x) => x.label);
+}
+
+/** Both messages give a clear (suffixed) address and none of them match: different places. */
+export function addressesConflict(a: string, b: string): boolean {
+  const pa = parseAddresses(a).filter((x) => x.suffix);
+  const pb = parseAddresses(b).filter((x) => x.suffix);
+  return pa.length > 0 && pb.length > 0 && !pa.some((x) => pb.some((y) => sameAddress(x, y)));
+}
 
 /** A concrete thing two messages share that code can check, or null. */
 export function sharedAnchor(a: DispatchLead, b: DispatchLead): string | null {
   const pa = digitsOf(a.phone);
-  if (pa.length >= 10 && pa === digitsOf(b.phone)) return "same phone";
+  // One phone with two different addresses is one caller, maybe two jobs (a property manager): not proof.
+  if (pa.length >= 10 && pa === digitsOf(b.phone) && !addressesConflict(a.raw_text, b.raw_text)) return "same phone";
   if (sharedAddresses(a.raw_text, b.raw_text).length) return "same house number and street";
   // A full name is not an anchor: in a city of a few thousand callers,
   // two different households share one (20 such pairs in Freeze Day).
@@ -466,17 +512,23 @@ export function codeLinks(leads: DispatchLead[]): LeadLink[] {
   for (const [d, g] of byPhone) {
     if (g.length < 2) continue;
     const indices = g.map((l) => l.index).sort((a, b) => a - b);
+    let conflict: [DispatchLead, DispatchLead] | null = null;
+    for (let x = 0; x < g.length && !conflict; x++)
+      for (let y = x + 1; y < g.length && !conflict; y++) if (addressesConflict(g[x].raw_text, g[y].raw_text)) conflict = [g[x], g[y]];
+    const where = (l: DispatchLead) => parseAddresses(l.raw_text).find((a) => a.suffix)?.label ?? "another address";
     out.push({
       key: linkKey("same_job", indices),
       indices,
       kind: "same_job",
-      confidence: "likely",
+      confidence: conflict ? "possible" : "likely",
       evidence: g.map((l) => ({ index: l.index, quote: phoneAsWritten(l.raw_text, d) ?? l.phone ?? "" })),
-      explanation: "Same phone number in each message.",
-      question: "",
-      ask_index: null,
+      explanation: conflict
+        ? `Same phone number, but different addresses (${where(conflict[0])} / ${where(conflict[1])}): one caller, maybe more than one job.`
+        : "Same phone number in each message.",
+      question: conflict ? `Are ${where(conflict[0])} and ${where(conflict[1])} one job?` : "",
+      ask_index: conflict ? conflict[0].index : null,
       source: "code",
-      downgraded: null,
+      downgraded: conflict ? "same phone, but the messages give different addresses" : null,
     });
   }
   return out;
@@ -494,11 +546,16 @@ export function mockLinks(leads: DispatchLead[]): LeadLink[] {
   const byAddr = new Map<string, DispatchLead[]>();
   const byStreet = new Map<string, DispatchLead[]>();
   for (const l of leads) {
-    for (const t of addressTokens(l.raw_text)) (byAddr.get(t) ?? byAddr.set(t, []).get(t)!).push(l);
+    for (const a of parseAddresses(l.raw_text)) {
+      const t = [a.num, a.dir, a.name].filter(Boolean).join(" ");
+      (byAddr.get(t) ?? byAddr.set(t, []).get(t)!).push(l);
+    }
     if (SHARED_WORDS.test(l.raw_text)) for (const s of streetKeys(l.raw_text)) (byStreet.get(s) ?? byStreet.set(s, []).get(s)!).push(l);
   }
   for (const [t, g] of byAddr) {
-    if (g.length < 2 || !g.some((l) => suffixedAddressTokens(l.raw_text).includes(t))) continue;
+    // Every pair must be the same place under sameAddress (no Oak Rd vs Oak St), and one must write a suffix.
+    const ok = g.every((l, x) => g.every((m, y) => x === y || sharedAddresses(l.raw_text, m.raw_text).length > 0));
+    if (g.length < 2 || !ok) continue;
     const indices = g.map((l) => l.index).sort((a, b) => a - b);
     out.push({
       key: linkKey("same_job", indices), indices, kind: "same_job", confidence: "likely",
@@ -556,7 +613,7 @@ export interface Capacity {
   stopsPerTruck: number;
 }
 
-export type ReplyKind = "ai" | "safety" | "water" | "cold" | "frozen" | "urgent" | "not_today" | "street";
+export type ReplyKind = "ai" | "safety" | "water" | "cold" | "frozen" | "urgent" | "not_today" | "street" | "building";
 
 export interface Job {
   id: string;
@@ -644,7 +701,13 @@ export function holdingKind(r: LeadRecord): "water" | "cold" | "frozen" | "urgen
 // Safety lines follow ready.gov / CDC winter-storm guidance (shut off the
 // main to stop water damage; never heat a home with an oven, grill or
 // generator: carbon monoxide). Gap fill, not yet reviewed by Anthony.
-export const HOLDING_SCRIPTS: Record<"water" | "cold" | "frozen" | "urgent" | "not_today" | "street", Record<Language, string>> = {
+const BUILDING_RE = /\b(building|apartments?|apartamento|units?|villas|complex|condos?|tenants|edificio|fourplex|duplex)\b/i;
+
+export const HOLDING_SCRIPTS: Record<"water" | "cold" | "frozen" | "urgent" | "not_today" | "street" | "building", Record<Language, string>> = {
+  building: {
+    en: "Several homes in your building reported the same problem this morning, so it may be the building's shared system (its water heater, boiler or supply) rather than your unit. A tech will check the building's system first and call you with what they find.",
+    es: "Varios departamentos de su edificio reportaron el mismo problema esta mañana, así que puede ser el sistema compartido del edificio (calentador, caldera o suministro) y no su unidad. Un técnico revisará primero el sistema del edificio y le llamará con lo que encuentre.",
+  },
   frozen: {
     en: "We can't get a truck to you today. Until we can: open the cabinet doors under sinks so warm air reaches the pipes, leave a faucet open a little, and never use an open flame to thaw a pipe. If a pipe bursts, turn off your main water shut-off valve. You're on our urgent list and we'll call you back as soon as a truck frees up.",
     es: "No podemos enviarle un técnico hoy. Mientras tanto: abra las puertas de los gabinetes bajo los lavabos para que llegue aire caliente a la tubería, deje una llave un poco abierta y nunca use una llama para descongelar un tubo. Si un tubo se revienta, cierre la llave de paso principal del agua. Está en nuestra lista urgente y le llamaremos en cuanto se libere un técnico.",
@@ -778,8 +841,9 @@ export function buildPlan(
     }
     // A confirmed street-wide cause on a truck gets the street-check reply.
     if (job.lane === "trucks" && job.sharedCause && !rec.safety_script) {
-      job.replyKind = "street";
-      job.reply = HOLDING_SCRIPTS.street[rec.language];
+      const building = job.members.some((m) => BUILDING_RE.test(m.record.raw_text));
+      job.replyKind = building ? "building" : "street";
+      job.reply = HOLDING_SCRIPTS[job.replyKind][rec.language];
     }
     // Every merged message keeps a reply in its own language: the job's
     // reply kind, or that household's own safety script if it has one.

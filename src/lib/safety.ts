@@ -106,8 +106,15 @@ const ELECTRICAL_PATTERNS: RegExp[] = [
  * over electrical when several match: each script starts with "leave
  * now, call 911", so the order only picks the most specific wording.
  */
+const NEGATED_HAZARD = /\b(no|not|don'?t|do not|doesn'?t|does not|didn'?t|isn'?t|never|without|zero|sin|no hay|ning[uú]n)\s+(any\s+|a\s+|the\s+|signs?\s+of\s+)?(smell(ing)?\s+(of\s+|like\s+)?gas|gas\s+(smell|leak|odor)|smoke|sparks?|sparking|burning\s+smell|olor\s+a\s+gas|huele\s+a\s+gas|fuga\s+de\s+gas|chispas|humo)\b/g;
+
 export function detectHazard(texts: Array<string | null | undefined>): HazardKind | null {
-  const hay = texts.filter(Boolean).join("\n").toLowerCase();
+  // A denied hazard ("no gas smell", "I don't smell gas", "no sparks") is not a report of one.
+  const hay = texts
+    .filter(Boolean)
+    .join("\n")
+    .toLowerCase()
+    .replace(NEGATED_HAZARD, " ");
   if (!hay.trim()) return null;
   if (GAS_PATTERNS.some((p) => p.test(hay))) return "gas";
   if (hasCo(hay)) return "co";

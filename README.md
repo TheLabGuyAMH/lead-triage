@@ -12,7 +12,7 @@ The morning after a hard freeze, a 1–10 truck plumbing shop wakes up to hundre
 
 Answer a question or change the number of trucks and the plan re-flows on screen. The owner reviews and sends everything; nothing is sent automatically.
 
-**Why Ember.** One message costs about **$0.0004** to read (measured: $0.3907 for 1,000 Freeze Day messages; $0.000347 per lead on the 40 held-out leads). Reading the pile for links cost **$0.0694** for the same 1,000 messages (122 calls of up to 30 messages each). The whole 1,000-message morning, both passes, is about **46 cents**, and took 297 s + 76 s (six per-message calls at a time, four link calls at a time). That is what makes "read everything, twice, every morning" a normal thing for a small shop to do.
+**Why Ember.** One message costs about **$0.0004** to read (measured: $0.3907 for 1,000 Freeze Day messages; $0.000347 per lead on the 40 held-out leads). Reading the pile for links cost **$0.0694** for the same 1,000 messages (122 calls of up to 30 messages each). The investigator's 9 tool loops added **$0.0161**. The whole 1,000-message morning is about **48 cents** ($0.3908 + $0.0694 + $0.0161 = $0.4762, summed from the trace rows) and took 297 s + 76 s + 19 s (six per-message calls at a time, four link calls, three investigations). That is what makes "read everything, twice, every morning" a normal thing for a small shop to do.
 
 **Why it matters.** Invoca's platform data found that [27% of calls to home services businesses go unanswered, and fewer than 3% of callers sent to voicemail leave a message](https://www.invoca.com/blog/how-much-missed-sales-calls-cost-home-services-businesses) (May 2024). During the February 2021 Texas freeze, an Austin plumbing company had [triple its normal number of calls and more than 2,500 customers awaiting service](https://www.texastribune.org/2021/02/26/texas-plumber-shortage-winter-storm).
 
@@ -21,7 +21,7 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 | Message pairs merged automatically / merged wrongly | 96 / **0** |
 | True linked pairs found, Ember + same-phone code (recall) | 176 of 205 (86%) |
 | Suggested pairs that were right (precision) | 176 of 190 (93%) |
-| Found by Ember's own links / no-model rules on the same messages | 138 of 205 / 115 of 205 |
+| Found by Ember's own links / no-model rules on the same messages | 138 of 205 / 106 of 205 |
 | Investigator (Ember tool loop) on 9 unplaced follow-ups | 5 proposals: 2 repeated links the pass already had, 3 new (2 right, 1 wrong, left as a question, not merged); 4 "no link" |
 | Shared-cause pairs: Ember / no-model rules | 76 of 87 / 24 of 87 |
 | Questions left for the owner | 30 |
@@ -29,7 +29,7 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 | Calls failed / quotes that weren't really in the message | 0 / 0 |
 | Cost, both passes | $0.3907 + $0.0694 |
 
-**Where rules can't reach.** A hand-written 23-message set where the messages that belong together share no phone and no house number: a son calling for his mother, a grandmother in Spanish and her grandson in English, a tenant and the property manager, "Bobby" and "Robert Nguyen" at the same duplex, a building with no hot water, a street with no house numbers. Ember found **8 of 8** linked pairs with no wrong suggestions; the no-model rules found **1 of 8**. Because code can't anchor those same-job links, none merged on its own: each became a question for the owner, such as "Is this the Bayview Apartments unit 12 toilet overflow Kim reported?". On the 20-message freeze morning, Ember found 6 of 6 (rules: 5 of 6).
+**Where rules can't reach.** A hand-written 23-message set where the messages that belong together share no phone and no house number: a son calling for his mother, a grandmother in Spanish and her grandson in English, a tenant and the property manager, "Bobby" and "Robert Nguyen" at the same duplex, a building with no hot water, a street with no house numbers. Ember found **8 of 8** linked pairs with no wrong suggestions; the no-model rules found **1 of 8**. Because code can't anchor those same-job links, none merged on its own: each became a question for the owner, such as "Is this the Bayview Apartments unit 12 toilet overflow Kim reported?". On the 20-message freeze morning the system found 6 of 6 (Ember's own links 5, the same-phone code link 1); the rules, as they stood at that run, found 5 of 6.
 
 | Per-message reading, 40 held-out synthetic leads | Result |
 |---|---|
@@ -44,7 +44,7 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 - All messages are synthetic. The Freeze Day set comes from templates in `scripts/gen-freeze.mjs`, so it is more repetitive than real texts; the 20-message set and the 40 held-out leads were written by AI models that also helped build the app. No contractor has used it yet.
 - The link prompt was tightened once **after** seeing the first Freeze Day results (v1: precision 173/292, mostly "possible shared cause" guesses between same-street homes with ordinary freeze damage; still 0 wrong merges). Both runs are committed (`*-v1-*` and the final files).
 - Urgency agreed with the generator's labels on 771 of 884 labeled messages. Of the 113 disagreements, 75 are same-day read as routine (mostly "kitchen pipes frozen, bathroom still works" and "toilet won't fill"), 32 are emergency read lower, 6 routine read as same-day.
-- A review found and we fixed: a phone's last four digits could pass for a house number, a shared full name counted as proof, and one Spanish no-water message got the electrical safety script because hazard detection read the model's explanation ("no ... electrical hazard is stated"). That message was re-read on fixed code, and the stored links were re-checked under the stricter rule (2 lowered to "possible"); numbers above are after the fix.
+- Four reviews found and we fixed: a phone's last four digits could pass for a house number; a shared full name counted as proof; one Spanish no-water message got the electrical safety script because hazard detection read the model's explanation ("no ... electrical hazard is stated"; re-read on fixed code); the bare word "flame" and a denied "no gas smell" triggered 911 scripts; "18 Oak Road" matched "18 Oak Street"; one phone with two addresses (a property manager) auto-merged; a building-wide outage got the street reply. Stored links were re-checked under each stricter rule; numbers above are after the fixes. No recorded Ember link changed in the last two re-checks.
 - Stops are filled in priority order and dealt to trucks in turn, not routed by geography.
 - The quote check proves the words are in the message, not that they are good evidence (a short quote like a street name passes); the anchor rule and the owner's answer are what stop a weak link from merging.
 - The hard-links set was written after the Freeze Day run by the same team that wrote the prompt; a set written by someone else would prove more. The safety and holding scripts are demo wording; a licensed professional should review them before real use.
@@ -56,7 +56,7 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 
 - **Blocks** (`src/lib/dispatch.ts` `planBlocks`): a pile of 30 or fewer is one block. A bigger pile is grouped so related messages meet: by street (a house-number street, or a bare street name seen elsewhere with a house number), by sender name for messages that point back at someone ("Linda's husband", "calling for my mom"), else by area. Blocks are capped at 30 messages. The 1,000-message Freeze Day became 122 blocks.
 - **Ember link call** (`api/_lib/ember.ts` `emberLink`, endpoint `POST /api/dispatch`, same three gates as `/api/extract`): strict JSON-schema output of links, each with kind (`same_job` / `shared_cause`), confidence, exact quotes per message, a one-line explanation and one deciding question.
-- **Code checks** (`validateLinks`): every member needs a quote that is really in its own message, or it is removed; "likely" `same_job` stays "likely" only if code finds a shared phone or house number + street (phone numbers are removed first, so a phone's last digits can't pass for a house number); the same phone alone is linked by code with no model at all (`codeLinks`).
+- **Code checks** (`validateLinks`): every member needs a quote that is really in its own message, or it is removed; "likely" `same_job` stays "likely" only if code finds a shared phone (when the messages don't give two different addresses) or the same address: house number, direction, full street name and suffix when both give one ("18 Oak Rd" is not "18 Oak St"; phone numbers are removed first). The same phone alone is linked by code with no model (`codeLinks`); one phone with two different addresses becomes a question ("Are 410 elm st and 722 oak ave one job?").
 - **Plan** (`buildPlan`): merges only anchored "likely" same-job links and links the owner confirms; ranks jobs (hazards, urgency, more messages, paste order); deals them to trucks in turn (truck 1, 2, 3...), so stops count per truck; urgent overflow gets the water shut-off, frozen-pipe, stay-warm (with the carbon-monoxide warning) or urgent-list script; routine overflow gets an honest "not today". A confirmed street-wide cause on a truck becomes one stop with a street-check reply for every home, each in its own language, each with its own call and text buttons. Hazards always get a truck, even past capacity. Answers and capacity changes re-plan instantly in the browser and the board says who moved.
 
 ### The investigator (bounded Ember agent)
@@ -115,8 +115,8 @@ Run through the deployed, passcode-gated endpoints with `scripts/record-dispatch
 | Freeze Day 1,000 | v1 | 173 / 292 | 173 / 205 | 100 (0) | 49 | 122 | $0.3907 extract + $0.0857 links |
 | Freeze Day 1,000 | final, block pass only | 174 / 187 | 174 / 205 | 96 (0) | 29 | 122 | $0.0694 links (per-message pass reused) + $0.0006 re-read of #230 |
 | Freeze Day 1,000 | final + investigator | 176 / 190 | 176 / 205 | 96 (0) | 30 | 122 + 9 investigations | + $0.0161 investigator |
-| Freeze Day 1,000 | no-model rules (same phone + keyword links), $0 | 115 / 145 | 115 / 205 | 96 (0) | — | 0 | $0 |
-| Hard links 23 | final | 8 / 8 | 8 / 8 | 0 (0): all became questions | 4 | 1 | $0.0098 |
+| Freeze Day 1,000 | no-model rules (same phone + keyword links, current address rule), $0 | 106 / 136 | 106 / 205 | 96 (0) | — | 0 | $0 |
+| Hard links 23 | final (recorded replay) | 8 / 8 | 8 / 8 | 0 (0): all became questions | 6 | 1 + 1 investigation | $0.0108 (an earlier identical-result run: $0.0098) |
 | Hard links 23 | no-model rules, $0 | 1 / 1 | 1 / 8 | 0 (0) | — | 0 | $0 |
 | Freeze morning 20 | v1 | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0091 |
 | Freeze morning 20 | final | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0087 (re-run after the fix round) |

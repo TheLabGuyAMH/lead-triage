@@ -23,10 +23,27 @@
     "wrong_auto_merge_examples": [],
     "likely_downgraded_by_code": 4,
     "no_model_rules": {
-      "what": "same phone + practice-mode keyword links on the same records, $0",
-      "recall": "1/8",
-      "precision": "1/1",
-      "wrong_auto_merges": 0
+      "what": "codeLinks (same phone) + mockLinks (same house number + street; same street with neighbors/whole-street wording) on the same 1,000 Ember-read records, $0",
+      "true_link_pairs": 8,
+      "true_groups": 6,
+      "links_found": 1,
+      "pairs_suggested": 1,
+      "pairs_suggested_correct": 1,
+      "recall_any_link": "1/8",
+      "recall_same_job": "0/4",
+      "recall_shared_cause": "1/4",
+      "precision_any_link": "1/1",
+      "ember_links": 0,
+      "ember_recall": "0/8",
+      "ember_recall_same_job": "0/4",
+      "ember_recall_shared_cause": "0/4",
+      "ember_precision": "0/0",
+      "auto_merged_pairs": 0,
+      "auto_merged_correct": 0,
+      "wrong_auto_merges": 0,
+      "wrong_auto_merge_examples": [],
+      "likely_downgraded_by_code": 0,
+      "right_pair_wrong_kind": 0
     },
     "before_investigator": {
       "recall": "8/8",
@@ -67,7 +84,16 @@
     },
     "spend_usd": 0.010832,
     "per_message_pass_reused_from": null,
-    "spend_detail": "$0.010832 over 25 billed call(s)"
+    "spend_detail": "$0.010832 over 25 billed call(s)",
+    "right_pair_wrong_kind": 0,
+    "rescore": {
+      "at": "2026-11-27T16:43:23.266Z",
+      "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence).",
+      "anchor_rule": "same phone, or same house number + street (phones removed first)",
+      "stored_likely_links_downgraded": 0,
+      "re_read_messages": [],
+      "spend_usd": 0
+    }
   },
   "links": [
     {

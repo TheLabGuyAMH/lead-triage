@@ -5,7 +5,7 @@
     "messages": 1000,
     "true_link_pairs": 205,
     "true_groups": 84,
-    "links_found": 108,
+    "links_found": 105,
     "pairs_suggested": 190,
     "pairs_suggested_correct": 176,
     "recall_any_link": "176/205",
@@ -26,23 +26,24 @@
       "what": "codeLinks (same phone) + mockLinks (same house number + street; same street with neighbors/whole-street wording) on the same 1,000 Ember-read records, $0",
       "true_link_pairs": 205,
       "true_groups": 84,
-      "links_found": 83,
-      "pairs_suggested": 145,
-      "pairs_suggested_correct": 115,
-      "recall_any_link": "115/205",
-      "recall_same_job": "91/118",
+      "links_found": 80,
+      "pairs_suggested": 136,
+      "pairs_suggested_correct": 106,
+      "recall_any_link": "106/205",
+      "recall_same_job": "82/118",
       "recall_shared_cause": "24/87",
-      "precision_any_link": "115/145",
+      "precision_any_link": "106/136",
       "ember_links": 0,
       "ember_recall": "0/205",
       "ember_recall_same_job": "0/118",
       "ember_recall_shared_cause": "0/87",
       "ember_precision": "0/0",
-      "auto_merged_pairs": 96,
-      "auto_merged_correct": 96,
+      "auto_merged_pairs": 87,
+      "auto_merged_correct": 87,
       "wrong_auto_merges": 0,
       "wrong_auto_merge_examples": [],
-      "likely_downgraded_by_code": 0
+      "likely_downgraded_by_code": 0,
+      "right_pair_wrong_kind": 0
     },
     "before_investigator": {
       "recall": "174/205",
@@ -105,8 +106,8 @@
     },
     "per_message_pass_reused_from": "replay-freeze-v1.json",
     "rescore": {
-      "at": "2026-11-27T16:21:37.837Z",
-      "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence). Then Gemini review: see history.",
+      "at": "2026-11-27T16:43:23.209Z",
+      "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence).",
       "anchor_rule": "same phone, or same house number + street (phones removed first)",
       "stored_likely_links_downgraded": 0,
       "re_read_messages": [
@@ -123,23 +124,12 @@
           "cost_usd": 0.0005503999999999999
         }
       ],
-      "spend_usd": 0.00055,
-      "history": [
-        {
-          "at": "2026-11-27T16:09:59.312Z",
-          "why": "Fable review 2026-11-27: a phone's last digits passed for a house number, a shared full name counted as an anchor, and hazard detection read the model's urgency_reason (message #230 got the electrical script from a negated sentence).",
-          "stored_likely_links_downgraded": 2
-        },
-        {
-          "at": "2026-11-27T16:21:37.837Z",
-          "why": "Gemini review 2026-11-27: an address token now needs a street suffix in at least one of the two messages; answers cover links inside a link; 'merged' counts multi-message stops.",
-          "stored_likely_links_downgraded": 0
-        }
-      ]
+      "spend_usd": 0
     },
     "spend_this_run_usd": 0.016064,
     "spend_this_run_detail": "$0.016064 over 9 billed call(s)",
-    "spend_note": "Per-message pass /bin/zsh.3907 (v1 run), block pass /bin/zsh.0694 (final prompt), re-read of #230 /bin/zsh.0006, investigator /bin/zsh.0161 (this run). Earlier investigator probes are in the README spend total."
+    "spend_note": "Per-message pass /bin/zsh.3907 (v1 run), block pass /bin/zsh.0694 (final prompt), re-read of #230 /bin/zsh.0006, investigator /bin/zsh.0161 (this run). Earlier investigator probes are in the README spend total.",
+    "right_pair_wrong_kind": 0
   },
   "links": [
     {
@@ -264,19 +254,11 @@
         {
           "index": 164,
           "quote": "254-555-0118"
-        },
-        {
-          "index": 13,
-          "quote": "158 Weber Rd"
-        },
-        {
-          "index": 164,
-          "quote": "Me again at 158 Weber Rd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Are you following up on the burst attic pipe at 158 Weber Rd?",
-      "ask_index": 164,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -598,7 +580,7 @@
         },
         {
           "index": 127,
-          "quote": "Soy Laura, familiar de Daniel, por lo del tubo reventado en 1286 Sunnybrook. \u00bfA qu\u00e9 hora vienen? 713-555-0195"
+          "quote": "Soy Laura, familiar de Daniel, por lo del tubo reventado en 1286 Sunnybrook. ¿A qué hora vienen? 713-555-0195"
         },
         {
           "index": 284,
@@ -747,7 +729,7 @@
         },
         {
           "index": 920,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Kingston, 2723 Kingston Dr. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Kingston, 2723 Kingston Dr. Mis vecinos tampoco."
         }
       ],
       "explanation": "Different Kingston Dr homes all report no water this morning extending beyond their own home to neighbors/block.",
@@ -819,7 +801,7 @@
         },
         {
           "index": 242,
-          "quote": "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers. \u00bfA qu\u00e9 hora vienen? 956-555-0126"
+          "quote": "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers. ¿A qué hora vienen? 956-555-0126"
         },
         {
           "index": 138,
@@ -884,19 +866,11 @@
         {
           "index": 321,
           "quote": "915-555-0142"
-        },
-        {
-          "index": 179,
-          "quote": "2831 Pharaoh Dr, 915-555-0142"
-        },
-        {
-          "index": 321,
-          "quote": "Me again at 2831 Pharaoh Dr, the split pipe is still not fixed, please hurry. 915-555-0142"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Are you calling again about the split pipe at 2831 Pharaoh Dr?",
-      "ask_index": 321,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -967,7 +941,7 @@
         },
         {
           "index": 190,
-          "quote": "Se revent\u00f3 un tubo en el cuarto de lavado y sale agua por todos lados. 5373 Brawner Pkwy, Annaville. Jose 361-555-0134"
+          "quote": "Se reventó un tubo en el cuarto de lavado y sale agua por todos lados. 5373 Brawner Pkwy, Annaville. Jose 361-555-0134"
         },
         {
           "index": 280,
@@ -1172,7 +1146,7 @@
         },
         {
           "index": 443,
-          "quote": "Soy Jose, familiar de Sofia, por lo del tuber\u00edas congeladas en 5253 Staples."
+          "quote": "Soy Jose, familiar de Sofia, por lo del tuberías congeladas en 5253 Staples."
         },
         {
           "index": 504,
@@ -1249,38 +1223,6 @@
       "downgraded": null
     },
     {
-      "key": "same_job:233,350",
-      "indices": [
-        233,
-        350
-      ],
-      "kind": "same_job",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "index": 233,
-          "quote": "956-555-0165"
-        },
-        {
-          "index": 350,
-          "quote": "956-555-0165"
-        },
-        {
-          "index": 233,
-          "quote": "1377 Everhart Rd, 956-555-0165"
-        },
-        {
-          "index": 350,
-          "quote": "Me again at 1377 Everhart Rd"
-        }
-      ],
-      "explanation": "Same phone number in each message.",
-      "question": "Is this a follow-up on the no water pressure at 1377 Everhart Rd from earlier today?",
-      "ask_index": 350,
-      "source": "code",
-      "downgraded": null
-    },
-    {
       "key": "same_job:233,350,384",
       "indices": [
         233,
@@ -1306,38 +1248,6 @@
       "explanation": "Same phone number in each message.",
       "question": "",
       "ask_index": null,
-      "source": "code",
-      "downgraded": null
-    },
-    {
-      "key": "same_job:236,302",
-      "indices": [
-        236,
-        302
-      ],
-      "kind": "same_job",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "index": 236,
-          "quote": "830-555-0188"
-        },
-        {
-          "index": 302,
-          "quote": "830-555-0188"
-        },
-        {
-          "index": 236,
-          "quote": "4777 Airline Rd"
-        },
-        {
-          "index": 302,
-          "quote": "Me again at 4777 Airline Rd"
-        }
-      ],
-      "explanation": "Same phone number in each message.",
-      "question": "Is this the same burst water heater at 4777 Airline Rd from your earlier message?",
-      "ask_index": 302,
       "source": "code",
       "downgraded": null
     },
@@ -1382,15 +1292,15 @@
       "evidence": [
         {
           "index": 243,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Cayo, 1502 Cayo Ct. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Cayo, 1502 Cayo Ct. Mis vecinos tampoco."
         },
         {
           "index": 703,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco."
         },
         {
           "index": 707,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Cayo, 300 Cayo Ct. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la mañana en la calle Cayo, 300 Cayo Ct. Mis vecinos tampoco."
         }
       ],
       "explanation": "Three different Cayo Ct homes report no water since morning and say neighbors also have none, indicating a street-wide supply problem.",
@@ -1495,19 +1405,11 @@
         {
           "index": 469,
           "quote": "915-555-0198"
-        },
-        {
-          "index": 258,
-          "quote": "2163 McArdle Rd Sam Taylor 915-555-0198"
-        },
-        {
-          "index": 469,
-          "quote": "Me again at 2163 McArdle Rd, the frozen kitchen pipes is still not fixed, please hurry. 915-555-0198"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same frozen kitchen pipe at 2163 McArdle Rd you reported earlier?",
-      "ask_index": 469,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -1595,7 +1497,7 @@
         },
         {
           "index": 341,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Leopard, 543 Leopard St."
+          "quote": "no tenemos agua desde la mañana en la calle Leopard, 543 Leopard St."
         },
         {
           "index": 651,
@@ -1651,7 +1553,7 @@
         },
         {
           "index": 546,
-          "quote": "por lo del falta de calefacci\u00f3n en 1388 Kostoryz."
+          "quote": "por lo del falta de calefacción en 1388 Kostoryz."
         }
       ],
       "explanation": "Both messages report no heat at the same address, 1388 Kostoryz.",
@@ -1766,7 +1668,7 @@
         },
         {
           "index": 447,
-          "quote": "El calentador de agua no prende desde que regres\u00f3 la luz. Michael Miller, Downtown. 956-555-0175"
+          "quote": "El calentador de agua no prende desde que regresó la luz. Michael Miller, Downtown. 956-555-0175"
         }
       ],
       "explanation": "Message 6 explicitly follows up for Michael Miller about a water heater, matching message 8's Michael Miller water heater report.",
@@ -2111,7 +2013,7 @@
       "evidence": [
         {
           "index": 458,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Williams"
+          "quote": "no tenemos agua desde la mañana en la calle Williams"
         },
         {
           "index": 521,
@@ -2127,7 +2029,7 @@
         },
         {
           "index": 893,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Williams"
+          "quote": "no tenemos agua desde la mañana en la calle Williams"
         }
       ],
       "explanation": "All report no water on Williams with neighbors/block also out, indicating a street-wide supply outage.",
@@ -2152,19 +2054,11 @@
         {
           "index": 718,
           "quote": "512-555-0131"
-        },
-        {
-          "index": 462,
-          "quote": "Amy Hernandez, 4953 Ocean Dr, 512-555-0131"
-        },
-        {
-          "index": 718,
-          "quote": "Me again at 4953 Ocean Dr"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this a follow-up to Amy Hernandez's split pipe at 4953 Ocean Dr?",
-      "ask_index": 718,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -2264,45 +2158,13 @@
         },
         {
           "index": 750,
-          "quote": "Soy Yolanda, familiar de Juan, por lo del tubo partido en 4507 Sunnybrook. \u00bfA qu\u00e9 hora vienen? 956-555-0119"
+          "quote": "Soy Yolanda, familiar de Juan, por lo del tubo partido en 4507 Sunnybrook. ¿A qué hora vienen? 956-555-0119"
         }
       ],
       "explanation": "Yolanda says she is Juan's relative about the split pipe at the same Sunnybrook address as Juan Ortiz.",
       "question": "Are you asking about Juan Ortiz's split kitchen pipe at 4507 Sunnybrook Rd?",
       "ask_index": 750,
       "source": "ember",
-      "downgraded": null
-    },
-    {
-      "key": "same_job:510,662",
-      "indices": [
-        510,
-        662
-      ],
-      "kind": "same_job",
-      "confidence": "likely",
-      "evidence": [
-        {
-          "index": 510,
-          "quote": "512-555-0182"
-        },
-        {
-          "index": 662,
-          "quote": "512-555-0182"
-        },
-        {
-          "index": 510,
-          "quote": "3691 Saratoga Blvd"
-        },
-        {
-          "index": 662,
-          "quote": "Me again at 3691 Saratoga Blvd"
-        }
-      ],
-      "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 3691 Saratoga Blvd from your earlier message?",
-      "ask_index": 662,
-      "source": "code",
       "downgraded": null
     },
     {
@@ -2355,23 +2217,11 @@
         {
           "index": 823,
           "quote": "361-555-0139"
-        },
-        {
-          "index": 515,
-          "quote": "Ken Sanchez, 5639 Cimarron Blvd, 361-555-0139"
-        },
-        {
-          "index": 663,
-          "quote": "Me again at 5639 Cimarron Blvd, the split pipe is still not fixed, please hurry. 361-555-0139"
-        },
-        {
-          "index": 823,
-          "quote": "Me again at 5639 Cimarron Blvd, the split pipe is still not fixed, please hurry. 361-555-0139"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same split pipe at 5639 Cimarron Blvd from your earlier message today?",
-      "ask_index": 663,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -2505,7 +2355,7 @@
       "evidence": [
         {
           "index": 531,
-          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Pharaoh"
+          "quote": "no tenemos agua desde la mañana en la calle Pharaoh"
         },
         {
           "index": 531,
@@ -2542,19 +2392,11 @@
         {
           "index": 660,
           "quote": "254-555-0140"
-        },
-        {
-          "index": 554,
-          "quote": "2209 Lipes Blvd."
-        },
-        {
-          "index": 660,
-          "quote": "Me again at 2209 Lipes Blvd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same burst water heater at 2209 Lipes Blvd reported by Monica?",
-      "ask_index": 660,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -2626,19 +2468,11 @@
         {
           "index": 672,
           "quote": "956-555-0170"
-        },
-        {
-          "index": 571,
-          "quote": "Pipe burst in the kitchen, water spraying everywhere and I can't find the shut off. 2750 Kingston Dr. Yolanda Flores 956-555-0170"
-        },
-        {
-          "index": 672,
-          "quote": "Me again at 2750 Kingston Dr, the burst pipe is still not fixed, please hurry. 956-555-0170"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same burst pipe at 2750 Kingston Dr reported earlier today?",
-      "ask_index": 672,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -2689,7 +2523,7 @@
         },
         {
           "index": 640,
-          "quote": "familiar de Elena, por lo del tuber\u00edas congeladas en 5177 Gollihar."
+          "quote": "familiar de Elena, por lo del tuberías congeladas en 5177 Gollihar."
         }
       ],
       "explanation": "Monica says she is Elena's relative asking about the frozen pipes at the same 5177 Gollihar address as Elena White.",
@@ -2910,7 +2744,7 @@
         },
         {
           "index": 803,
-          "quote": "Soy Alma, familiar de Debbie, por lo del tubo reventado en 5281 Staples. \u00bfA qu\u00e9 hora vienen? 830-555-0175"
+          "quote": "Soy Alma, familiar de Debbie, por lo del tubo reventado en 5281 Staples. ¿A qué hora vienen? 830-555-0175"
         },
         {
           "index": 803,
@@ -3043,19 +2877,11 @@
         {
           "index": 741,
           "quote": "512-555-0172"
-        },
-        {
-          "index": 618,
-          "quote": "1768 Weber Rd"
-        },
-        {
-          "index": 741,
-          "quote": "Me again at 1768 Weber Rd"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Are you following up on the no-heat call for 1768 Weber Rd?",
-      "ask_index": 741,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -3094,7 +2920,7 @@
       "evidence": [
         {
           "index": 635,
-          "quote": "Se congelaron las tuber\u00edas y no sale agua. 1469 Navigation Blvd. Maria Guerra 361-555-0161"
+          "quote": "Se congelaron las tuberías y no sale agua. 1469 Navigation Blvd. Maria Guerra 361-555-0161"
         },
         {
           "index": 932,
@@ -3131,19 +2957,11 @@
         {
           "index": 866,
           "quote": "409-555-0118"
-        },
-        {
-          "index": 647,
-          "quote": "Tina, 2233 Kostoryz Rd, 409-555-0118"
-        },
-        {
-          "index": 866,
-          "quote": "Me again at 2233 Kostoryz Rd, the split pipe is still not fixed, please hurry."
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this a follow-up to Tina's split pipe at 2233 Kostoryz?",
-      "ask_index": 866,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -3367,7 +3185,7 @@
       "evidence": [
         {
           "index": 694,
-          "quote": "No tenemos calefacci\u00f3n desde anoche y mi abuela tiene 88 a\u00f1os. Hace mucho fr\u00edo en la casa. 2732 McArdle Rd. 432-555-0113"
+          "quote": "No tenemos calefacción desde anoche y mi abuela tiene 88 años. Hace mucho frío en la casa. 2732 McArdle Rd. 432-555-0113"
         },
         {
           "index": 820,
@@ -3396,19 +3214,11 @@
         {
           "index": 941,
           "quote": "915-555-0167"
-        },
-        {
-          "index": 696,
-          "quote": "Se revent\u00f3 un tubo en el cuarto de lavado y sale agua por todos lados. 2818 Kingston Dr, Southside. Marcus Wilson 915-555-0167"
-        },
-        {
-          "index": 941,
-          "quote": "Me again at 2818 Kingston Dr, the burst pipe is still not fixed, please hurry. 915-555-0167"
         }
       ],
       "explanation": "Same phone number in each message.",
-      "question": "Is this the same burst pipe at 2818 Kingston Dr reported earlier today?",
-      "ask_index": 941,
+      "question": "",
+      "ask_index": null,
       "source": "code",
       "downgraded": null
     },
@@ -3448,15 +3258,15 @@
       "evidence": [
         {
           "index": 703,
-          "quote": "Hola, no tenemos agua desde la ma\u00f1ana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco. Raul 956-555-0148"
+          "quote": "Hola, no tenemos agua desde la mañana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco. Raul 956-555-0148"
         },
         {
           "index": 815,
-          "quote": "Se congelaron las tuber\u00edas y no sale agua. 1821 Cayo Ct. Raul Jones 361-555-0128"
+          "quote": "Se congelaron las tuberías y no sale agua. 1821 Cayo Ct. Raul Jones 361-555-0128"
         },
         {
           "index": 921,
-          "quote": "Se congelaron las tuber\u00edas y no sale agua. 2359 Cayo Ct. Raul Flores 979-555-0138"
+          "quote": "Se congelaron las tuberías y no sale agua. 2359 Cayo Ct. Raul Flores 979-555-0138"
         }
       ],
       "explanation": "Three different homes on Cayo Ct with no water, and message 12 says neighbors also have no water.",

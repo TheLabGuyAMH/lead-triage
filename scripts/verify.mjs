@@ -384,6 +384,25 @@ async function main() {
   const dBig = await handleDispatch({ leads: many.slice(0, 31), mode: "mock" });
   check("dispatch endpoint rejects a block over the cap", dBig.status === 400);
   check("answer key covers 4 groups", FREEZE_GROUPS.length === 4);
+  // Astra review: the merge rule must identify the job, not just the caller
+  check("'18 Oak Road' and '18 Oak Street' are different places", D.sharedAddresses("leak at 18 Oak Road", "no heat at 18 Oak Street").length === 0);
+  check("'120 North Elm St' and '120 North Park Ave' are different places", D.sharedAddresses("burst pipe 120 North Elm St", "no heat 120 North Park Ave").length === 0);
+  check("'Rodd Field Rd' keeps both words", D.parseAddresses("water off at 3009 Rodd Field Rd").map((a) => a.label).join() === "3009 rodd field rd");
+  check("'1215 Laguna Dr' still matches '1215 Laguna Drive'", D.sharedAddresses("1215 Laguna Dr", "1215 Laguna Drive").length === 1);
+  const pmA = { index: 0, raw_text: "Property manager: burst pipe at 410 Elm St. Call 361-555-0177", name: "Pat", phone: "361-555-0177", area: null, service_needed: null, urgency: "emergency" };
+  const pmB = { index: 1, raw_text: "Property manager again: heater failed at 722 Oak Ave. Call 361-555-0177", name: "Pat", phone: "361-555-0177", area: null, service_needed: null, urgency: "same-day" };
+  const pmLinks = D.codeLinks([pmA, pmB]);
+  check("one phone with two different addresses is a question, not a merge", pmLinks.length === 1 && pmLinks[0].confidence === "possible" && /410 elm st/.test(pmLinks[0].question) && D.sharedAnchor(pmA, pmB) === null);
+  const pmC = { ...pmB, index: 2, raw_text: "Me again about 410 Elm St, water still coming. 361-555-0177" };
+  check("one phone at one address still merges", D.codeLinks([pmA, pmC])[0].confidence === "likely");
+  check("'No gas smell' is not a gas report", detectHazard(["No gas smell. I want a quote next month for a water heater replacement"]) === null);
+  check("'I don't smell gas, but no heat' is not a gas report", detectHazard(["I don't smell gas but the furnace won't start"]) === null);
+  check("'I smell gas' still is", detectHazard(["no heat and I smell gas in the kitchen"]) === "gas");
+  const bLink = { key: "shared_cause:2,11,22", indices: [2, 11, 22], kind: "shared_cause", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 2, source: "ember" };
+  const bRes = [2, 11, 22].map((i) => ({ index: i, mode: "mock", usage: { tokens_in: 0, tokens_out: 0, cost_usd: 0, estimated: true }, record: { ...mockExtract(["No hot water in the whole building at Seaside Villas this morning. Unit 4, Ana 361-555-0151", "Seaside Villas unit 9, no hot water since 6am. Omar 713-555-0177", "Hola, en Seaside Villas no hay agua caliente, apartamento 2. Rosa 956-555-0133"][[2, 11, 22].indexOf(i)], SAMPLE_CONFIG).record } }));
+  const bPlan = D.buildPlan(bRes, [bLink], { "shared_cause:2,11,22": "yes" }, { trucks: 2, stopsPerTruck: 2 });
+  check("a confirmed building-wide problem gets the building-check reply, not the street one", bPlan.lanes.trucks[0]?.replyKind === "building" && [...bPlan.lanes.trucks[0].memberReplies.values()].every((r) => r.kind === "building"));
+
   // Muse review: "flame" only as an event
   check("'water heater flame won't stay lit' is not a fire", detectHazard(["Water heater flame wont stay lit, no hot water, no rush this week"]) === null);
   check("'furnace flame sensor dirty' is not a fire", detectHazard(["Furnace flame sensor dirty I think, can someone clean it next week?"]) === null);
@@ -407,7 +426,7 @@ async function main() {
 
   // Fixes from the 2026-11-27 Gemini review
   check("'50 inside' in two messages is not a shared address", D.sharedAddresses("still no heat and it's 50 inside", "it's 50 inside here too") .length === 0);
-  check("'418 Mesquite St' and '418 Mesquite' still match", D.sharedAddresses("Linda Garza, 418 Mesquite St", "about the burst pipe at 418 Mesquite").join() === "418 mesquite");
+  check("'418 Mesquite St' and '418 Mesquite' still match", D.sharedAddresses("Linda Garza, 418 Mesquite St", "about the burst pipe at 418 Mesquite").join() === "418 mesquite st");
   const sup = { key: "same_job:0,6,9", indices: [0, 6, 9], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 0, source: "ember" };
   const sub = { key: "same_job:0,6", indices: [0, 6], kind: "same_job", confidence: "likely", evidence: [], explanation: "", question: "", ask_index: 0, source: "code" };
   const splitPlan = D.buildPlan(fz, [sup, sub], { "same_job:0,6,9": "no" }, { trucks: 5, stopsPerTruck: 5 });

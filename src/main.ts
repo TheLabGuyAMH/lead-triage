@@ -275,6 +275,7 @@ const REPLY_BADGE: Record<Job["replyKind"], string> = {
   cold: `<span class="badge script">Stay-warm script, not AI text</span>`,
   frozen: `<span class="badge script">Frozen-pipe script, not AI text</span>`,
   street: `<span class="badge script">Street-check script, not AI text</span>`,
+  building: `<span class="badge script">Building-check script, not AI text</span>`,
   urgent: `<span class="badge script">Urgent-list script, not AI text</span>`,
   not_today: `<span class="badge script">Honest "not today" script, not AI text</span>`,
 };
@@ -469,7 +470,7 @@ function laneMap(plan: DispatchPlan): Map<number, Lane> {
 const LANE_NAMES: Record<Lane, string> = {
   read_first: "read first",
   trucks: "the trucks",
-  made_safe: "made safe by text",
+  made_safe: "urgent reply (no truck)",
   not_today: "not today",
 };
 
@@ -560,8 +561,8 @@ function render() {
     ? `<div class="plan-stats">
         <span><strong>${config.trucks}</strong> trucks × <strong>${config.stopsPerTruck}</strong> stops = <strong>${plan.slots}</strong> slots</span>
         <span><strong>${trucksUsed}</strong> on trucks${plan.overflowHazards ? ` (${plan.overflowHazards} hazard${plan.overflowHazards === 1 ? "" : "s"} over capacity)` : ""}</span>
-        <span><strong>${L.made_safe.length}</strong> made safe by text</span>
-        <span><strong>${L.not_today.length}</strong> told “not today”</span>
+        <span><strong>${L.made_safe.length}</strong> urgent replies ready (no truck today)</span>
+        <span><strong>${L.not_today.length}</strong> “not today” replies ready</span>
         <span><strong>${plan.merged}</strong> multi-message stops</span>
         <span><strong>${plan.pending}</strong> question${plan.pending === 1 ? "" : "s"} open</span>
       </div>
@@ -593,8 +594,8 @@ function render() {
     (L.trucks.length
       ? `<h3 class="lane-head">Trucks today (${L.trucks.length} of ${plan.slots} slots)</h3>${L.trucks.map((j) => cardHtml(j, j.stop! > config.stopsPerTruck ? `Truck ${j.truck} · over capacity (hazard)` : `Truck ${j.truck} · stop ${j.stop}`)).join("")}`
       : "") +
-    laneSection("made_safe", "Made safe by text: urgent, no truck today", "Each gets a fixed code-written reply, not AI text: water shut-off, frozen-pipe or stay-warm advice where the message fits one, otherwise a plain urgent-list message.", L.made_safe.length <= 25) +
-    laneSection("not_today", "Told the truth: not today", "Routine jobs past today's capacity get an honest “we can't come today” message instead of silence.", false);
+    laneSection("made_safe", "Urgent, no truck today: safety replies ready for you to send", "Each gets a fixed code-written reply, not AI text: water shut-off, frozen-pipe or stay-warm advice where the message fits one, otherwise a plain urgent-list message.", L.made_safe.length <= 25) +
+    laneSection("not_today", "Not today: honest replies ready for you to send", "Routine jobs past today's capacity get an honest “we can't come today” message instead of silence.", false);
 
   // The filtered fold opens whenever it holds anything, so a real lead
   // misread as spam stays visible instead of disappearing.

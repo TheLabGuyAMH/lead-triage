@@ -21,10 +21,14 @@ loadEnvFile();
 
 const { lib, cleanup } = await loadLib();
 try {
-  const replayPath = join(REPO, "src/lib/replay-freeze.json");
-  const resultsPath = join(REPO, "evals/results-dispatch-freeze1000-2026-11-27.json");
+  // --set=hard re-scores the hard-links replay instead.
+  const hard = arg("set", "freeze") === "hard";
+  const replayPath = join(REPO, hard ? "src/lib/replay-hard.json" : "src/lib/replay-freeze.json");
+  const resultsPath = join(REPO, hard ? "evals/results-dispatch-hard23-2026-11-27.json" : "evals/results-dispatch-freeze1000-2026-11-27.json");
   const replay = JSON.parse(readFileSync(replayPath, "utf8"));
-  const rows = readFileSync(join(REPO, "evals/freeze-day.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
+  const rows = hard
+    ? lib.HARD_LEADS.map((text) => ({ text, group: null }))
+    : readFileSync(join(REPO, "evals/freeze-day.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
   const groups = new Map();
   rows.forEach((r, i) => {
     if (!r.group) return;
@@ -32,7 +36,7 @@ try {
     g.members.push(i);
     groups.set(r.group, g);
   });
-  const truth = [...groups.values()].filter((g) => g.members.length >= 2);
+  const truth = hard ? lib.HARD_GROUPS.map((g) => ({ kind: g.kind, members: g.members })) : [...groups.values()].filter((g) => g.members.length >= 2);
 
   const patched = [];
   for (const i of patch) {
@@ -49,8 +53,12 @@ try {
   }
 
   const real = replay.results.filter((r) => r.record.category === "real").map(lib.toDispatchLead);
-  const links = lib.recheckAnchors(replay.links, real);
-  const downgradedNow = links.filter((l, n) => l.confidence !== replay.links[n].confidence).length;
+  // Same-phone links are re-derived (today's rule asks when one phone gives two addresses); the rest are re-checked.
+  const fresh = lib.codeLinks(real);
+  const kept = lib.recheckAnchors(replay.links.filter((l) => l.source !== "code"), real);
+  const links = lib.mergeLinks([fresh, kept]);
+  const before = new Map(replay.links.map((l) => [l.key, l.confidence]));
+  const downgradedNow = links.filter((l) => before.get(l.key) === "likely" && l.confidence === "possible").length;
   const baseline = lib.mergeLinks([lib.codeLinks(real), lib.mockLinks(real)]);
   const final = scoreLinks(lib, links, truth);
   const noModel = scoreLinks(lib, baseline, truth);
