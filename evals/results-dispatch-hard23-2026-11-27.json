@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-11-27T16:10:16.242Z",
+  "recorded_at": "2026-11-27T16:30:26.828Z",
   "summary": {
     "set": "hard23",
     "messages": 23,
@@ -21,22 +21,40 @@
     "auto_merged_correct": 0,
     "wrong_auto_merges": 0,
     "wrong_auto_merge_examples": [],
-    "likely_downgraded_by_code": 3,
+    "likely_downgraded_by_code": 4,
     "no_model_rules": {
       "what": "same phone + practice-mode keyword links on the same records, $0",
       "recall": "1/8",
       "precision": "1/1",
       "wrong_auto_merges": 0
     },
+    "before_investigator": {
+      "recall": "8/8",
+      "precision": "8/8"
+    },
+    "investigator": {
+      "orphans": 1,
+      "failed": 0,
+      "links_kept": 1,
+      "outcomes": [
+        "proposed"
+      ],
+      "turns": [
+        3
+      ],
+      "quotes_dropped_by_code": 0,
+      "wall_clock_seconds": 3
+    },
     "member_quotes_dropped_by_code": 0,
     "link_calls": 1,
+    "block_pass_reused": false,
     "link_calls_failed": 0,
     "extraction_failures": 0,
     "extraction": null,
     "plan_at_capacity": {
       "trucks": 6,
-      "made_safe": 12,
-      "not_today": 4,
+      "made_safe": 14,
+      "not_today": 2,
       "read_first": 0,
       "filtered": 1,
       "merged_links": 0,
@@ -44,12 +62,12 @@
     },
     "wall_clock_seconds": {
       "per_message_pass": 12,
-      "cross_message_pass": 5,
+      "cross_message_pass": 4,
       "concurrency": 4
     },
-    "spend_usd": 0.009783,
+    "spend_usd": 0.010832,
     "per_message_pass_reused_from": null,
-    "spend_detail": "$0.009783 over 24 billed call(s)"
+    "spend_detail": "$0.010832 over 25 billed call(s)"
   },
   "links": [
     {
@@ -70,7 +88,7 @@
           "quote": "my son Victor said he called you about my garage flooding"
         }
       ],
-      "explanation": "Victor reported his mom's Holly garage flooding and Gloria says her son Victor called about her garage flooding on Holly Rd.",
+      "explanation": "Victor reported his mom's Holly garage flooding; Gloria says her son Victor called about her garage flooding on Holly Rd.",
       "question": "Is this the same Holly Rd garage flooding Victor reported for you?",
       "ask_index": 9,
       "source": "ember",
@@ -88,7 +106,7 @@
       "evidence": [
         {
           "index": 2,
-          "quote": "No hot water in the whole building at Seaside Villas"
+          "quote": "No hot water in the whole building at Seaside Villas this morning"
         },
         {
           "index": 11,
@@ -99,8 +117,8 @@
           "quote": "en Seaside Villas no hay agua caliente, apartamento 2"
         }
       ],
-      "explanation": "Three different units at Seaside Villas report no hot water, with one saying the whole building is affected.",
-      "question": "Is the hot water outage affecting the whole Seaside Villas building?",
+      "explanation": "Three different Seaside Villas units report no hot water, with one saying the whole building is affected.",
+      "question": "Is the hot water out for the whole Seaside Villas building?",
       "ask_index": 2,
       "source": "ember",
       "downgraded": null
@@ -121,10 +139,18 @@
         {
           "index": 14,
           "quote": "Unit 12 called me about an overflowing toilet leaking into the hallway"
+        },
+        {
+          "index": 3,
+          "quote": "Tenant at Bayview Apartments unit 12, toilet overflowing and water going under the door into the hall."
+        },
+        {
+          "index": 14,
+          "quote": "Property manager for Bayview Apartments. Unit 12 called me about an overflowing toilet leaking into the hallway, please send someone, bill us."
         }
       ],
-      "explanation": "Both messages describe the same unit 12 overflowing toilet leaking into the hallway at Bayview Apartments.",
-      "question": "Is this the Bayview Apartments unit 12 toilet overflow Kim reported?",
+      "explanation": "Kim the tenant and Hector the property manager both report the unit 12 toilet overflowing into the hallway.",
+      "question": "Is this the same Bayview Apartments unit 12 toilet overflow Kim reported?",
       "ask_index": 14,
       "source": "ember",
       "downgraded": "code found no shared phone or house number + street"
@@ -147,11 +173,11 @@
           "quote": "left side of the Purdue duplex. Wrote earlier, still no heat"
         }
       ],
-      "explanation": "Both report no heat on the left side of the Purdue duplex, and Robert says he wrote earlier, but the names differ.",
-      "question": "Did you write earlier about the left side of the Purdue duplex having no heat?",
+      "explanation": "Both report no heat on the left side of the Purdue duplex, with Robert noting he wrote earlier.",
+      "question": "Are you the left side of the Purdue duplex Bobby reported for?",
       "ask_index": 20,
       "source": "ember",
-      "downgraded": null
+      "downgraded": "code found no shared phone or house number + street"
     },
     {
       "key": "same_job:6,16",
@@ -164,15 +190,15 @@
       "evidence": [
         {
           "index": 6,
-          "quote": "soy Alma Treviño, se reventó un tubo debajo del lavabo"
+          "quote": "se reventó un tubo debajo del lavabo y está mojado todo el piso. Estoy en Gollihar cerca de la escuela"
         },
         {
           "index": 16,
-          "quote": "calling for my grandma Alma Treviño"
+          "quote": "calling for my grandma Alma Treviño, she doesn't speak much English. Pipe under her sink burst, she's near the school on Gollihar"
         }
       ],
-      "explanation": "Daniel says he is calling for his grandma Alma Treviño about the same burst pipe under her sink near the school on Gollihar.",
-      "question": "Are you calling about Alma Treviño's burst pipe under her sink on Gollihar?",
+      "explanation": "Daniel says he is calling for his grandma Alma Treviño about the same burst sink pipe on Gollihar near the school.",
+      "question": "Is this the same burst pipe under Alma Treviño's sink on Gollihar?",
       "ask_index": 16,
       "source": "ember",
       "downgraded": "code found no shared phone or house number + street"
@@ -192,11 +218,11 @@
         },
         {
           "index": 18,
-          "quote": "Water's off at our house on Tiger Ln and the neighbors say theirs too"
+          "quote": "Water's off at our house on Tiger Ln and the neighbors say theirs too, is it the main?"
         }
       ],
-      "explanation": "Both messages say water is out on Tiger Lane/Ln for multiple homes, suggesting a main or street-wide outage.",
-      "question": "Is the Tiger Lane water outage affecting your neighbors too?",
+      "explanation": "Both report no water on Tiger Lane/Ln affecting neighbors and the whole cul-de-sac.",
+      "question": "Is the water out for the whole Tiger Lane cul-de-sac, possibly a main break?",
       "ask_index": 18,
       "source": "ember",
       "downgraded": null

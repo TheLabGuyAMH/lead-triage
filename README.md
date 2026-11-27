@@ -6,8 +6,9 @@ The morning after a hard freeze, a 1–10 truck plumbing shop wakes up to hundre
 
 1. **Ember reads every message** into a strict schema (urgency, service, phone, area, language, a reply draft).
 2. **Ember reads the pile.** A second pass looks across messages for ones that belong together, quotes the exact words that prove it, and writes the one question that would settle a doubtful link ("Is the leak in unit B what's coming through unit A's wall?").
-3. **Code decides what's safe.** A link survives only if every quote is really in the message it cites, and it merges automatically only when code finds a shared phone or the same house number and street. Anything weaker waits for the owner's answer. Code then fills today's truck slots in priority order.
-4. **Nobody is left guessing.** Urgent jobs that miss the trucks get a fixed shut-off-your-water or stay-warm-safely script; routine ones get an honest "we can't come today". Gas, carbon-monoxide and electrical hazards always get a truck and a fixed "leave now, call 911" script, never AI text.
+3. **Ember investigates the loose ends.** A follow-up that points at someone the pass couldn't place ("following up for Beth Mendez", "calling for my mom Sandra") gets a bounded Ember agent: up to five turns with search and read tools over the whole pile, ending in a proposed link with quotes or "no link". The card shows its steps: searched "Beth Mendez" → #7, read #7, proposed the link.
+4. **Code decides what's safe.** A link survives only if every quote is really in the message it cites, and it merges automatically only when code finds a shared phone or the same house number and street. Anything weaker waits for the owner's answer. Code then fills today's truck slots in priority order.
+5. **Nobody is left guessing.** Urgent jobs that miss the trucks get a fixed shut-off-your-water or stay-warm-safely script; routine ones get an honest "we can't come today". Gas, carbon-monoxide and electrical hazards always get a truck and a fixed "leave now, call 911" script, never AI text.
 
 Answer a question or change the number of trucks and the plan re-flows on screen. The owner reviews and sends everything; nothing is sent automatically.
 
@@ -18,11 +19,12 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 | Freeze Day: 1,000 fictional messages, answer key by construction | Result |
 |---|---|
 | Message pairs merged automatically / merged wrongly | 96 / **0** |
-| True linked pairs found, Ember + same-phone code (recall) | 174 of 205 (85%) |
-| Suggested pairs that were right (precision) | 174 of 187 (93%) |
-| Found by Ember's own links / no-model rules on the same messages | 136 of 205 / 115 of 205 |
+| True linked pairs found, Ember + same-phone code (recall) | 176 of 205 (86%) |
+| Suggested pairs that were right (precision) | 176 of 190 (93%) |
+| Found by Ember's own links / no-model rules on the same messages | 138 of 205 / 115 of 205 |
+| Investigator (Ember tool loop) on 9 unplaced follow-ups | 3 links proposed: 2 right, 1 wrong (left as a question, not merged) |
 | Shared-cause pairs: Ember / no-model rules | 76 of 87 / 24 of 87 |
-| Questions left for the owner | 29 |
+| Questions left for the owner | 30 |
 | Category matches the generator's label | 999 of 1,000 |
 | Calls failed / quotes that weren't really in the message | 0 / 0 |
 | Cost, both passes | $0.3907 + $0.0694 |
@@ -54,6 +56,10 @@ Answer a question or change the number of trucks and the plan re-flows on screen
 - **Ember link call** (`api/_lib/ember.ts` `emberLink`, endpoint `POST /api/dispatch`, same three gates as `/api/extract`): strict JSON-schema output of links, each with kind (`same_job` / `shared_cause`), confidence, exact quotes per message, a one-line explanation and one deciding question.
 - **Code checks** (`validateLinks`): every member needs a quote that is really in its own message, or it is removed; "likely" `same_job` stays "likely" only if code finds a shared phone or house number + street (phone numbers are removed first, so a phone's last digits can't pass for a house number); the same phone alone is linked by code with no model at all (`codeLinks`).
 - **Plan** (`buildPlan`): merges only anchored "likely" same-job links and links the owner confirms; ranks jobs (hazards, urgency, more messages, paste order); deals them to trucks in turn (truck 1, 2, 3...), so stops count per truck; urgent overflow gets the water shut-off, frozen-pipe, stay-warm (with the carbon-monoxide warning) or urgent-list script; routine overflow gets an honest "not today". A confirmed street-wide cause on a truck becomes one stop with a street-check reply for every home, each in its own language, each with its own call and text buttons. Hazards always get a truck, even past capacity. Answers and capacity changes re-plan instantly in the browser and the board says who moved.
+
+### The investigator (bounded Ember agent)
+
+`src/lib/investigate.ts`, `api/_lib/ember.ts` `emberInvestigate`, endpoint `POST /api/investigate` (same three gates). Picked by code: a message that refers back to someone or something (`REFERS_RE`) whose group has no original message, at most 12 per live run. Ember gets `search_messages` (code searches every message; a phone matches by digits, words common to a fifth of the pile are ignored, name matches count double), `read_message`, `propose_link` and `no_link`, with `tool_choice: "auto"`, for at most five turns; the last turn offers only the two finishing tools. The tools run in code, read-only, over the messages the browser sent. A proposal goes through the same `validateLinks()` and always starts at "possible", so the agent can suggest but never merge: the owner confirms with its deciding question. Every step is shown on the card and kept in the trace. Multi-turn tool calling on `muse-ember-1.0` was verified live on 2026-11-27 (tool results accepted over five turns; about $0.0018 per investigation).
 
 ## How it works
 
@@ -105,7 +111,8 @@ Run through the deployed, passcode-gated endpoints with `scripts/record-dispatch
 | Set | Link prompt | Pairs suggested (right / total) | True pairs found | Auto-merged (wrong) | Open questions | Link calls | Spend |
 |---|---|---|---|---|---|---|---|
 | Freeze Day 1,000 | v1 | 173 / 292 | 173 / 205 | 100 (0) | 49 | 122 | $0.3907 extract + $0.0857 links |
-| Freeze Day 1,000 | final (shared cause needs a message saying it goes beyond one home) | 174 / 187 | 174 / 205 | 96 (0) | 29 | 122 | $0.0694 links (per-message pass reused) + $0.0006 re-read of #230 |
+| Freeze Day 1,000 | final, block pass only | 174 / 187 | 174 / 205 | 96 (0) | 29 | 122 | $0.0694 links (per-message pass reused) + $0.0006 re-read of #230 |
+| Freeze Day 1,000 | final + investigator | 176 / 190 | 176 / 205 | 96 (0) | 30 | 122 + 9 investigations | + $0.0161 investigator |
 | Freeze Day 1,000 | no-model rules (same phone + keyword links), $0 | 115 / 145 | 115 / 205 | 96 (0) | — | 0 | $0 |
 | Hard links 23 | final | 8 / 8 | 8 / 8 | 0 (0): all became questions | 4 | 1 | $0.0098 |
 | Hard links 23 | no-model rules, $0 | 1 / 1 | 1 / 8 | 0 (0) | — | 0 | $0 |
@@ -113,7 +120,7 @@ Run through the deployed, passcode-gated endpoints with `scripts/record-dispatch
 | Freeze morning 20 | final | 6 / 6 | 6 / 6 | 2 (0) | 2 | 1 | $0.0087 (re-run after the fix round) |
 | Freeze morning 20 | no-model rules, $0 | 5 / 5 | 5 / 6 | 2 (0) | — | 0 | $0 |
 
-Results: [Freeze Day final](evals/results-dispatch-freeze1000-2026-11-27.json) · [Freeze Day v1](evals/results-dispatch-freeze1000-v1-2026-11-27.json) · [freeze morning final](evals/results-dispatch-freeze20-2026-11-27.json) · [freeze morning v1](evals/results-dispatch-freeze20-v1-2026-11-27.json), traces with every call's tokens and cost under [traces/](traces/) (`ember-dispatch-*`). Per-message pass on the Freeze Day: 1,000 of 1,000 calls succeeded in 297 s, category agreed with the generator's label on 999 of 1,000, urgency on 771 of 884 labeled. "Pairs" counts every pair of messages inside a link, so a three-home street is three pairs. Spend for this round, from the traces and run logs: **$0.5831 over 1,332 billed calls** (two freeze-morning runs, the Freeze Day run and its v2 link pass, the fix-round re-read of #230, the hard-links set, and a third freeze-morning run after the fixes); with the earlier rounds' committed traces ($0.0798 over 167 calls) the build total is **$0.6629**, far under the $10 cap. The account's usage page is the authority for the submission.
+Results: [Freeze Day final](evals/results-dispatch-freeze1000-2026-11-27.json) · [Freeze Day v1](evals/results-dispatch-freeze1000-v1-2026-11-27.json) · [freeze morning final](evals/results-dispatch-freeze20-2026-11-27.json) · [freeze morning v1](evals/results-dispatch-freeze20-v1-2026-11-27.json), traces with every call's tokens and cost under [traces/](traces/) (`ember-dispatch-*`). Per-message pass on the Freeze Day: 1,000 of 1,000 calls succeeded in 297 s, category agreed with the generator's label on 999 of 1,000, urgency on 771 of 884 labeled. "Pairs" counts every pair of messages inside a link, so a three-home street is three pairs. Spend for this round, from the traces and run logs: **$0.6312** (two freeze-morning runs, the Freeze Day run and its v2 link pass, the fix-round re-read of #230, the hard-links set twice, a third freeze-morning run, three two-message investigator probes and two investigator runs; each investigation is up to five Ember calls and is counted with its summed usage); with the earlier rounds' committed traces ($0.0798 over 167 calls) the build total is **$0.7110**, far under the $10 cap. The account's usage page is the authority for the submission.
 
 ## Run it locally
 

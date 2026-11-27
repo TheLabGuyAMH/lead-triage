@@ -2,6 +2,7 @@
 
 One line per decision a later agent could not read from the code, with its reason. Newest first.
 
+- 2026-11-27 (investigator) — Unplaced follow-ups get a bounded Ember tool loop (search/read/propose/no-link, five turns, last turn finish-only) whose proposals always start at "possible", because the block pass can't see across blocks and an agent that searches the pile can, while a wrong agent link must never move a truck without the owner's yes. Tools run in code over the messages sent; there is no write tool.
 - 2026-11-27 (fix round) — Auto-merge anchors are a shared phone or house number + street only, with phone numbers removed before looking for house numbers; a shared full name is not an anchor, because the Fable review found a phone's last four digits passing as a house number ("0175 lucia") and 20 Freeze Day pairs of different households sharing a full name.
 - 2026-11-27 (fix round) — Hazard detection reads the raw message and, only if it names no hazard, the model's short service label; never the model's urgency_reason, because a reason can say why a message is NOT a hazard ("no gas or electrical hazard is stated") and a pattern can't read the negation.
 - 2026-11-27 (fix round) — Truck jobs are dealt in turn (truck 1, 2, 3, ...) with stops numbered per truck, superseding "filled in priority order" for the labels, because filling truck 1 first put five gas leaks on one truck.

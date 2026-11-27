@@ -440,7 +440,8 @@ function investigationHtml(link: LeadLink): string {
         : s.tool === "propose_link"
           ? "proposed this link"
           : esc(s.tool);
-  return `<p class="hint investigation">Ember investigated in ${inv.turns} step${inv.turns === 1 ? "" : "s"} with tools over the whole pile: ${inv.steps.map(step).join("; ")}.</p>`;
+  const used = inv.steps.filter((s) => s.tool === "search_messages" || s.tool === "read_message").length;
+  return `<p class="hint investigation">Ember investigated in ${inv.turns} turn${inv.turns === 1 ? "" : "s"} (${used} tool call${used === 1 ? "" : "s"}) over the whole pile: ${inv.steps.filter((s) => !s.args.unknown && s.tool !== "(text answer)").map(step).join("; ")}.</p>`;
 }
 
 /** Call / text / copy the deciding question to the customer it names. */
