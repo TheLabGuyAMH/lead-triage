@@ -150,7 +150,7 @@
           "quote": "Heat pump is blowing cold air and the house keeps getting colder. Beth Mendez 210-555-0172 Flour Bluff"
         }
       ],
-      "explanation": "Same name Beth Mendez together with the same heat pump problem; message 129 is a follow-up saying nobody has called back yet about that heat pump.",
+      "explanation": "Same name Beth Mendez together with the same heat pump problem; message #138 is a follow-up saying nobody has called back yet about that heat pump.",
       "question": "Beth, is this Rodd Field follow-up about the same heat pump blowing cold air you reported earlier?",
       "ask_index": 137,
       "source": "ember",
@@ -580,7 +580,7 @@
         },
         {
           "index": 127,
-          "quote": "Soy Laura, familiar de Daniel, por lo del tubo reventado en 1286 Sunnybrook. ¿A qué hora vienen? 713-555-0195"
+          "quote": "Soy Laura, familiar de Daniel, por lo del tubo reventado en 1286 Sunnybrook. \u00bfA qu\u00e9 hora vienen? 713-555-0195"
         },
         {
           "index": 284,
@@ -729,7 +729,7 @@
         },
         {
           "index": 920,
-          "quote": "no tenemos agua desde la mañana en la calle Kingston, 2723 Kingston Dr. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Kingston, 2723 Kingston Dr. Mis vecinos tampoco."
         }
       ],
       "explanation": "Different Kingston Dr homes all report no water this morning extending beyond their own home to neighbors/block.",
@@ -801,7 +801,7 @@
         },
         {
           "index": 242,
-          "quote": "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers. ¿A qué hora vienen? 956-555-0126"
+          "quote": "Soy Beth, familiar de Sandra, por lo del calentador en 3321 Ayers. \u00bfA qu\u00e9 hora vienen? 956-555-0126"
         },
         {
           "index": 138,
@@ -892,7 +892,7 @@
           "quote": "Following up for Marcus Martin about the split pipe on Kingston, nobody has called back yet."
         }
       ],
-      "explanation": "Message 9 explicitly follows up on Marcus Martin's split pipe from message 6.",
+      "explanation": "message #308 explicitly follows up on Marcus Martin's split pipe from message #188.",
       "question": "Are you following up on Marcus Martin's split pipe at 3082 Kingston Dr?",
       "ask_index": 307,
       "source": "ember",
@@ -941,14 +941,14 @@
         },
         {
           "index": 190,
-          "quote": "Se reventó un tubo en el cuarto de lavado y sale agua por todos lados. 5373 Brawner Pkwy, Annaville. Jose 361-555-0134"
+          "quote": "Se revent\u00f3 un tubo en el cuarto de lavado y sale agua por todos lados. 5373 Brawner Pkwy, Annaville. Jose 361-555-0134"
         },
         {
           "index": 280,
           "quote": "Following up for Jose Cruz about the burst pipe on Brawner, nobody has called back yet. Nancy 956-555-0123"
         }
       ],
-      "explanation": "Message 5 is a follow-up about Jose's burst pipe on Brawner, matching message 3's burst pipe at 5373 Brawner Pkwy.",
+      "explanation": "message #281 is a follow-up about Jose's burst pipe on Brawner, matching message #191's burst pipe at 5373 Brawner Pkwy.",
       "question": "Is the burst pipe on Brawner the one at 5373 Brawner Pkwy?",
       "ask_index": 280,
       "source": "ember",
@@ -1068,7 +1068,7 @@
           "quote": "Following up for Carlos Sanchez about the no heat on Leopard, nobody has called back yet."
         }
       ],
-      "explanation": "Message 13 explicitly follows up on a Carlos no-heat call on Leopard, matching message 6.",
+      "explanation": "message #456 explicitly follows up on a Carlos no-heat call on Leopard, matching message #220.",
       "question": "Are you following up on Carlos's no-heat call from 1463 Leopard St?",
       "ask_index": 455,
       "source": "ember",
@@ -1146,7 +1146,7 @@
         },
         {
           "index": 443,
-          "quote": "Soy Jose, familiar de Sofia, por lo del tuberías congeladas en 5253 Staples."
+          "quote": "Soy Jose, familiar de Sofia, por lo del tuber\u00edas congeladas en 5253 Staples."
         },
         {
           "index": 504,
@@ -1292,15 +1292,15 @@
       "evidence": [
         {
           "index": 243,
-          "quote": "no tenemos agua desde la mañana en la calle Cayo, 1502 Cayo Ct. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Cayo, 1502 Cayo Ct. Mis vecinos tampoco."
         },
         {
           "index": 703,
-          "quote": "no tenemos agua desde la mañana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco."
         },
         {
           "index": 707,
-          "quote": "no tenemos agua desde la mañana en la calle Cayo, 300 Cayo Ct. Mis vecinos tampoco."
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Cayo, 300 Cayo Ct. Mis vecinos tampoco."
         }
       ],
       "explanation": "Three different Cayo Ct homes report no water since morning and say neighbors also have none, indicating a street-wide supply problem.",
@@ -1497,7 +1497,7 @@
         },
         {
           "index": 341,
-          "quote": "no tenemos agua desde la mañana en la calle Leopard, 543 Leopard St."
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Leopard, 543 Leopard St."
         },
         {
           "index": 651,
@@ -1553,7 +1553,7 @@
         },
         {
           "index": 546,
-          "quote": "por lo del falta de calefacción en 1388 Kostoryz."
+          "quote": "por lo del falta de calefacci\u00f3n en 1388 Kostoryz."
         }
       ],
       "explanation": "Both messages report no heat at the same address, 1388 Kostoryz.",
@@ -1619,7 +1619,7 @@
           "quote": "4502 Alameda St."
         }
       ],
-      "explanation": "Message 5 says the problem extends to the next door on Alameda St, and message 14 reports no water from another home on the same street.",
+      "explanation": "message #325 says the problem extends to the next door on Alameda St, and message #883 reports no water from another home on the same street.",
       "question": "Is the water loss affecting other homes on Alameda St beyond your next-door neighbor?",
       "ask_index": 324,
       "source": "ember",
@@ -1668,10 +1668,10 @@
         },
         {
           "index": 447,
-          "quote": "El calentador de agua no prende desde que regresó la luz. Michael Miller, Downtown. 956-555-0175"
+          "quote": "El calentador de agua no prende desde que regres\u00f3 la luz. Michael Miller, Downtown. 956-555-0175"
         }
       ],
-      "explanation": "Message 6 explicitly follows up for Michael Miller about a water heater, matching message 8's Michael Miller water heater report.",
+      "explanation": "message #337 explicitly follows up for Michael Miller about a water heater, matching message #448's Michael Miller water heater report.",
       "question": "Is the water heater on Whiteley the same one Michael Miller reported from Downtown?",
       "ask_index": 336,
       "source": "ember",
@@ -2013,7 +2013,7 @@
       "evidence": [
         {
           "index": 458,
-          "quote": "no tenemos agua desde la mañana en la calle Williams"
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Williams"
         },
         {
           "index": 521,
@@ -2029,7 +2029,7 @@
         },
         {
           "index": 893,
-          "quote": "no tenemos agua desde la mañana en la calle Williams"
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Williams"
         }
       ],
       "explanation": "All report no water on Williams with neighbors/block also out, indicating a street-wide supply outage.",
@@ -2088,7 +2088,7 @@
           "quote": "2410 Whiteley Dr"
         }
       ],
-      "explanation": "Both are on Whiteley Dr and message 13 says the whole street has no water, matching message 6's no-pressure problem.",
+      "explanation": "Both are on Whiteley Dr and message #805 says the whole street has no water, matching message #468's no-pressure problem.",
       "question": "Is your Whiteley Dr water-pressure loss part of the whole-street outage on Whiteley?",
       "ask_index": 467,
       "source": "ember",
@@ -2158,7 +2158,7 @@
         },
         {
           "index": 750,
-          "quote": "Soy Yolanda, familiar de Juan, por lo del tubo partido en 4507 Sunnybrook. ¿A qué hora vienen? 956-555-0119"
+          "quote": "Soy Yolanda, familiar de Juan, por lo del tubo partido en 4507 Sunnybrook. \u00bfA qu\u00e9 hora vienen? 956-555-0119"
         }
       ],
       "explanation": "Yolanda says she is Juan's relative about the split pipe at the same Sunnybrook address as Juan Ortiz.",
@@ -2355,7 +2355,7 @@
       "evidence": [
         {
           "index": 531,
-          "quote": "no tenemos agua desde la mañana en la calle Pharaoh"
+          "quote": "no tenemos agua desde la ma\u00f1ana en la calle Pharaoh"
         },
         {
           "index": 531,
@@ -2523,7 +2523,7 @@
         },
         {
           "index": 640,
-          "quote": "familiar de Elena, por lo del tuberías congeladas en 5177 Gollihar."
+          "quote": "familiar de Elena, por lo del tuber\u00edas congeladas en 5177 Gollihar."
         }
       ],
       "explanation": "Monica says she is Elena's relative asking about the frozen pipes at the same 5177 Gollihar address as Elena White.",
@@ -2744,7 +2744,7 @@
         },
         {
           "index": 803,
-          "quote": "Soy Alma, familiar de Debbie, por lo del tubo reventado en 5281 Staples. ¿A qué hora vienen? 830-555-0175"
+          "quote": "Soy Alma, familiar de Debbie, por lo del tubo reventado en 5281 Staples. \u00bfA qu\u00e9 hora vienen? 830-555-0175"
         },
         {
           "index": 803,
@@ -2920,7 +2920,7 @@
       "evidence": [
         {
           "index": 635,
-          "quote": "Se congelaron las tuberías y no sale agua. 1469 Navigation Blvd. Maria Guerra 361-555-0161"
+          "quote": "Se congelaron las tuber\u00edas y no sale agua. 1469 Navigation Blvd. Maria Guerra 361-555-0161"
         },
         {
           "index": 932,
@@ -3185,7 +3185,7 @@
       "evidence": [
         {
           "index": 694,
-          "quote": "No tenemos calefacción desde anoche y mi abuela tiene 88 años. Hace mucho frío en la casa. 2732 McArdle Rd. 432-555-0113"
+          "quote": "No tenemos calefacci\u00f3n desde anoche y mi abuela tiene 88 a\u00f1os. Hace mucho fr\u00edo en la casa. 2732 McArdle Rd. 432-555-0113"
         },
         {
           "index": 820,
@@ -3258,15 +3258,15 @@
       "evidence": [
         {
           "index": 703,
-          "quote": "Hola, no tenemos agua desde la mañana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco. Raul 956-555-0148"
+          "quote": "Hola, no tenemos agua desde la ma\u00f1ana en la calle Cayo, 5754 Cayo Ct. Mis vecinos tampoco. Raul 956-555-0148"
         },
         {
           "index": 815,
-          "quote": "Se congelaron las tuberías y no sale agua. 1821 Cayo Ct. Raul Jones 361-555-0128"
+          "quote": "Se congelaron las tuber\u00edas y no sale agua. 1821 Cayo Ct. Raul Jones 361-555-0128"
         },
         {
           "index": 921,
-          "quote": "Se congelaron las tuberías y no sale agua. 2359 Cayo Ct. Raul Flores 979-555-0138"
+          "quote": "Se congelaron las tuber\u00edas y no sale agua. 2359 Cayo Ct. Raul Flores 979-555-0138"
         }
       ],
       "explanation": "Three different homes on Cayo Ct with no water, and message 12 says neighbors also have no water.",

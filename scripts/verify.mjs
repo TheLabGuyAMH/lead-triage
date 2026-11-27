@@ -384,6 +384,11 @@ async function main() {
   const dBig = await handleDispatch({ leads: many.slice(0, 31), mode: "mock" });
   check("dispatch endpoint rejects a block over the cap", dBig.status === 400);
   check("answer key covers 4 groups", FREEZE_GROUPS.length === 4);
+  // Ember's batch positions become board numbers
+  const relBlock = [{ index: 187 }, { index: 307 }];
+  check("'message 2 follows up on message 1' becomes board numbers", D.relabelIds("Message 2 follows up on message 1.", (n) => relBlock[n - 1]?.index ?? null) === "message #308 follows up on message #188.");
+  check("house numbers are left alone", D.relabelIds("pipe at 418 Mesquite, id 9", () => null) === "pipe at 418 Mesquite, id 9");
+
   // Astra review: the merge rule must identify the job, not just the caller
   check("'18 Oak Road' and '18 Oak Street' are different places", D.sharedAddresses("leak at 18 Oak Road", "no heat at 18 Oak Street").length === 0);
   check("'120 North Elm St' and '120 North Park Ave' are different places", D.sharedAddresses("burst pipe 120 North Elm St", "no heat 120 North Park Ave").length === 0);

@@ -623,7 +623,11 @@ function render() {
     `Budget: $${sessionTotals.cost.toFixed(2)} of $${config.capUsd.toFixed(2)} cap (browser-side stop)`;
 
   const calls = trace.filter(Boolean).length + linkTrace.length;
-  costPill.textContent = `${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} · ${calls} call${calls === 1 ? "" : "s"} (session)`;
+  // The header pill is this browser's own spend; a replay's recorded calls are not session calls.
+  const spent = sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown";
+  costPill.textContent = showingReplay
+    ? `${spent} spent this session · viewing a recording (${calls.toLocaleString()} recorded calls)`
+    : `${spent} · ${calls} call${calls === 1 ? "" : "s"} (session)`;
   costTraceSummary.textContent = `Cost & trace · ${sessionTotals.costKnown ? `$${sessionTotals.cost.toFixed(4)}` : "cost unknown"} session · ${calls} call${calls === 1 ? "" : "s"} shown`;
 
   const shown = trace.filter(Boolean).sort((a, b) => a.index - b.index);

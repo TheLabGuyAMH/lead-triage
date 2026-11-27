@@ -82,6 +82,11 @@ main { max-width: 1240px; margin: 0 auto; padding: 10px 20px 24px; display: grid
   main { grid-template-columns: minmax(360px, 5fr) 7fr; }
   .input-zone { position: sticky; top: 12px; }
 }
+/* Phones and narrow screens: the plan first, the paste box after it. */
+@media (max-width: 959px) {
+  .board-zone { order: -1; }
+}
+.h1-sub { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; }
 
 .panel {
   background: var(--card);

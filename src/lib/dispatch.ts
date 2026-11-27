@@ -414,6 +414,18 @@ export function recheckAnchors(links: LeadLink[], leads: DispatchLead[]): LeadLi
   });
 }
 
+/**
+ * Ember numbers messages by their position in what it was sent ("message
+ * 9", "id 3"); the board numbers them by paste order (#188). Rewrite the
+ * former into the latter so an explanation points at the right card.
+ */
+export function relabelIds(text: string, toPaste: (n: number) => number | null): string {
+  return text.replace(/\b(messages?|msg|id)\s*#?(\d{1,4})\b/gi, (m, word: string, n: string) => {
+    const i = toPaste(Number(n));
+    return i === null ? m : `${word.toLowerCase().startsWith("message") ? "message" : "message"} #${i + 1}`;
+  });
+}
+
 export const linkKey = (kind: LinkKind, indices: number[]) => `${kind}:${[...indices].sort((a, b) => a - b).join(",")}`;
 
 export interface ValidationOutcome {
@@ -479,8 +491,8 @@ export function validateLinks(raw: unknown, block: DispatchLead[], source: LinkS
       kind,
       confidence,
       evidence: proof,
-      explanation: typeof item.explanation === "string" ? item.explanation.slice(0, 300) : "",
-      question: typeof item.deciding_question === "string" ? item.deciding_question.slice(0, 300) : "",
+      explanation: typeof item.explanation === "string" ? relabelIds(item.explanation, (n) => block[n - 1]?.index ?? null).slice(0, 300) : "",
+      question: typeof item.deciding_question === "string" ? relabelIds(item.deciding_question, (n) => block[n - 1]?.index ?? null).slice(0, 300) : "",
       ask_index: block[askId - 1].index,
       source,
       downgraded,
